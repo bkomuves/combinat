@@ -37,7 +37,6 @@ import Control.Monad.ST
 import Data.List hiding (permutations)
 import Data.Array
 import Data.Array.ST
-import Data.STRef
 
 import Math.Combinat.Helper
 
@@ -57,7 +56,7 @@ newtype DisjCycles  = DisjCycles [[Int]] deriving (Eq,Ord,Show,Read)
 fromPermutation :: Permutation -> [Int]
 fromPermutation (Permutation ar) = elems ar
 
--- | Assumes that the input is a permutations of the numbers @[1..n]@.
+-- | Assumes that the input is a permutation of the numbers @[1..n]@.
 toPermutationUnsafe :: [Int] -> Permutation
 toPermutationUnsafe xs = Permutation perm where
   n = length xs
@@ -69,6 +68,7 @@ isPermutation xs = (ar!0 == 0) && and [ ar!j == 1 | j<-[1..n] ] where
   n = length xs
   -- the zero index is an unidiomatic hack
   ar = accumArray (+) 0 (0,n) $ map f xs 
+  f :: Int -> (Int,Int)
   f j = if j<1 || j>n then (0,1) else (j,1)
 
 -- | Checks the input.
