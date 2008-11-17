@@ -194,6 +194,7 @@ fasc4A_algorithm_W n' rnd = worker (rnd,n,n,[]) where
 -- * Binary trees
 
 -- | Generates all binary trees with n nodes. 
+--   At the moment just a synonym for 'binaryTreesNaive'.
 binaryTrees :: Int -> [BinTree ()]
 binaryTrees = binaryTreesNaive
 
