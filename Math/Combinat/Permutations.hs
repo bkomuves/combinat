@@ -23,7 +23,7 @@ module Math.Combinat.Permutations
   , randomCyclicPermutation
   , _randomCyclicPermutation
   , randomPermutationDurstenfeld
-  , randomPermutationSattolo
+  , randomCyclicPermutationSattolo
     -- * Multisets
   , permuteMultiset
   , countPermuteMultiset
@@ -115,13 +115,13 @@ _randomPermutation :: RandomGen g => Int -> g -> ([Int],g)
 _randomPermutation n rndgen = (fromPermutation perm, rndgen') where
   (perm, rndgen') = randomPermutationDurstenfeld n rndgen 
 
--- | A synonym for 'randomPermutationSattolo'.
+-- | A synonym for 'randomCyclicPermutationSattolo'.
 randomCyclicPermutation :: RandomGen g => Int -> g -> (Permutation,g)
-randomCyclicPermutation = randomPermutationSattolo
+randomCyclicPermutation = randomCyclicPermutationSattolo
 
 _randomCyclicPermutation :: RandomGen g => Int -> g -> ([Int],g)
 _randomCyclicPermutation n rndgen = (fromPermutation perm, rndgen') where
-  (perm, rndgen') = randomPermutationSattolo n rndgen 
+  (perm, rndgen') = randomCyclicPermutationSattolo n rndgen 
 
 -- | Generates a uniformly random permutation of @[1..n]@.
 -- Durstenfeld's algorithm (see <http://en.wikipedia.org/wiki/Knuth_shuffle>).
@@ -130,8 +130,8 @@ randomPermutationDurstenfeld = randomPermutationDurstenfeldSattolo False
 
 -- | Generates a uniformly random /cyclic/ permutation of @[1..n]@.
 -- Sattolo's algorithm (see <http://en.wikipedia.org/wiki/Knuth_shuffle>).
-randomPermutationSattolo :: RandomGen g => Int -> g -> (Permutation,g)
-randomPermutationSattolo = randomPermutationDurstenfeldSattolo True
+randomCyclicPermutationSattolo :: RandomGen g => Int -> g -> (Permutation,g)
+randomCyclicPermutationSattolo = randomPermutationDurstenfeldSattolo True
 
 randomPermutationDurstenfeldSattolo :: RandomGen g => Bool -> Int -> g -> (Permutation,g)
 randomPermutationDurstenfeldSattolo isSattolo n rnd = res where
