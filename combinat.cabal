@@ -35,6 +35,8 @@ Library
   
   Other-Modules:       Math.Combinat.Helper
 
+  Extensions:          MultiParamTypeClasses, ScopedTypeVariables
+
   Hs-Source-Dirs:      .
 
   ghc-options:         -Wall -fno-warn-unused-matches

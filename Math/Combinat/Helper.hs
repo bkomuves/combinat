@@ -6,6 +6,10 @@ import Debug.Trace
 debug :: Show a => a -> b -> b
 debug x y = trace (show x) y
 
+-- helps testing the random rutines 
+count :: Eq a => a -> [a] -> Int
+count x xs = length $ filter (==x) xs
+
 fromJust :: Maybe a -> a
 fromJust (Just x) = x
 fromJust Nothing = error "fromJust: Nothing"
