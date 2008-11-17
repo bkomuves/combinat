@@ -20,6 +20,9 @@
 --  * underscore prefix: use plain lists instead of other types with 
 --    enforced invariants;
 --
+--  * \"random\" prefix: generates random objects 
+--    (typically with uniform distribution); 
+--
 --  * \"count\" prefix: counting functions.
 
 module Math.Combinat 
