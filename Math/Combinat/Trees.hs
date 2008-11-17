@@ -142,6 +142,13 @@ nestedParentheses = fasc4A_algorithm_P
 randomNestedParentheses :: RandomGen g => Int -> g -> ([Paren],g)
 randomNestedParentheses = fasc4A_algorithm_W
 
+-- | Synonym for 'fasc4A_algorithm_U'.
+nthNestedParentheses :: Int -> Integer -> [Paren]
+nthNestedParentheses = fasc4A_algorithm_U
+
+countNestedParentheses :: Int -> Integer
+countNestedParentheses = countBinaryTrees
+
 -- | Generates all sequences of nested parentheses of length 2n.
 -- Order is lexigraphic (when right parentheses are considered 
 -- smaller then left ones).
@@ -189,6 +196,26 @@ fasc4A_algorithm_W n' rnd = worker (rnd,n,n,[]) where
       else worker (rnd' , p-1 , q   , RightParen:parens)
     where 
       (x,rnd') = randomR ( 0 , (q+p)*(q-p+1)-1 ) rnd
+
+-- | Nth nested parentheses of length 2n. 
+-- The order is the same as in 'fasc4A_algorithm_P'.
+-- Based on \"Algorithm U\" in Knuth.
+fasc4A_algorithm_U 
+  :: Int               -- ^ n
+  -> Integer           -- ^ N; should satisfy 1 <= N <= C(n) 
+  -> [Paren]
+fasc4A_algorithm_U n' bign0 = reverse $ worker (bign0,c0,n,n,[]) where
+  n = fromIntegral n' :: Integer
+  c0 = foldl f 1 [2..n]  
+  f c p = ((4*p-2)*c) `div` (p+1) 
+  worker :: (Integer,Integer,Integer,Integer,[Paren]) -> [Paren]
+  worker (_   ,_,_,0,parens) = parens
+  worker (bign,c,p,q,parens) = 
+    if bign <= c' 
+      then worker (bign    , c'   , p   , q-1 , RightParen:parens)
+      else worker (bign-c' , c-c' , p-1 , q   , LeftParen :parens)
+    where
+      c' = ((q+1)*(q-p)*c) `div` ((q+p)*(q-p+1))
   
 -------------------------------------------------------
 -- * Binary trees
