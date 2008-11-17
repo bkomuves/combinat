@@ -32,6 +32,8 @@ module Math.Combinat.Trees
 import Data.List
 import Data.Tree (Tree(..),Forest(..))
 
+import System.Random
+
 import Math.Combinat.Helper
 
 -------------------------------------------------------
@@ -136,6 +138,10 @@ binaryTreeToForest = worker where
 nestedParentheses :: Int -> [[Paren]]
 nestedParentheses = fasc4A_algorithm_P
 
+-- | Synonym for 'fasc4A_algorithm_W'.
+randomNestedParentheses :: RandomGen g => Int -> g -> ([Paren],g)
+randomNestedParentheses = fasc4A_algorithm_W
+
 -- | Generates all sequences of nested parentheses of length 2n.
 -- Order is lexigraphic (when right parentheses are considered 
 -- smaller then left ones).
@@ -169,7 +175,21 @@ fasc4A_algorithm_P n = unfold next ( start , [] ) where
 	      _ -> findj ( lls, [] ) ( reverse rs ++ xs , ys) 
 	    RightParen -> Just ( reverse ys ++ xs ++ reverse (LeftParen:rs) ++ ls , [] )
     
-
+-- | Generates a random sequence of nested parentheses of length 2n, from
+-- the uniform distribution.    
+-- Based on \"Algorithm W\" in Knuth.
+fasc4A_algorithm_W :: RandomGen g => Int -> g -> ([Paren],g)
+fasc4A_algorithm_W n' rnd = worker (rnd,n,n,[]) where
+  n = fromIntegral n' :: Integer
+  worker :: RandomGen g => (g,Integer,Integer,[Paren]) -> ([Paren],g)
+  worker (rnd,_,0,parens) = (parens,rnd)
+  worker (rnd,p,q,parens) = 
+    if x<(q+1)*(q-p) 
+      then worker (rnd' , p   , q-1 , LeftParen :parens)
+      else worker (rnd' , p-1 , q   , RightParen:parens)
+    where 
+      (x,rnd') = randomR ( 0 , (q+p)*(q-p+1)-1 ) rnd
+  
 -------------------------------------------------------
 -- * Binary trees
 
@@ -182,7 +202,7 @@ binaryTrees = binaryTreesNaive
 -- This is also the counting function for forests and nested parentheses.
 countBinaryTrees :: Int -> Integer
 countBinaryTrees n = binomial (2*n) n `div` (1 + fromIntegral n)
-
+    
 -- | Generates all binary trees with n nodes. The naive algorithm.
 binaryTreesNaive :: Int -> [BinTree ()]
 binaryTreesNaive 0 = [ leaf ]

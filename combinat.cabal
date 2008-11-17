@@ -21,7 +21,7 @@ Flag splitBase
 
 Library
   if flag(splitBase)
-    Build-Depends:       base >= 3, array, containers
+    Build-Depends:       base >= 3, array, containers, random
   else
     Build-Depends:       base <  3
 
