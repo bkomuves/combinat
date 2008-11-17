@@ -6,6 +6,8 @@ module Math.Combinat.Trees
   ( -- * Types
     BinTree(..)
   , leaf
+  , BinTree'(..)
+  , forgetNodeDecorations
   , module Data.Tree 
   , Paren(..)
   , parenthesesToString
@@ -31,8 +33,16 @@ module Math.Combinat.Trees
   , binaryTrees
   , countBinaryTrees
   , binaryTreesNaive
+  , randomBinaryTree
+  , fasc4A_algorithm_R
   ) 
   where
+
+import Control.Monad
+import Control.Monad.ST
+
+import Data.Array
+import Data.Array.ST
 
 import Data.List
 import Data.Tree (Tree(..),Forest(..))
@@ -44,6 +54,7 @@ import Math.Combinat.Helper
 -------------------------------------------------------
 -- * Types
 
+-- | A binary tree with leafs decorated with type 'a'.
 data BinTree a
   = Branch (BinTree a) (BinTree a)
   | Leaf a
@@ -52,6 +63,22 @@ data BinTree a
 leaf :: BinTree ()
 leaf = Leaf ()
 
+-- | A binary tree with leafs and internal nodes decorated 
+-- with types 'a' and 'b', respectively.
+data BinTree' a b
+  = Branch' (BinTree' a b) b (BinTree' a b)
+  | Leaf' a
+  deriving (Eq,Ord,Show,Read)
+
+forgetNodeDecorations :: BinTree' a b -> BinTree a
+forgetNodeDecorations (Branch' left _ right) = 
+  Branch (forgetNodeDecorations left) (forgetNodeDecorations right)
+forgetNodeDecorations (Leaf' decor) = Leaf decor 
+  
+instance Functor BinTree where
+  fmap f (Branch left right) = Branch (fmap f left) (fmap f right)
+  fmap f (Leaf x) = Leaf (f x)
+    
 -------------------------------------------------------
 
 data Paren = LeftParen | RightParen deriving (Eq,Ord,Show,Read)
@@ -187,12 +214,13 @@ fasc4A_algorithm_P n = unfold next ( start , [] ) where
 	      _ -> findj ( lls, [] ) ( reverse rs ++ xs , ys) 
 	    RightParen -> Just ( reverse ys ++ xs ++ reverse (LeftParen:rs) ++ ls , [] )
     
--- | Generates a random sequence of nested parentheses of length 2n, from
--- the uniform distribution.    
+-- | Generates a uniformly random sequence of nested parentheses of length 2n.    
 -- Based on \"Algorithm W\" in Knuth.
 fasc4A_algorithm_W :: RandomGen g => Int -> g -> ([Paren],g)
 fasc4A_algorithm_W n' rnd = worker (rnd,n,n,[]) where
-  n = fromIntegral n' :: Integer
+  n = fromIntegral n' :: Integer  
+  -- the numbers we use are of order n^2, so for n >> 2^16 
+  -- on a 32 bit machine, we need big integers.
   worker :: RandomGen g => (g,Integer,Integer,[Paren]) -> ([Paren],g)
   worker (rnd,_,0,parens) = (parens,rnd)
   worker (rnd,p,q,parens) = 
@@ -202,7 +230,7 @@ fasc4A_algorithm_W n' rnd = worker (rnd,n,n,[]) where
     where 
       (x,rnd') = randomR ( 0 , (q+p)*(q-p+1)-1 ) rnd
 
--- | Nth nested parentheses of length 2n. 
+-- | Nth sequence of nested parentheses of length 2n. 
 -- The order is the same as in 'fasc4A_algorithm_P'.
 -- Based on \"Algorithm U\" in Knuth.
 fasc4A_algorithm_U 
@@ -246,6 +274,43 @@ binaryTreesNaive n =
   , r <- binaryTreesNaive (n-1-i) 
   ]
 
+-- | Generates an uniformly random binary tree, using 'fasc4A_algorithm_R'.
+randomBinaryTree :: RandomGen g => Int -> g -> (BinTree (), g)
+randomBinaryTree n rnd = (tree,rnd') where
+  (decorated,rnd') = fasc4A_algorithm_R n rnd      
+  tree = fmap (const ()) $ forgetNodeDecorations decorated
+
+-- | Grows a uniformly random binary tree. 
+-- \"Algorithm R\" (Remy's procudere) in Knuth.
+-- Nodes are decorated with odd numbers, leaves with even numbers (from the
+-- set @[0..2n]@). Uses mutable arrays internally.
+fasc4A_algorithm_R :: RandomGen g => Int -> g -> (BinTree' Int Int, g)
+fasc4A_algorithm_R n0 rnd = res where
+  res = runST $ do
+    ar <- newArray (0,2*n0) 0
+    rnd' <- worker rnd 1 ar
+    links <- unsafeFreeze ar
+    return (toTree links, rnd')
+  toTree links = f (links!0) where
+    f i = if odd i 
+      then Branch' (f $ links!i) i (f $ links!(i+1)) 
+      else Leaf' i  
+  worker :: RandomGen g => g -> Int -> STUArray s Int Int -> ST s g
+  worker rnd n ar = do 
+    if n > n0
+      then return rnd
+      else do
+        writeArray ar (n2-b)   n2
+        lk <- readArray ar k
+        writeArray ar (n2-1+b) lk
+        writeArray ar k        (n2-1)
+        worker rnd' (n+1) ar      
+    where  
+      n2 = n+n
+      (x,rnd') = randomR (0,4*n-3) rnd
+      (k,b) = x `divMod` 2
+      
+      
 ----- binary tree zipper
 
 data Ctx a
