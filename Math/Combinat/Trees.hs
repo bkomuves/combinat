@@ -21,7 +21,12 @@ module Math.Combinat.Trees
   , binaryTreeToNestedParentheses
     -- * Nested parentheses
   , nestedParentheses 
+  , randomNestedParentheses
+  , nthNestedParentheses
+  , countNestedParentheses
   , fasc4A_algorithm_P
+  , fasc4A_algorithm_W
+  , fasc4A_algorithm_U
     -- * Binary trees
   , binaryTrees
   , countBinaryTrees
