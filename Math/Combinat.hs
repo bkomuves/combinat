@@ -26,7 +26,8 @@
 --  * \"count\" prefix: counting functions.
 
 module Math.Combinat 
-  ( module Math.Combinat.Tuples
+  ( module Math.Combinat.Sets
+  , module Math.Combinat.Tuples
   , module Math.Combinat.Combinations
   , module Math.Combinat.Partitions
   , module Math.Combinat.Permutations
@@ -34,6 +35,7 @@ module Math.Combinat
   , module Math.Combinat.Trees
   ) where
 
+import Math.Combinat.Sets
 import Math.Combinat.Tuples
 import Math.Combinat.Combinations
 import Math.Combinat.Partitions
