@@ -11,6 +11,10 @@ module Math.Combinat.Permutations
   , toPermutationUnsafe
   , isPermutation
   , toPermutation
+    -- * Permutation groups
+  , permute
+  , multiply
+  , inverse
     -- * Simple permutations
   , permutations
   , _permutations
@@ -76,7 +80,55 @@ toPermutation :: [Int] -> Permutation
 toPermutation xs = if isPermutation xs 
   then toPermutationUnsafe xs
   else error "toPermutation: not a permutation"
+
+-------------------------------------------------------
+-- * Permutation groups
     
+-- | Action of a permutation on a set. If our permutation is 
+-- encoded with the sequence @[p1,p2,...,pn]@, then in the
+-- two-line notation we have
+--
+-- > ( 1  2  3  ... n  )
+-- > ( p1 p2 p3 ... pn )
+--
+-- We adopt the convention that permutations act /on the left/ 
+-- (as opposed to Knuth, where they act on the right).
+-- Thus, 
+-- 
+-- > permute pi1 (permute pi2 set) == permute (pi1 `multiply` pi2) set
+--   
+-- The second argument should be an array with bounds @(1,n)@.
+-- The function checks the array bounds.
+permute :: Permutation -> Array Int a -> Array Int a    
+permute pi@(Permutation perm) ar = 
+  if (a==1) && (b==n) 
+    then listArray (1,n) [ ar!(perm!i) | i <- [1..n] ] 
+    else error "permute: array bounds do not match"
+  where
+    (_,n) = bounds perm  
+    (a,b) = bounds ar   
+   
+-- | Multiplies two permutations together. See 'permute' for our
+-- conventions.  
+multiply :: Permutation -> Permutation -> Permutation
+multiply pi1@(Permutation perm1) (Permutation perm2) = 
+  if (n==m) 
+    then Permutation result
+    else error "multiply: permutations of different sets"  
+  where
+	  (_,n) = bounds perm1
+	  (_,m) = bounds perm2    
+	  result = permute pi1 perm2    
+  
+infixr 7 `multiply`  
+    
+-- | The inverse permutation
+inverse :: Permutation -> Permutation    
+inverse (Permutation perm1) = Permutation result
+  where
+    result = array (1,n) $ map swap $ assocs perm1
+    (_,n) = bounds perm1
+
 -------------------------------------------------------
 -- * Permutations of distinct elements
 

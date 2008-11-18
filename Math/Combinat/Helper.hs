@@ -6,6 +6,11 @@ import Debug.Trace
 debug :: Show a => a -> b -> b
 debug x y = trace (show x) y
 
+{-# SPECIALIZE swap :: (a,a) -> (a,a) #-}
+{-# SPECIALIZE swap :: (Int,Int) -> (Int,Int) #-}
+swap :: (a,b) -> (b,a)
+swap (x,y) = (y,x)
+
 -- helps testing the random rutines 
 count :: Eq a => a -> [a] -> Int
 count x xs = length $ filter (==x) xs
