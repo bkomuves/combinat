@@ -310,68 +310,6 @@ fasc4A_algorithm_R n0 rnd = res where
       (x,rnd') = randomR (0,4*n-3) rnd
       (k,b) = x `divMod` 2
       
-      
------ binary tree zipper
-
-data Ctx a
-  = Top 
-  | L (Ctx a) (BinTree a)
-  | R (BinTree a) (Ctx a) 
-
-type Loc a = (BinTree a, Ctx a)
-
-left :: Loc a -> Loc a
-left (Branch l r , c) = (l , L c r)
-left (Leaf _ , _) = error "left: Leaf"
-
-right :: Loc a -> Loc a
-right (Branch l r , c) = (r , R l c)
-right (Leaf _ , _) = error "right: Leaf"
- 
-top :: BinTree a -> Loc a
-top t = (t, Top)
- 
-up :: Loc a -> Loc a
-up (t, L c r) = (Branch t r, c)
-up (t, R l c) = (Branch l t, c)
-up (t, Top  ) = error "up: top"
-
-upmost :: Loc a -> Loc a
-upmost l@(t, Top) = l
-upmost l = upmost (up l)
- 
-modify :: (BinTree a -> BinTree a) -> Loc a -> Loc a
-modify f (t, c) = (f t, c)
-
------
-
-{-
--- | Generates all binary trees with n nodes.
--- Based on \"Algorithm B\" in Knuth, uses tree zippers.
-fasc4A_algorithm_B	:: Int -> [BinTree ()]
-fasc4A_algorithm_B 0 = [ leaf ]
-fasc4A_algorithm_B n = unfold1 next start where
-  start = nest n (\t -> Branch t leaf) leaf
-
-  killLeft  (Branch _ r) = Branch leaf r
-  killRight (Branch l _) = Branch l leaf
+-------------------------------------------------------      
   
-  next t = case findj (top t) of
-    Nothing -> Nothing
-    Just locj@(s,c) -> case findk (top s) of
-      lock@(u,Top) -> Just $ promote (modify killLeft locj ) lock 
-      lock@(u,_  ) -> Just $ promote locj (modify killRight lock)
-      
-  findj :: Loc () -> Maybe (Loc ())
-  findj (Branch (Leaf _) t , c) = case t of
-    Branch l r -> findj $ left (Branch t leaf , c) 
-    Leaf _ -> Nothing
-  findj loc@(Leaf _ , c) = Just loc
 
-  findk :: Loc () -> Loc ()
-  findk loc@( Branch l (Leaf _) , _) = loc
-  findk loc@( Branch l r , _) = findk (right loc)
-  
-  promote :: Loc () -> Loc () -> BinTree ()
-  promote locj lock = undefined
--}
