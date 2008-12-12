@@ -4,7 +4,7 @@ module Math.Combinat.Helper where
 import Debug.Trace
 
 debug :: Show a => a -> b -> b
-debug x y = trace (show x) y
+debug x y = trace ("-- " ++ show x ++ "\n") y
 
 {-# SPECIALIZE swap :: (a,a) -> (a,a) #-}
 {-# SPECIALIZE swap :: (Int,Int) -> (Int,Int) #-}
