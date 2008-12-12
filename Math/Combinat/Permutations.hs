@@ -11,8 +11,10 @@ module Math.Combinat.Permutations
   , toPermutationUnsafe
   , isPermutation
   , toPermutation
+  , permutationSize
     -- * Permutation groups
   , permute
+  , permuteList
   , multiply
   , inverse
     -- * Simple permutations
@@ -81,6 +83,10 @@ toPermutation xs = if isPermutation xs
   then toPermutationUnsafe xs
   else error "toPermutation: not a permutation"
 
+-- | Returns @n@, where the input is a permutation of the numbers @[1..n]@
+permutationSize :: Permutation -> Int
+permutationSize (Permutation ar) = snd $ bounds ar
+
 -------------------------------------------------------
 -- * Permutation groups
     
@@ -107,7 +113,12 @@ permute pi@(Permutation perm) ar =
   where
     (_,n) = bounds perm  
     (a,b) = bounds ar   
-   
+
+-- | The list should be of length @n@.
+permuteList :: Permutation -> [a] -> [a]    
+permuteList perm xs = elems $ permute perm $ listArray (1,n) xs where
+  n = permutationSize perm
+
 -- | Multiplies two permutations together. See 'permute' for our
 -- conventions.  
 multiply :: Permutation -> Permutation -> Permutation
