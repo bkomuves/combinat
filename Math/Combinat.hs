@@ -33,6 +33,8 @@ module Math.Combinat
   , module Math.Combinat.Permutations
   , module Math.Combinat.Tableaux
   , module Math.Combinat.Trees
+  , binomial
+  , factorial
   ) where
 
 import Math.Combinat.Sets
@@ -43,3 +45,4 @@ import Math.Combinat.Permutations
 import Math.Combinat.Tableaux
 import Math.Combinat.Trees
 
+import Math.Combinat.Helper ( binomial , factorial )
