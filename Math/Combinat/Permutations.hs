@@ -8,10 +8,18 @@ module Math.Combinat.Permutations
   ( -- * Types
     Permutation
   , fromPermutation
+  , permutationArray
   , toPermutationUnsafe
   , isPermutation
   , toPermutation
   , permutationSize
+    -- * Disjoint cycles
+  , fromDisjointCycles
+  , disjointCyclesUnsafe
+  , permutationToDisjointCycles
+  , isEvenPermutation
+  , isOddPermutation
+  , signOfPermutation
     -- * Permutation groups
   , permute
   , permuteList
@@ -48,19 +56,20 @@ import Math.Combinat.Helper
 
 import System.Random
 
--------------------------------------------------------
+--------------------------------------------------------------------------------
 -- * Types
 
 -- | Standard notation for permutations. Internally it is an array of the integers @[1..n]@. 
 newtype Permutation = Permutation (Array Int Int) deriving (Eq,Ord,Show,Read)
 
-{-
 -- | Disjoint cycle notation for permutations
-newtype DisjCycles  = DisjCycles [[Int]] deriving (Eq,Ord,Show,Read)
--}
+newtype DisjointCycles = DisjointCycles [[Int]] deriving (Eq,Ord,Show,Read)
 
 fromPermutation :: Permutation -> [Int]
 fromPermutation (Permutation ar) = elems ar
+
+permutationArray :: Permutation -> Array Int Int
+permutationArray (Permutation ar) = ar
 
 -- | Assumes that the input is a permutation of the numbers @[1..n]@.
 toPermutationUnsafe :: [Int] -> Permutation
@@ -87,7 +96,105 @@ toPermutation xs = if isPermutation xs
 permutationSize :: Permutation -> Int
 permutationSize (Permutation ar) = snd $ bounds ar
 
--------------------------------------------------------
+--------------------------------------------------------------------------------
+-- * Disjoint cycles
+
+fromDisjointCycles :: DisjointCycles -> [[Int]]
+fromDisjointCycles (DisjointCycles cycles) = cycles
+
+disjointCyclesUnsafe :: [[Int]] -> DisjointCycles 
+disjointCyclesUnsafe = DisjointCycles
+
+permutationToDisjointCycles :: Permutation -> DisjointCycles
+permutationToDisjointCycles (Permutation perm) = res where
+
+  (1,n) = bounds perm
+
+  -- we don't want trivial cycles
+  f :: [Int] -> Bool
+  f [_] = False
+  f _ = True
+  
+  res = runST $ do
+    tag <- newArray (1,n) False 
+    cycles <- unfoldM (step tag) 1 
+    return (DisjointCycles $ filter f cycles)
+    
+  step :: STUArray s Int Bool -> Int -> ST s ([Int],Maybe Int)
+  step tag k = do
+    cyc <- worker tag k k [k] 
+    m <- next tag (k+1)
+    return (reverse cyc,m)
+    
+  next :: STUArray s Int Bool -> Int -> ST s (Maybe Int)
+  next tag k = if k > n
+    then return Nothing
+    else readArray tag k >>= \b -> if b 
+      then next tag (k+1)  
+      else return (Just k)
+       
+  worker :: STUArray s Int Bool -> Int -> Int -> [Int] -> ST s [Int]
+  worker tag k l cyc = do
+    writeArray tag l True
+    let m = perm ! l
+    if m == k 
+      then return cyc
+      else worker tag k m (m:cyc)      
+
+{-
+testmanyperm n m g = mapAccumL f g (replicate m 0) where
+  f g _ = (g',(a,b)) where
+    (p,g') = randomPermutation n g
+    a = isEvenPermutation p
+    b = testEvenPerm p 
+
+testcount (_,xys) = if and (map (\(x,y) -> x==y) xys)
+  then length $ filter (\(x,y) -> x) xys
+  else error "baj van"
+
+testEvenPerm p = even $ sum $ map (\x->x-1) $ map length $ fromDisjointCycles $ permutationToDisjointCycles p
+-}
+
+isEvenPermutation :: Permutation -> Bool
+isEvenPermutation (Permutation perm) = res where
+
+  (1,n) = bounds perm
+  res = runST $ do
+    tag <- newArray (1,n) False 
+    cycles <- unfoldM (step tag) 1 
+    return $ even (sum cycles)
+    
+  step :: STUArray s Int Bool -> Int -> ST s (Int,Maybe Int)
+  step tag k = do
+    cyclen <- worker tag k k 0
+    m <- next tag (k+1)
+    return (cyclen,m)
+    
+  next :: STUArray s Int Bool -> Int -> ST s (Maybe Int)
+  next tag k = if k > n
+    then return Nothing
+    else readArray tag k >>= \b -> if b 
+      then next tag (k+1)  
+      else return (Just k)
+      
+  worker :: STUArray s Int Bool -> Int -> Int -> Int -> ST s Int
+  worker tag k l cyclen = do
+    writeArray tag l True
+    let m = perm ! l
+    if m == k 
+      then return cyclen
+      else worker tag k m (1+cyclen)      
+
+isOddPermutation :: Permutation -> Bool
+isOddPermutation = not . isEvenPermutation
+
+-- | Plus 1 or minus 1.
+signOfPermutation :: Num a => Permutation -> a
+signOfPermutation perm = case isEvenPermutation perm of
+  True  ->   1
+  False -> (-1)
+   
+--------------------------------------------------------------------------------
 -- * Permutation groups
     
 -- | Action of a permutation on a set. If our permutation is 
@@ -140,7 +247,7 @@ inverse (Permutation perm1) = Permutation result
     result = array (1,n) $ map swap $ assocs perm1
     (_,n) = bounds perm1
 
--------------------------------------------------------
+--------------------------------------------------------------------------------
 -- * Permutations of distinct elements
 
 -- | A synonym for 'permutationsNaive'
@@ -167,7 +274,7 @@ _permutationsNaive n = helper [1..n] where
 countPermutations :: Int -> Integer
 countPermutations = factorial
 
--------------------------------------------------------
+--------------------------------------------------------------------------------
 -- * Random permutations
 
 -- | A synonym for 'randomPermutationDurstenfeld'.
@@ -217,7 +324,7 @@ randomPermutationDurstenfeldSattolo isSattolo n rnd = res where
           writeArray ar k z
         worker (n-1) (m-1) rnd' ar 
 
--------------------------------------------------------
+--------------------------------------------------------------------------------
 -- * Permutations of a multiset
 
 -- | Generates all permutations of a multiset.  
@@ -257,4 +364,5 @@ fasc2B_algorithm_L xs = unfold1 next (sort xs) where
     else reverse (x:us)  ++ reverse (u:yys) ++ xs
   inc _ _ ( [] , _ ) = error "permute: should not happen"
       
--------------------------------------------------------
+--------------------------------------------------------------------------------
+

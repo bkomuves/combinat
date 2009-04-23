@@ -1,6 +1,7 @@
 
 module Math.Combinat.Helper where
 
+import Control.Monad
 import Debug.Trace
 
 debug :: Show a => a -> b -> b
@@ -69,4 +70,21 @@ unfoldEither :: (b -> Either c (b,a)) -> b -> (c,[a])
 unfoldEither f y = case f y of
   Left z -> (z,[])
   Right (y,x) -> let (z,xs) = unfoldEither f y in (z,x:xs)
+  
+unfoldM :: Monad m => (b -> m (a,Maybe b)) -> b -> m [a]
+unfoldM f y = do
+  (x,m) <- f y
+  case m of
+    Nothing -> return [x]
+    Just y' -> do
+      xs <- unfoldM f y'
+      return (x:xs)
+
+mapAccumM :: Monad m => (acc -> x -> m (acc, y)) -> acc -> [x] -> m (acc, [y])
+mapAccumM _ s [] = return (s, [])
+mapAccumM f s (x:xs) = do
+  (s1,y) <- f s x
+  (s2,ys) <- mapAccumM f s1 xs
+  return (s2, y:ys)
+
   
