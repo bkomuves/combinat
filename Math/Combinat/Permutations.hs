@@ -17,6 +17,7 @@ module Math.Combinat.Permutations
   , fromDisjointCycles
   , disjointCyclesUnsafe
   , permutationToDisjointCycles
+  , disjointCyclesToPermutation
   , isEvenPermutation
   , isOddPermutation
   , signOfPermutation
@@ -105,6 +106,26 @@ fromDisjointCycles (DisjointCycles cycles) = cycles
 disjointCyclesUnsafe :: [[Int]] -> DisjointCycles 
 disjointCyclesUnsafe = DisjointCycles
 
+{-
+testconv n m g = mapAccumL f g (replicate m 0) where
+  f g _ = (g',p==q) where
+    (p,g') = randomPermutation n g
+    d = permutationToDisjointCycles p
+    q = disjointCyclesToPermutation n d
+-}
+  
+disjointCyclesToPermutation :: Int -> DisjointCycles -> Permutation
+disjointCyclesToPermutation n (DisjointCycles cycles) = Permutation perm where
+  pairs :: [Int] -> [(Int,Int)]
+  pairs xs@(x:_) = worker (xs++[x]) where
+    worker (x:xs@(y:_)) = (x,y):worker xs
+    worker _ = [] 
+  perm = runST $ do
+    ar <- newArray_ (1,n) :: ST s (STUArray s Int Int)
+    forM_ [1..n] $ \i -> writeArray ar i i 
+    forM_ cycles $ \cyc -> forM_ (pairs cyc) $ \(i,j) -> writeArray ar i j
+    freeze ar
+  
 permutationToDisjointCycles :: Permutation -> DisjointCycles
 permutationToDisjointCycles (Permutation perm) = res where
 
