@@ -3,10 +3,11 @@
 --   Donald E. Knuth: The Art of Computer Programming, vol 4, pre-fascicle 2B.
 --
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE CPP, ScopedTypeVariables, GeneralizedNewtypeDeriving #-}
 module Math.Combinat.Permutations 
   ( -- * Types
     Permutation
+  , DisjointCycles
   , fromPermutation
   , permutationArray
   , toPermutationUnsafe
@@ -21,6 +22,7 @@ module Math.Combinat.Permutations
   , isEvenPermutation
   , isOddPermutation
   , signOfPermutation
+  , isCyclicPermutation
     -- * Permutation groups
   , permute
   , permuteList
@@ -57,13 +59,17 @@ import Math.Combinat.Helper
 
 import System.Random
 
+#ifdef QUICKCHECK
+import Test.QuickCheck
+#endif
+
 --------------------------------------------------------------------------------
 -- * Types
 
 -- | Standard notation for permutations. Internally it is an array of the integers @[1..n]@. 
 newtype Permutation = Permutation (Array Int Int) deriving (Eq,Ord,Show,Read)
 
--- | Disjoint cycle notation for permutations
+-- | Disjoint cycle notation for permutations. Internally it is @[[Int]]@.
 newtype DisjointCycles = DisjointCycles [[Int]] deriving (Eq,Ord,Show,Read)
 
 fromPermutation :: Permutation -> [Int]
@@ -126,6 +132,7 @@ disjointCyclesToPermutation n (DisjointCycles cycles) = Permutation perm where
     forM_ cycles $ \cyc -> forM_ (pairs cyc) $ \(i,j) -> writeArray ar i j
     freeze ar
   
+-- | This is compatible with Maple's @convert(perm,\'disjcyc\')@.  
 permutationToDisjointCycles :: Permutation -> DisjointCycles
 permutationToDisjointCycles (Permutation perm) = res where
 
@@ -214,6 +221,16 @@ signOfPermutation :: Num a => Permutation -> a
 signOfPermutation perm = case isEvenPermutation perm of
   True  ->   1
   False -> (-1)
+  
+isCyclicPermutation :: Permutation -> Bool
+isCyclicPermutation perm = 
+  case cycles of
+    []    -> True
+    [cyc] -> (length cyc == n)
+    _     -> False
+  where 
+    n = permutationSize perm
+    DisjointCycles cycles = permutationToDisjointCycles perm
    
 --------------------------------------------------------------------------------
 -- * Permutation groups
@@ -385,5 +402,93 @@ fasc2B_algorithm_L xs = unfold1 next (sort xs) where
     else reverse (x:us)  ++ reverse (u:yys) ++ xs
   inc _ _ ( [] , _ ) = error "permute: should not happen"
       
+--------------------------------------------------------------------------------
+
+#ifdef QUICKCHECK
+
+minPermSize = 1
+maxPermSize = 123
+
+newtype Elem = Elem Int deriving Eq
+newtype Nat  = Nat { fromNat :: Int } deriving (Eq,Ord,Show,Num,Random)
+
+naturalSet :: Permutation -> Array Int Elem
+naturalSet perm = listArray (1,n) [ Elem i | i<-[1..n] ] where
+  n = permutationSize perm
+
+sameSize :: Permutation ->  Permutation -> Bool
+sameSize perm1 perm2 = ( permutationSize perm1 == permutationSize perm2)
+
+newtype CyclicPermutation = Cyclic { fromCyclic :: Permutation } deriving Show
+
+data SameSize = SameSize Permutation Permutation deriving Show
+
+instance Random Permutation where
+  random g = randomPermutation size g1 where
+    (size,g1) = randomR (minPermSize,maxPermSize) g
+  randomR _ = random
+
+instance Random CyclicPermutation where
+  random g = (Cyclic cycl,g2) where
+    (size,g1) = randomR (minPermSize,maxPermSize) g
+    (cycl,g2) = randomCyclicPermutation size g1
+  randomR _ = random
+
+instance Random DisjointCycles where
+  random g = (disjcyc,g2) where
+    (size,g1) = randomR (minPermSize,maxPermSize) g
+    (perm,g2) = randomPermutation size g1
+    disjcyc   = permutationToDisjointCycles perm
+  randomR _ = random
+
+instance Random SameSize where
+  random g = (SameSize prm1 prm2, g3) where
+    (size,g1) = randomR (minPermSize,maxPermSize) g
+    (prm1,g2) = randomPermutation size g1 
+    (prm2,g3) = randomPermutation size g2
+  randomR _ = random
+
+instance Arbitrary Nat where
+  arbitrary = choose (Nat 0 , Nat 50)
+     
+instance Arbitrary Permutation       where arbitrary = choose undefined
+instance Arbitrary CyclicPermutation where arbitrary = choose undefined
+instance Arbitrary DisjointCycles    where arbitrary = choose undefined
+instance Arbitrary SameSize          where arbitrary = choose undefined
+
+prop_disjcyc1 perm = ( perm == disjointCyclesToPermutation n (permutationToDisjointCycles perm) )
+  where n = permutationSize perm
+prop_disjcyc2 k dcyc = ( dcyc == permutationToDisjointCycles (disjointCyclesToPermutation n dcyc) )
+  where 
+    n = fromNat k + m 
+    m = case fromDisjointCycles dcyc of
+      [] -> 1
+      xxs -> maximum (concat xxs)
+
+prop_randCyclic cycl = ( isCyclicPermutation (fromCyclic cycl) )
+
+prop_inverse perm = ( perm == inverse (inverse perm) ) 
+
+prop_mulPerm (SameSize perm1 perm2) = 
+    ( permute perm1 (permute perm2 set) == permute (perm1 `multiply` perm2) set ) 
+  where 
+    set = naturalSet perm1
+
+prop_mulSign (SameSize perm1 perm2) = 
+    ( sgn perm1 * sgn perm2 == sgn (perm1 `multiply` perm2) ) 
+  where 
+    sgn = signOfPermutation :: Permutation -> Int
+
+prop_invMul (SameSize perm1 perm2) =   
+  ( inverse perm2 `multiply` inverse perm1 == inverse (perm1 `multiply` perm2) ) 
+
+prop_cyclSign cycl = ( isEvenPermutation perm == odd n ) where
+  perm = fromCyclic cycl
+  n = permutationSize perm
+  
+prop_permIsPerm perm = ( isPermutation (fromPermutation perm) ) 
+
+#endif
+
 --------------------------------------------------------------------------------
 
