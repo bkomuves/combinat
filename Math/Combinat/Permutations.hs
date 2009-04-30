@@ -111,14 +111,6 @@ fromDisjointCycles (DisjointCycles cycles) = cycles
 
 disjointCyclesUnsafe :: [[Int]] -> DisjointCycles 
 disjointCyclesUnsafe = DisjointCycles
-
-{-
-testconv n m g = mapAccumL f g (replicate m 0) where
-  f g _ = (g',p==q) where
-    (p,g') = randomPermutation n g
-    d = permutationToDisjointCycles p
-    q = disjointCyclesToPermutation n d
--}
   
 disjointCyclesToPermutation :: Int -> DisjointCycles -> Permutation
 disjointCyclesToPermutation n (DisjointCycles cycles) = Permutation perm where
@@ -168,20 +160,6 @@ permutationToDisjointCycles (Permutation perm) = res where
     if m == k 
       then return cyc
       else worker tag k m (m:cyc)      
-
-{-
-testmanyperm n m g = mapAccumL f g (replicate m 0) where
-  f g _ = (g',(a,b)) where
-    (p,g') = randomPermutation n g
-    a = isEvenPermutation p
-    b = testEvenPerm p 
-
-testcount (_,xys) = if and (map (\(x,y) -> x==y) xys)
-  then length $ filter (\(x,y) -> x) xys
-  else error "baj van"
-
-testEvenPerm p = even $ sum $ map (\x->x-1) $ map length $ fromDisjointCycles $ permutationToDisjointCycles p
--}
 
 isEvenPermutation :: Permutation -> Bool
 isEvenPermutation (Permutation perm) = res where
@@ -487,6 +465,11 @@ prop_cyclSign cycl = ( isEvenPermutation perm == odd n ) where
   n = permutationSize perm
   
 prop_permIsPerm perm = ( isPermutation (fromPermutation perm) ) 
+
+prop_isEven perm = ( isEvenPermutation perm == isEvenAlternative perm ) where
+  isEvenAlternative p = 
+    even $ sum $ map (\x->x-1) $ map length $ fromDisjointCycles $ permutationToDisjointCycles p
+
 
 #endif
 
