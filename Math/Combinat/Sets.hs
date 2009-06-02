@@ -25,8 +25,8 @@ choose 0 _  = [[]]
 choose k [] = []
 choose k (x:xs) = map (x:) (choose (k-1) xs) ++ choose k xs  
 
--- | All possible ways to choose @k@ elements from a list, /with
--- repetitions/. \"Symmetric power\" for lists. See also "Math.Combinat.Combinations".
+-- | All possible ways to choose @k@ elements from a list, /with repetitions/. 
+-- \"Symmetric power\" for lists. See also "Math.Combinat.Combinations".
 -- TODO: better name?
 combine :: Int -> [a] -> [[a]]
 combine 0 _  = [[]]

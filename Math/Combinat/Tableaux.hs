@@ -41,6 +41,9 @@ shape t = toPartition (_shape t)
 dualTableau :: Tableau a -> Tableau a
 dualTableau = transpose
 
+content :: Tableau a -> [a]
+content = concat
+
 -- | An element @(i,j)@ of the resulting tableau (which has shape of the
 -- given partition) means that the vertical part of the hook has length @i@,
 -- and the horizontal part @j@. The /hook length/ is thus @i+j-1@. 
@@ -123,10 +126,32 @@ standardYoungTableaux shape' = map rev $ tableaux shape where
   
 -- | hook-length formula
 countStandardYoungTableaux :: Partition -> Integer
-countStandardYoungTableaux part = {- debug (hooks part) $ -}
+countStandardYoungTableaux part = {- debug (hookLengths part) $ -}
   factorial n `div` h where
     h = product $ map fromIntegral $ concat $ hookLengths part 
     n = weight part
         
+--------------------------------------------------------------------------------
+    
+-- | Semistandard Young tableaux of given shape, \"naive\" algorithm    
+semiStandardYoungTableaux :: Int -> Partition -> [Tableau Int]
+semiStandardYoungTableaux n part = worker (repeat 0) shape where
+  shape = fromPartition part
+  worker _ [] = [[]] 
+  worker prevRow (s:ss) 
+    = [ (r:rs) | r <- row n s 1 prevRow, rs <- worker (map (+1) r) ss ]
+
+  -- weekly increasing lists of length @len@, pointwise at least @xs@, 
+  -- maximum value @n@, minimum value @prev@.
+  row :: Int -> Int -> Int -> [Int] -> [[Int]]
+  row _ 0   _    _      = [[]]
+  row n len prev (x:xs) = [ (a:as) | a <- [max x prev..n] , as <- row n (len-1) a xs ]
+
+-- | Stanley's hook formula (cf. Fulton page 55)
+countSemiStandardYoungTableaux :: Int -> Partition -> Integer
+countSemiStandardYoungTableaux n shape = k `div` h where
+  h = product $ map fromIntegral $ concat $ hookLengths shape 
+  k = product [ fromIntegral (n+j-i) | (i,j) <- elements shape ]
+  
 --------------------------------------------------------------------------------
     

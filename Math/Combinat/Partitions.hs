@@ -15,6 +15,8 @@ module Math.Combinat.Partitions
   , weight
   , _dualPartition
   , dualPartition
+  , _elements
+  , elements
     -- * Generation
   , _partitions' 
   , partitions'  
@@ -86,6 +88,19 @@ dualPartition (Partition part) = Partition (_dualPartition part)
 _dualPartition :: [Int] -> [Int]
 _dualPartition [] = []
 _dualPartition xs@(k:_) = [ length $ filter (>=i) xs | i <- [1..k] ]
+
+-- Example:
+--
+-- > elements (toPartition [5,2,1]) ==
+-- > [ (1,1), (1,2), (1,3), (1,4), (1,5)
+-- > , (2,1), (2,2), (2,3), (2,4)
+-- > , (3,1)
+-- > ]
+elements :: Partition -> [(Int,Int)]
+elements (Partition part) = _elements part
+
+_elements :: [Int] -> [(Int,Int)]
+_elements shape = [ (i,j) | (i,l) <- zip [1..] shape, j<-[1..l] ] 
   
 -------------------------------------------------------
 
