@@ -51,7 +51,12 @@ module Math.Combinat.Permutations
 import Control.Monad
 import Control.Monad.ST
 
+#if __GLASGOW_HASKELL__ < 610
+import Data.List 
+#else
 import Data.List hiding (permutations)
+#endif
+
 import Data.Array
 import Data.Array.ST
 
