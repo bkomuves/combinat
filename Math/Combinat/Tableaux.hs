@@ -27,7 +27,7 @@ import Data.List
 import Math.Combinat.Helper
 import Math.Combinat.Partitions
 
--------------------------------------------------------
+--------------------------------------------------------------------------------
 -- * Basic stuff
 
 type Tableau a = [[a]]
@@ -41,13 +41,27 @@ shape t = toPartition (_shape t)
 dualTableau :: Tableau a -> Tableau a
 dualTableau = transpose
 
-hooks :: Partition -> Tableau Int
+-- | An element @(i,j)@ of the resulting tableau (which has shape of the
+-- given partition) means that the vertical part of the hook has length @i@,
+-- and the horizontal part @j@. The /hook length/ is thus @i+j-1@. 
+--
+-- Example:
+--
+-- > > mapM_ print $ hooks $ toPartition [5,4,1]
+-- > [(3,5),(2,4),(2,3),(2,2),(1,1)]
+-- > [(2,4),(1,3),(1,2),(1,1)]
+-- > [(1,1)]
+--
+hooks :: Partition -> Tableau (Int,Int)
 hooks part = zipWith f p [1..] where 
   p = fromPartition part
   q = _dualPartition p
-  f l i = zipWith (\x y -> x+y-i) q [l,l-1..1] 
+  f l i = zipWith (\x y -> (x-i+1,y)) q [l,l-1..1] 
 
--------------------------------------------------------
+hookLengths :: Partition -> Tableau Int
+hookLengths part = (map . map) (\(i,j) -> i+j-1) (hooks part) 
+
+--------------------------------------------------------------------------------
 -- * Row and column words
 
 rowWord :: Tableau a -> [a]
@@ -68,7 +82,7 @@ columnWord = rowWord . transpose
 columnWordToTableau :: Ord a => [a] -> Tableau a
 columnWordToTableau = transpose . rowWordToTableau
     
--------------------------------------------------------
+--------------------------------------------------------------------------------
 -- * Standard Young tableaux
 
 -- | Standard Young tableaux of a given shape.
@@ -111,8 +125,8 @@ standardYoungTableaux shape' = map rev $ tableaux shape where
 countStandardYoungTableaux :: Partition -> Integer
 countStandardYoungTableaux part = {- debug (hooks part) $ -}
   factorial n `div` h where
-    h = product $ map fromIntegral $ concat $ hooks part 
+    h = product $ map fromIntegral $ concat $ hookLengths part 
     n = weight part
         
--------------------------------------------------------
+--------------------------------------------------------------------------------
     
