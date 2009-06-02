@@ -2,7 +2,8 @@
 -- | Subsets. 
 
 module Math.Combinat.Sets 
-  ( kSublists
+  ( choose
+  , kSublists
   , sublists
   , countKSublists
   , countSublists
@@ -12,6 +13,10 @@ module Math.Combinat.Sets
 import Math.Combinat.Helper
 
 -------------------------------------------------------
+
+-- | synonym for "kSublists"
+choose :: Int -> [a] -> [[a]]
+choose = kSublists
 
 -- | Sublists of a list having given number of elements.
 kSublists :: Int -> [a] -> [[a]]
