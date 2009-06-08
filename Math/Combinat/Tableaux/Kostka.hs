@@ -95,7 +95,7 @@ index' (Tri (i,j)) = binom2 i + j - 1
 -- the 2 is a hack to be safe with the floating point stuff
 deIndex' :: Int -> Tri 
 deIndex' m = Tri ( i+1 , m - binom2 (i+1) + 1 ) where
-  i = ( (floor.sqrt.fromIntegral) (2+8*m) - 1 ) `div` 2  
+  i = ( (floor.sqrt.(fromIntegral::Int->Double)) (2+8*m) - 1 ) `div` 2  
 
 instance Ix Tri where
   index   (a,b) x = index' x - index' a 
