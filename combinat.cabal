@@ -16,19 +16,29 @@ Tested-With:         GHC == 6.10.1
 Cabal-Version:       >= 1.2
 Build-Type:          Simple
 
+Flag withQuickCheck
+  Description: Compile with the QuickCheck tests. 
+  default: False
+
 Flag splitBase
   Description: Choose the new smaller, split-up base package.
 
-Flag withQuickCheck
-  Description: Compile with the QuickCheck tests. 
+Flag base4
+  Description: Base v4
   
 Library
   if flag(splitBase)
-    Build-Depends:       base >= 3, array, containers, random
+    if flag(base4)
+      Build-Depends:       base >= 4, array, containers, random
+      cpp-options:         -DBASE_VERSION=4
+    else 
+      Build-Depends:       base >= 3 && < 4, array, containers, random
+      cpp-options:         -DBASE_VERSION=3
     if flag(withQuickCheck)
       Build-Depends:       QuickCheck
   else
-    Build-Depends:       base <  3
+    Build-Depends:       base < 3
+    cpp-options:         -DBASE_VERSION=2
 
 
   Exposed-Modules:     Math.Combinat, 
