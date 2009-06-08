@@ -2,36 +2,14 @@
 module Math.Combinat.Helper where
 
 import Control.Monad
+
+import Data.List
+import Data.Ord
+import qualified Data.Set as Set
+
 import Debug.Trace
 
-debug :: Show a => a -> b -> b
-debug x y = trace ("-- " ++ show x ++ "\n") y
-
-{-# SPECIALIZE swap :: (a,a) -> (a,a) #-}
-{-# SPECIALIZE swap :: (Int,Int) -> (Int,Int) #-}
-swap :: (a,b) -> (b,a)
-swap (x,y) = (y,x)
-
--- helps testing the random rutines 
-count :: Eq a => a -> [a] -> Int
-count x xs = length $ filter (==x) xs
-
-fromJust :: Maybe a -> a
-fromJust (Just x) = x
-fromJust Nothing = error "fromJust: Nothing"
-
--- iterated function application
-nest :: Int -> (a -> a) -> a -> a
-nest 0 _ x = x
-nest n f x = nest (n-1) f (f x)
-
-reverseOrdering :: Ordering -> Ordering
-reverseOrdering LT = GT
-reverseOrdering GT = LT
-reverseOrdering EQ = EQ
-
-reverseCompare :: Ord a => a -> a -> Ordering
-reverseCompare x y = reverseOrdering $ compare x y
+--------------------------------------------------------------------------------
 
 factorial :: Int -> Integer
 factorial 0 = 1
@@ -46,7 +24,54 @@ binomial n k
   where 
     k' = fromIntegral k
     n' = fromIntegral n
+
+--------------------------------------------------------------------------------
+
+debug :: Show a => a -> b -> b
+debug x y = trace ("-- " ++ show x ++ "\n") y
+
+{-# SPECIALIZE swap :: (a,a) -> (a,a) #-}
+{-# SPECIALIZE swap :: (Int,Int) -> (Int,Int) #-}
+swap :: (a,b) -> (b,a)
+swap (x,y) = (y,x)
+
+--------------------------------------------------------------------------------
+
+equating :: Eq b => (a -> b) -> a -> a -> Bool
+equating f x y = (f x == f y)
+
+reverseOrdering :: Ordering -> Ordering
+reverseOrdering LT = GT
+reverseOrdering GT = LT
+reverseOrdering EQ = EQ
+
+reverseCompare :: Ord a => a -> a -> Ordering
+reverseCompare x y = reverseOrdering $ compare x y
+
+groupSortBy :: (Eq b, Ord b) => (a -> b) -> [a] -> [[a]]
+groupSortBy f = groupBy (equating f) . sortBy (comparing f) 
+
+nubOrd :: Ord a => [a] -> [a]
+nubOrd = worker Set.empty where
+  worker _ [] = []
+  worker s (x:xs) 
+    | Set.member x s = worker s xs
+    | otherwise      = x : worker (Set.insert x s) xs
     
+--------------------------------------------------------------------------------
+
+-- helps testing the random rutines 
+count :: Eq a => a -> [a] -> Int
+count x xs = length $ filter (==x) xs
+
+--------------------------------------------------------------------------------
+
+fromJust :: Maybe a -> a
+fromJust (Just x) = x
+fromJust Nothing = error "fromJust: Nothing"
+
+--------------------------------------------------------------------------------
+
 intToBool :: Int -> Bool
 intToBool 0 = False
 intToBool 1 = True
@@ -55,6 +80,13 @@ intToBool _ = error "intToBool"
 boolToInt :: Bool -> Int 
 boolToInt False = 0
 boolToInt True  = 1
+
+--------------------------------------------------------------------------------
+    
+-- iterated function application
+nest :: Int -> (a -> a) -> a -> a
+nest 0 _ x = x
+nest n f x = nest (n-1) f (f x)
 
 unfold1 :: (a -> Maybe a) -> a -> [a]
 unfold1 f x = case f x of 
@@ -87,4 +119,6 @@ mapAccumM f s (x:xs) = do
   (s2,ys) <- mapAccumM f s1 xs
   return (s2, y:ys)
 
+--------------------------------------------------------------------------------
+    
   
