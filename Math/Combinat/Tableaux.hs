@@ -132,7 +132,8 @@ countStandardYoungTableaux part = {- debug (hookLengths part) $ -}
     n = weight part
         
 --------------------------------------------------------------------------------
-    
+-- * Semistandard Young tableaux
+   
 -- | Semistandard Young tableaux of given shape, \"naive\" algorithm    
 semiStandardYoungTableaux :: Int -> Partition -> [Tableau Int]
 semiStandardYoungTableaux n part = worker (repeat 0) shape where

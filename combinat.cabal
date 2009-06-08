@@ -38,6 +38,7 @@ Library
                        Math.Combinat.Partitions,
                        Math.Combinat.Permutations,
                        Math.Combinat.Tableaux,
+                       Math.Combinat.Tableaux.Kostka,
                        Math.Combinat.Trees
   
   Other-Modules:       Math.Combinat.Helper
