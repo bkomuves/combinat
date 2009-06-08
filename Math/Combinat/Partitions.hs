@@ -33,6 +33,7 @@ module Math.Combinat.Partitions
 
 import Data.List
 import Math.Combinat.Helper
+import Math.Combinat.Numbers (factorial,binomial)
 
 -------------------------------------------------------
 

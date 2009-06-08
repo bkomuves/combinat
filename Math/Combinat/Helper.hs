@@ -11,22 +11,6 @@ import Debug.Trace
 
 --------------------------------------------------------------------------------
 
-factorial :: Int -> Integer
-factorial 0 = 1
-factorial n = product [1..fromIntegral n]
-
-binomial :: Int -> Int -> Integer
-binomial n k 
-  | k > n = 0
-  | k < 0 = 0
-  | k > (n `div` 2) = binomial n (n-k)
-  | otherwise = (product [n'-k'+1 .. n']) `div` (product [1..k'])
-  where 
-    k' = fromIntegral k
-    n' = fromIntegral n
-
---------------------------------------------------------------------------------
-
 debug :: Show a => a -> b -> b
 debug x y = trace ("-- " ++ show x ++ "\n") y
 

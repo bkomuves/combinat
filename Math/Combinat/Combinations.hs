@@ -3,7 +3,7 @@
 
 module Math.Combinat.Combinations where
 
-import Math.Combinat.Helper
+import Math.Combinat.Numbers (factorial,binomial)
 
 -------------------------------------------------------
 

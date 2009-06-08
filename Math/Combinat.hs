@@ -26,17 +26,17 @@
 --  * \"count\" prefix: counting functions.
 
 module Math.Combinat 
-  ( module Math.Combinat.Sets
+  ( module Math.Combinat.Numbers
+  , module Math.Combinat.Sets
   , module Math.Combinat.Tuples
   , module Math.Combinat.Combinations
   , module Math.Combinat.Partitions
   , module Math.Combinat.Permutations
   , module Math.Combinat.Tableaux
   , module Math.Combinat.Trees
-  , binomial
-  , factorial
   ) where
 
+import Math.Combinat.Numbers
 import Math.Combinat.Sets
 import Math.Combinat.Tuples
 import Math.Combinat.Combinations
@@ -44,5 +44,3 @@ import Math.Combinat.Partitions
 import Math.Combinat.Permutations
 import Math.Combinat.Tableaux
 import Math.Combinat.Trees
-
-import Math.Combinat.Helper ( binomial , factorial )

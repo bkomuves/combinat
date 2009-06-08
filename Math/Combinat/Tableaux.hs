@@ -25,6 +25,7 @@ module Math.Combinat.Tableaux where
 import Data.List
 
 import Math.Combinat.Helper
+import Math.Combinat.Numbers (factorial,binomial)
 import Math.Combinat.Partitions
 
 --------------------------------------------------------------------------------

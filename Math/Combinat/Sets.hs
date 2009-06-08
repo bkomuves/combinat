@@ -14,7 +14,7 @@ module Math.Combinat.Sets
   ) 
   where
 
-import Math.Combinat.Helper
+import Math.Combinat.Numbers (factorial,binomial)
 
 --------------------------------------------------------------------------------
 

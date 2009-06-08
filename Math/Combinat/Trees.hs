@@ -50,6 +50,7 @@ import Data.Tree (Tree(..),Forest(..))
 import System.Random
 
 import Math.Combinat.Helper
+import Math.Combinat.Numbers (factorial,binomial)
 
 -------------------------------------------------------
 -- * Types

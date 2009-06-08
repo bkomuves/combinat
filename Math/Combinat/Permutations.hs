@@ -61,6 +61,7 @@ import Data.Array
 import Data.Array.ST
 
 import Math.Combinat.Helper
+import Math.Combinat.Numbers (factorial,binomial)
 
 import System.Random
 

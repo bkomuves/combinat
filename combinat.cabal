@@ -32,6 +32,7 @@ Library
 
 
   Exposed-Modules:     Math.Combinat, 
+                       Math.Combinat.Numbers,
                        Math.Combinat.Sets,
                        Math.Combinat.Tuples, 
                        Math.Combinat.Combinations,
