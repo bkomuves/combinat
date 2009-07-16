@@ -1,7 +1,7 @@
 
 -- | A few important number sequences. 
 --  
--- See the "On-Line Encyclopedia of Integer Sequences",
+-- See the \"On-Line Encyclopedia of Integer Sequences\",
 -- <http://www.research.att.com/~njas/sequences/> .
 
 module Math.Combinat.Numbers where
@@ -82,7 +82,7 @@ signedStirling1stArray n
           | otherwise = prev ! j 
         
 -- | (Signed) Stirling numbers of the first kind. OEIS:A008275.
--- This function uses "signedStirling1stArray", so it shouldn't be used
+-- This function uses 'signedStirling1stArray', so it shouldn't be used
 -- to compute /many/ Stirling numbers.
 signedStirling1st :: Integral a => a -> a -> Integer
 signedStirling1st n k 
@@ -90,9 +90,7 @@ signedStirling1st n k
   | k > n     = 0
   | otherwise = signedStirling1stArray n ! (fromIntegral k)
 
--- | (Unsigned) Stirling numbers of the first kind. OEIS:A008275.
--- This function uses "signedStirling1stArray", so it shouldn't be used
--- to compute /many/ Stirling numbers.
+-- | (Unsigned) Stirling numbers of the first kind. See 'signedStirling1st'.
 unsignedStirling1st :: Integral a => a -> a -> Integer
 unsignedStirling1st n k = abs (signedStirling1st n k)
 
