@@ -120,5 +120,23 @@ bernoulli n
         / toRational (k+1)
 
 --------------------------------------------------------------------------------
+-- * Power series
+
+-- | Power series expansion of 
+-- 
+-- > @1 / ( (1-x^a_1) * (1-x^a_2) * ... * (1-x^a_n) )@
+--
+-- Example:
+--
+-- @(coinSeries [2,3,5]) !! k@ is the number of ways 
+-- to pay @k@ dollars with coins of two, three and five dollars.
+--
+-- TODO: better name?
+coinSeries :: [Int] -> [Integer]
+coinSeries []  = 1 : repeat 0
+coinSeries (k:ks) = xs where
+  xs = zipWith (+) (coinSeries ks) (replicate k 0 ++ xs) 
+  
+--------------------------------------------------------------------------------
 
  
