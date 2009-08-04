@@ -43,7 +43,7 @@ import Math.Combinat.Numbers (factorial,binomial,multinomial)
 --   are monotone decreasing sequences of positive integers.
 newtype Partition = Partition [Int] deriving (Eq,Ord,Show,Read)
 
--- | Sorts the input.
+-- | Sorts the input, and cuts the nonpositive elements.
 mkPartition :: [Int] -> Partition
 mkPartition xs = Partition $ sortBy (reverseCompare) $ filter (>0) xs
 
@@ -51,12 +51,15 @@ mkPartition xs = Partition $ sortBy (reverseCompare) $ filter (>0) xs
 toPartitionUnsafe :: [Int] -> Partition
 toPartitionUnsafe = Partition
 
--- | Checks whether the input is a partition.
+-- | Checks whether the input is a partition. See the note at 'isPartition'!
 toPartition :: [Int] -> Partition
 toPartition xs = if isPartition xs
   then toPartitionUnsafe xs
   else error "toPartition: not a partition"
   
+-- | Note: we only check that the sequence is ordered, but we /do not/ check for
+-- negative elements. This can be useful when working with symmetric functions.
+-- It may also change in the future...
 isPartition :: [Int] -> Bool
 isPartition []  = True
 isPartition [_] = True
@@ -92,7 +95,7 @@ _dualPartition :: [Int] -> [Int]
 _dualPartition [] = []
 _dualPartition xs@(k:_) = [ length $ filter (>=i) xs | i <- [1..k] ]
 
--- Example:
+-- | Example:
 --
 -- > elements (toPartition [5,2,1]) ==
 -- > [ (1,1), (1,2), (1,3), (1,4), (1,5)
