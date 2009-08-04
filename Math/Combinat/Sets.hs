@@ -14,7 +14,7 @@ module Math.Combinat.Sets
   ) 
   where
 
-import Math.Combinat.Numbers (factorial,binomial)
+import Math.Combinat.Numbers (binomial)
 
 --------------------------------------------------------------------------------
 
@@ -48,7 +48,7 @@ kSublists = choose
 
 -- | @# = \binom { n } { k }@.
 countKSublists :: Int -> Int -> Integer
-countKSublists k n = binomial (fromIntegral n) (fromIntegral k)
+countKSublists k n = binomial n k 
 
 -- | All sublists of a list.
 sublists :: [a] -> [[a]]
