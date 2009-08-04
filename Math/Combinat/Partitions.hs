@@ -13,16 +13,18 @@ module Math.Combinat.Partitions
   , width
   , heightWidth
   , weight
-  , _dualPartition
   , dualPartition
-  , _elements
+  , _dualPartition
   , elements
+  , _elements
+  , countAutomorphisms
+  , _countAutomorphisms
     -- * Generation
-  , _partitions' 
   , partitions'  
+  , _partitions' 
   , countPartitions'
-  , _partitions
   , partitions
+  , _partitions
   , countPartitions
   , allPartitions'  
   , allPartitions 
@@ -33,7 +35,7 @@ module Math.Combinat.Partitions
 
 import Data.List
 import Math.Combinat.Helper
-import Math.Combinat.Numbers (factorial,binomial)
+import Math.Combinat.Numbers (factorial,binomial,multinomial)
 
 -------------------------------------------------------
 
@@ -102,7 +104,14 @@ elements (Partition part) = _elements part
 
 _elements :: [Int] -> [(Int,Int)]
 _elements shape = [ (i,j) | (i,l) <- zip [1..] shape, j<-[1..l] ] 
-  
+
+-- | Computes the number of \"automorphisms\" of a given partition.
+countAutomorphisms :: Partition -> Integer  
+countAutomorphisms = _countAutomorphisms . fromPartition
+
+_countAutomorphisms :: [Int] -> Integer
+_countAutomorphisms = multinomial . map length . group
+ 
 -------------------------------------------------------
 
 -- | Partitions of d, fitting into a given rectangle, as lists.

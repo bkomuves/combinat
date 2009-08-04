@@ -42,6 +42,11 @@ binomial n k
     k' = fromIntegral k
     n' = fromIntegral n
 
+multinomial :: Integral a => [a] -> Integer
+multinomial xs = div
+  (factorial (sum xs))
+  (product [ factorial x | x<-xs ])  
+  
 --------------------------------------------------------------------------------
 -- * Catalan numbers
 
