@@ -45,7 +45,7 @@ module Math.Combinat.Partitions
 import Data.List
 import Data.Array.Unboxed
 
---import Math.Combinat.Helper
+import Math.Combinat.Helper
 import Math.Combinat.Numbers (factorial,binomial,multinomial)
 
 --------------------------------------------------------------------------------

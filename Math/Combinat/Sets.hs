@@ -6,7 +6,8 @@ module Math.Combinat.Sets
     choose
   , combine
   , tuplesFromList
-  
+  , listTensor
+    -- 
   , kSublists
   , sublists
   , countKSublists
@@ -43,7 +44,7 @@ tuplesFromList :: Int -> [a] -> [[a]]
 tuplesFromList 0 _  = [[]]
 tuplesFromList k xs = [ (y:ys) | y <- xs, ys <- tuplesFromList (k-1) xs ]
  
- -- | \"Tensor product\" for lists.
+-- | \"Tensor product\" for lists.
 listTensor :: [[a]] -> [[a]]
 listTensor [] = [[]]
 listTensor (xs:xss) = [ y:ys | y <- xs, ys <- listTensor xss ]

@@ -29,10 +29,10 @@ Flag base4
 Library
   if flag(splitBase)
     if flag(base4)
-      Build-Depends:       base >= 4 && < 5, array, containers, random
+      Build-Depends:       base >= 4 && < 5, array, containers, random, mtl
       cpp-options:         -DBASE_VERSION=4
     else 
-      Build-Depends:       base >= 3 && < 4, array, containers, random
+      Build-Depends:       base >= 3 && < 4, array, containers, random, mtl
       cpp-options:         -DBASE_VERSION=3
     if flag(withQuickCheck)
       Build-Depends:       QuickCheck

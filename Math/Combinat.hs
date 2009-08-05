@@ -34,6 +34,7 @@ module Math.Combinat
   , module Math.Combinat.Permutations
   , module Math.Combinat.Tableaux
   , module Math.Combinat.Trees
+  , module Math.Combinat.Graphviz
   ) where
 
 import Math.Combinat.Numbers
@@ -44,3 +45,4 @@ import Math.Combinat.Partitions
 import Math.Combinat.Permutations
 import Math.Combinat.Tableaux
 import Math.Combinat.Trees
+import Math.Combinat.Graphviz
