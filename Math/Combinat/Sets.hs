@@ -33,13 +33,21 @@ combine 0 _  = [[]]
 combine k [] = []
 combine k xxs@(x:xs) = map (x:) (combine (k-1) xxs) ++ combine k xs  
 
--- | \"Tensor power\" for lists.
+-- | \"Tensor power\" for lists. Special case of 'listTensor':
+--
+-- > tuplesFromList k xs == listTensor (replicate k xs)
+-- 
 -- See also "Math.Combinat.Tuples".
 -- TODO: better name?
 tuplesFromList :: Int -> [a] -> [[a]]
 tuplesFromList 0 _  = [[]]
 tuplesFromList k xs = [ (y:ys) | y <- xs, ys <- tuplesFromList (k-1) xs ]
  
+ -- | \"Tensor product\" for lists.
+listTensor :: [[a]] -> [[a]]
+listTensor [] = [[]]
+listTensor (xs:xss) = [ y:ys | y <- xs, ys <- listTensor xss ]
+
 --------------------------------------------------------------------------------
 
 -- | Sublists of a list having given number of elements.
