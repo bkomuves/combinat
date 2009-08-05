@@ -33,10 +33,11 @@ module Math.Combinat.Partitions
   , allPartitions 
   , countAllPartitions'
   , countAllPartitions
-    -- * Paritions of multisets
+    -- * Paritions of multisets, vector partitions
   , partitionMultiset
   , IntVector
   , vectorPartitions
+  , _vectorPartitions
   , fasc3B_algorithm_M
   ) 
   where
@@ -44,7 +45,7 @@ module Math.Combinat.Partitions
 import Data.List
 import Data.Array.Unboxed
 
-import Math.Combinat.Helper
+--import Math.Combinat.Helper
 import Math.Combinat.Numbers (factorial,binomial,multinomial)
 
 --------------------------------------------------------------------------------
@@ -200,6 +201,9 @@ type IntVector = UArray Int Int
 -- | Vector partitions. Basically a synonym for 'fasc3B_algorithm_M'.
 vectorPartitions :: IntVector -> [[IntVector]]
 vectorPartitions = fasc3B_algorithm_M . elems
+
+_vectorPartitions :: [Int] -> [[[Int]]]
+_vectorPartitions = map (map elems) . fasc3B_algorithm_M
 
 -- | Generates all vector partitions 
 --   (\"algorithm M\" in Knuth). 
