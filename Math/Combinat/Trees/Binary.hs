@@ -40,6 +40,7 @@ module Math.Combinat.Trees.Binary
 
 --------------------------------------------------------------------------------
 
+import Control.Applicative
 import Control.Monad
 import Control.Monad.ST
 
@@ -48,6 +49,10 @@ import Data.Array.ST
 
 import Data.List
 import Data.Tree (Tree(..),Forest(..))
+
+import Data.Monoid
+import Data.Foldable (Foldable(foldMap))
+import Data.Traversable (Traversable(traverse))
 
 import System.Random
 
@@ -77,11 +82,21 @@ forgetNodeDecorations :: BinTree' a b -> BinTree a
 forgetNodeDecorations (Branch' left _ right) = 
   Branch (forgetNodeDecorations left) (forgetNodeDecorations right)
 forgetNodeDecorations (Leaf' decor) = Leaf decor 
+
+--------------------------------------------------------------------------------
   
 instance Functor BinTree where
   fmap f (Branch left right) = Branch (fmap f left) (fmap f right)
   fmap f (Leaf x) = Leaf (f x)
-    
+  
+instance Foldable BinTree where
+  foldMap f (Leaf x) = f x
+  foldMap f (Branch left right) = (foldMap f left) `mappend` (foldMap f right)  
+
+instance Traversable BinTree where
+  traverse f (Leaf x) = Leaf <$> f x
+  traverse f (Branch left right) = Branch <$> traverse f left <*> traverse f right
+
 --------------------------------------------------------------------------------
 
 data Paren = LeftParen | RightParen deriving (Eq,Ord,Show,Read)
