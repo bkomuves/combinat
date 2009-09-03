@@ -47,7 +47,9 @@ tuplesFromList k xs = [ (y:ys) | y <- xs, ys <- tuplesFromList (k-1) xs ]
 -- | \"Tensor product\" for lists.
 listTensor :: [[a]] -> [[a]]
 listTensor [] = [[]]
-listTensor (xs:xss) = [ y:ys | y <- xs, ys <- listTensor xss ]
+-- the order seems to be very important, the wrong order causes a memory leak!
+listTensor (xs:xss) = [ y:ys | ys <- listTensor xss , y <- xs ]
+--listTensor (xs:xss) = [ y:ys | y <- xs, ys <- listTensor xss ]
 
 --------------------------------------------------------------------------------
 
