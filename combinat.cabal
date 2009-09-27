@@ -1,5 +1,5 @@
 Name:                combinat
-Version:             0.2.3
+Version:             0.2.3.1
 Synopsis:            Generation of various combinatorial objects.
 Description:         A collection of functions to generate combinatorial
                      objects like partitions, combinations, permutations,

@@ -42,13 +42,15 @@ combine k xxs@(x:xs) = map (x:) (combine (k-1) xxs) ++ combine k xs
 -- TODO: better name?
 tuplesFromList :: Int -> [a] -> [[a]]
 tuplesFromList 0 _  = [[]]
-tuplesFromList k xs = [ (y:ys) | y <- xs, ys <- tuplesFromList (k-1) xs ]
+tuplesFromList k xs = [ (y:ys) | ys <- tuplesFromList (k-1) xs , y <- xs ]
+--the order seems to be very important, the wrong order causes a memory leak!
+--tuplesFromList k xs = [ (y:ys) | y <- xs, ys <- tuplesFromList (k-1) xs ]
  
 -- | \"Tensor product\" for lists.
 listTensor :: [[a]] -> [[a]]
 listTensor [] = [[]]
--- the order seems to be very important, the wrong order causes a memory leak!
 listTensor (xs:xss) = [ y:ys | ys <- listTensor xss , y <- xs ]
+--the order seems to be very important, the wrong order causes a memory leak!
 --listTensor (xs:xss) = [ y:ys | y <- xs, ys <- listTensor xss ]
 
 --------------------------------------------------------------------------------
@@ -64,7 +66,9 @@ countKSublists k n = binomial n k
 -- | All sublists of a list.
 sublists :: [a] -> [[a]]
 sublists [] = [[]]
-sublists (x:xs) = map (x:) (sublists xs) ++ sublists xs 
+sublists (x:xs) = sublists xs ++ map (x:) (sublists xs)  
+--the order seems to be very important, the wrong order causes a memory leak!
+--sublists (x:xs) = map (x:) (sublists xs) ++ sublists xs 
 
 -- | @# = 2^n@.
 countSublists :: Int -> Integer
