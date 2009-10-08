@@ -1,5 +1,5 @@
 Name:                combinat
-Version:             0.2.3.1
+Version:             0.2.4
 Synopsis:            Generation of various combinatorial objects.
 Description:         A collection of functions to generate combinatorial
                      objects like partitions, combinations, permutations,
@@ -43,6 +43,7 @@ Library
 
   Exposed-Modules:     Math.Combinat, 
                        Math.Combinat.Numbers,
+                       Math.Combinat.Numbers.Series,
                        Math.Combinat.Sets,
                        Math.Combinat.Tuples, 
                        Math.Combinat.Combinations,
@@ -57,7 +58,8 @@ Library
   
   Other-Modules:       Math.Combinat.Helper
 
-  Extensions:          MultiParamTypeClasses, ScopedTypeVariables, CPP
+  Extensions:          CPP, MultiParamTypeClasses, ScopedTypeVariables, 
+                       GeneralizedNewtypeDeriving 
 
   Hs-Source-Dirs:      .
 
