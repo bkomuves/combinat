@@ -45,6 +45,11 @@ module Math.Combinat.Permutations
   , permuteMultiset
   , countPermuteMultiset
   , fasc2B_algorithm_L
+
+#ifdef QUICKCHECK
+    -- * QuickCheck 
+  , checkAll
+#endif QUICKCHECK
   ) 
   where
 
@@ -440,6 +445,22 @@ instance Arbitrary CyclicPermutation where arbitrary = choose undefined
 instance Arbitrary DisjointCycles    where arbitrary = choose undefined
 instance Arbitrary SameSize          where arbitrary = choose undefined
 
+-- | Runs all quickCheck tests
+checkAll :: IO ()
+checkAll = do
+  let f :: Testable a => a -> IO ()
+      f = quickCheck
+  f prop_disjcyc1
+  f prop_disjcyc2 
+  f prop_randCyclic
+  f prop_inverse
+  f prop_mulPerm
+  f prop_mulSign      
+  f prop_invMul
+  f prop_cyclSign
+  f prop_permIsPerm
+  f prop_isEven
+          
 prop_disjcyc1 perm = ( perm == disjointCyclesToPermutation n (permutationToDisjointCycles perm) )
   where n = permutationSize perm
 prop_disjcyc2 k dcyc = ( dcyc == permutationToDisjointCycles (disjointCyclesToPermutation n dcyc) )
