@@ -2,7 +2,11 @@
 -- | Some basic power series expansions.
 -- This module is not re-exported by "Math.Combinat".
 --
+-- Note: the \"@convolveWithXXX@\" functions are much faster than the equivalent
+-- @(XXX \`convolve\`)@!
+-- 
 -- TODO: better names for these functions.
+--
 
 {-# LANGUAGE CPP, GeneralizedNewtypeDeriving #-}
 module Math.Combinat.Numbers.Series where
@@ -67,20 +71,29 @@ coinSeries' ((a,k):aks) = xs where
 --------------------------------------------------------------------------------
 -- * Reciprocals of products of polynomials
 
--- | Convolution of many 'pseries', that is, expansion of reciprocal
+-- | Convolution of many 'pseries', that is, the expansion of the reciprocal
 -- of a product of polynomials
 productPSeries :: [[Int]] -> [Integer]
 productPSeries = foldl (flip convolveWithPSeries) unitSeries
 
 -- | The same, with coefficients.
--- This is the most general function in this module; all the others
--- are special cases of this one.  
 productPSeries' :: Num a => [[(a,Int)]] -> [a]
 productPSeries' = foldl (flip convolveWithPSeries') unitSeries
+
+convolveWithProductPSeries :: [[Int]] -> [Integer] -> [Integer]
+convolveWithProductPSeries kss ser = foldl (flip convolveWithPSeries) ser kss
+
+-- | This is the most general function in this module; all the others
+-- are special cases of this one.  
+convolveWithProductPSeries' :: Num a => [[(a,Int)]] -> [a] -> [a] 
+convolveWithProductPSeries' akss ser = foldl (flip convolveWithPSeries') ser akss
   
 --------------------------------------------------------------------------------
--- * Reciprocals of polynomials, without coefficients
+-- * Reciprocals of polynomials
 
+-- Reciprocals of polynomials, without coefficients
+
+#ifdef QUICKCHECK
 -- | Expansion of @1 / (1-x^k)@. Included for completeness only; 
 -- it equals to @coinSeries [k]@, and for example
 -- for @k=4@ it is simply
@@ -97,11 +110,16 @@ pseries2 k1 k2 = convolveWithPSeries2 k1 k2 unitSeries
 -- | The expansion of @1 / (1-x^k_1-x^k_2-x^k_3)@
 pseries3 :: Int -> Int -> Int -> [Integer]
 pseries3 k1 k2 k3 = convolveWithPSeries3 k1 k2 k3 unitSeries
+#endif
 
--- | The expansion of @1 / (1-x^k_1-x^k_2-x^k_3-...-x^k_n)@
+-- | The power series expansion of 
+--
+-- > 1 / (1 - x^k_1 - x^k_2 - x^k_3 - ... - x^k_n)
+--
 pseries :: [Int] -> [Integer]
 pseries ks = convolveWithPSeries ks unitSeries
 
+#ifdef QUICKCHECK
 -- | Convolve with (the expansion of) @1 / (1-x^k1)@
 convolveWithPSeries1 :: Int -> [Integer] -> [Integer]
 convolveWithPSeries1 k1 series1 = xs where
@@ -126,8 +144,12 @@ convolveWithPSeries3 k1 k2 k3 series1 = xs where
     ( replicate k1 0 ++ xs )
     ( replicate k2 0 ++ xs )
     ( replicate k3 0 ++ xs )
+#endif
 
--- | Convolve with (the expansion of) @1 / (1-x^k_1-x^k_2-x^k_3-...-x^k_n)@
+-- | Convolve with (the expansion of) 
+--
+-- > 1 / (1 - x^k_1 - x^k_2 - x^k_3 - ... - x^k_n)
+--
 convolveWithPSeries :: [Int] -> [Integer] -> [Integer]
 convolveWithPSeries ks series1 = ys where 
   series = series1 ++ repeat 0 
@@ -137,8 +159,9 @@ convolveWithPSeries ks series1 = ys where
     xs = zipWith (+) (replicate k 0 ++ ys) (worker ks ys)
 
 --------------------------------------------------------------------------------
--- * Reciprocals of polynomials, with coefficients
+--  Reciprocals of polynomials, with coefficients
 
+#ifdef QUICKCHECK
 -- | @1 / (1 - a*x^k)@. 
 -- For example, for @a=3@ and @k=2@ it is just
 -- 
@@ -154,11 +177,16 @@ pseries2' ak1 ak2 = convolveWithPSeries2' ak1 ak2 unitSeries
 -- | @1 / (1 - a_1*x^k_1 - a_2*x^k_2 - a_3*x^k_3)@
 pseries3' :: Num a => (a,Int) -> (a,Int) -> (a,Int) -> [a]
 pseries3' ak1 ak2 ak3 = convolveWithPSeries3' ak1 ak2 ak3 unitSeries
+#endif
 
--- | @1 / (1 - a_1*x^k_1 - a_2*x^k_2 - a_3*x^k_3 - ... - a_n*x^k_n)@
+-- | The expansion of 
+--
+-- > 1 / (1 - a_1*x^k_1 - a_2*x^k_2 - a_3*x^k_3 - ... - a_n*x^k_n)
+--
 pseries' :: Num a => [(a,Int)] -> [a]
 pseries' aks = convolveWithPSeries' aks unitSeries
 
+#ifdef QUICKCHECK
 -- | Convolve with @1 / (1 - a*x^k)@. 
 convolveWithPSeries1' :: Num a => (a,Int) -> [a] -> [a]
 convolveWithPSeries1' (a1,k1) series1 = xs where
@@ -185,8 +213,12 @@ convolveWithPSeries3' (a1,k1) (a2,k2) (a3,k3) series1 = xs where
     ( replicate k1 0 ++ map (*a1) xs )
     ( replicate k2 0 ++ map (*a2) xs )
     ( replicate k3 0 ++ map (*a3) xs )
+#endif
 
--- | Convolve with @1 / (1 - a_1*x^k_1 - a_2*x^k_2 - a_3*x^k_3 - ... - a_n*x^k_n)@
+-- | Convolve with (the expansion of) 
+--
+-- > 1 / (1 - a_1*x^k_1 - a_2*x^k_2 - a_3*x^k_3 - ... - a_n*x^k_n)
+--
 convolveWithPSeries' :: Num a => [(a,Int)] -> [a] -> [a]
 convolveWithPSeries' aks series1 = ys where 
   series = series1 ++ repeat 0 
