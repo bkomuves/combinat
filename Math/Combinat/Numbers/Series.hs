@@ -68,6 +68,20 @@ coinSeries' [] = 1 : repeat 0
 coinSeries' ((a,k):aks) = xs where
   xs = zipWith (+) (coinSeries' aks) (replicate k 0 ++ map (*a) xs) 
 
+convolveWithCoinSeries :: [Int] -> [Integer] -> [Integer]
+convolveWithCoinSeries ks series1 = worker ks where
+  series = series1 ++ repeat 0
+  worker [] = series
+  worker (k:ks) = xs where
+    xs = zipWith (+) (worker ks) (replicate k 0 ++ xs)
+
+convolveWithCoinSeries' :: Num a => [(a,Int)] -> [a] -> [a]
+convolveWithCoinSeries' ks series1 = worker ks where
+  series = series1 ++ repeat 0
+  worker [] = series
+  worker ((a,k):aks) = xs where
+    xs = zipWith (+) (worker aks) (replicate k 0 ++ map (*a) xs)
+
 --------------------------------------------------------------------------------
 -- * Reciprocals of products of polynomials
 
@@ -227,6 +241,34 @@ convolveWithPSeries' aks series1 = ys where
   worker ((a,k):aks) ys = xs where
     xs = zipWith (+) (replicate k 0 ++ map (*a) ys) (worker aks ys)
 
+data Sign = Plus | Minus deriving (Eq,Show)
+
+signValue :: Num a => Sign -> a
+signValue Plus  =  1
+signValue Minus = -1
+
+signedPSeries :: [(Sign,Int)] -> [Integer] 
+signedPSeries aks = convolveWithSignedPSeries aks unitSeries
+
+-- | Convolve with (the expansion of) 
+--
+-- > 1 / (1 +- x^k_1 +- x^k_2 +- x^k_3 +- ... +- x^k_n)
+--
+-- Should be faster than using `convolveWithPSeries'`.
+-- Note: 'Plus' corresponds to the coefficient @-1@ in `pseries'` (since
+-- there is a minus sign in the definition there)!
+convolveWithSignedPSeries :: [(Sign,Int)] -> [Integer] -> [Integer]
+convolveWithSignedPSeries aks series1 = ys where 
+  series = series1 ++ repeat 0 
+  ys = worker aks ys 
+  worker [] _ = series
+  worker ((a,k):aks) ys = xs where
+    xs = case a of
+      Minus -> zipWith (+) one two 
+      Plus  -> zipWith (-) one two
+    one = worker aks ys
+    two = replicate k 0 ++ ys
+     
 --------------------------------------------------------------------------------
 
 #ifdef QUICKCHECK
