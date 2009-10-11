@@ -28,6 +28,7 @@ module Math.Combinat.Permutations
   , permuteList
   , multiply
   , inverse
+  , identity
     -- * Simple permutations
   , permutations
   , _permutations
