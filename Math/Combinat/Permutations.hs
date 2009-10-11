@@ -267,12 +267,16 @@ multiply pi1@(Permutation perm1) (Permutation perm2) =
   
 infixr 7 `multiply`  
     
--- | The inverse permutation
+-- | The inverse permutation.
 inverse :: Permutation -> Permutation    
 inverse (Permutation perm1) = Permutation result
   where
     result = array (1,n) $ map swap $ assocs perm1
     (_,n) = bounds perm1
+    
+-- | The trivial permutation.
+identity :: Int -> Permutation 
+identity n = Permutation $ listArray (1,n) [1..n]
 
 --------------------------------------------------------------------------------
 -- * Permutations of distinct elements
