@@ -11,6 +11,7 @@ module Math.Combinat.Permutations
   , fromPermutation
   , permutationArray
   , toPermutationUnsafe
+  , arrayToPermutationUnsafe
   , isPermutation
   , toPermutation
   , permutationSize
@@ -95,6 +96,10 @@ toPermutationUnsafe :: [Int] -> Permutation
 toPermutationUnsafe xs = Permutation perm where
   n = length xs
   perm = listArray (1,n) xs
+
+-- Indexing starts from 1.
+arrayToPermutationUnsafe :: Array Int Int -> Permutation
+arrayToPermutationUnsafe = Permutation
 
 -- | Checks whether the input is a permutation of the numbers @[1..n]@.
 isPermutation :: [Int] -> Bool
