@@ -76,8 +76,14 @@ binTree'Dot' tree = lines where
 -- | Generates graphviz @.dot@ file from a forest. The first argument tells whether
 -- to make the individual trees clustered subgraphs; the second is the name of the
 -- graph.
-forestDot :: Show a => Bool -> String -> Forest a -> Dot
-forestDot clustered graphname forest = digraphBracket graphname lines where
+forestDot 
+  :: Show a 
+  => Bool        -- ^ make the individual trees clustered subgraphs
+  -> Bool        -- ^ reverse the direction of the arrows
+  -> String      -- ^ name of the graph
+  -> Forest a 
+  -> Dot
+forestDot clustered revarrows graphname forest = digraphBracket graphname lines where
   lines = concat $ zipWith cluster [(1::Int)..] (addUniqueLabelsForest forest) 
   name unique = "node_"++show unique
   cluster j tree = let treelines = worker (0::Int) tree in case clustered of
@@ -86,17 +92,26 @@ forestDot clustered graphname forest = digraphBracket graphname lines where
   worker depth (Node (label,unique) subtrees) = vertex : edges ++ concatMap (worker (depth+1)) subtrees where
     vertex = name unique ++ "[label=\"" ++ show label ++ "\"" ++ "];"
     edges = map edge subtrees
-    edge (Node (_,unique') _) = name unique ++ " -> " ++ name unique'   
-  
+    edge (Node (_,unique') _) = if not revarrows 
+      then name unique  ++ " -> " ++ name unique'   
+      else name unique' ++ " -> " ++ name unique
+      
 -- | Generates graphviz @.dot@ file from a tree. The first argument is
 -- the name of the graph.
-treeDot :: Show a => String -> Tree a -> Dot
-treeDot graphname tree = digraphBracket graphname lines where
+treeDot 
+  :: Show a 
+  => Bool     -- ^ reverse the direction of the arrow
+  -> String   -- ^ name of the graph
+  -> Tree a 
+  -> Dot
+treeDot revarrows graphname tree = digraphBracket graphname lines where
   lines = worker (0::Int) (addUniqueLabelsTree tree) 
   name unique = "node_"++show unique
   worker depth (Node (label,unique) subtrees) = vertex : edges ++ concatMap (worker (depth+1)) subtrees where
     vertex = name unique ++ "[label=\"" ++ show label ++ "\"" ++ "];"
     edges = map edge subtrees
-    edge (Node (_,unique') _) = name unique ++ " -> " ++ name unique'
+    edge (Node (_,unique') _) = if not revarrows 
+      then name unique  ++ " -> " ++ name unique'   
+      else name unique' ++ " -> " ++ name unique
 
 --------------------------------------------------------------------------------
