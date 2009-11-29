@@ -14,6 +14,12 @@ module Math.Combinat.Trees.Nary
   , labelDepthForest
   , labelDepthTree_
   , labelDepthForest_
+    -- * labelling by number of children
+  , labelNChildrenTree
+  , labelNChildrenForest
+  , labelNChildrenTree_
+  , labelNChildrenForest_
+    
   ) where
 
 
@@ -49,6 +55,8 @@ addUniqueLabelsTree_ = fmap snd . addUniqueLabelsTree
 
 addUniqueLabelsForest_ :: Forest a -> Forest Int
 addUniqueLabelsForest_ = map (fmap snd) . addUniqueLabelsForest
+
+--------------------------------------------------------------------------------
     
 -- | Attaches the depth to each node. The depth of the root is 0. 
 labelDepthTree :: Tree a -> Tree (a,Int) 
@@ -63,6 +71,22 @@ labelDepthTree_ = fmap snd . labelDepthTree
 
 labelDepthForest_ :: Forest a -> Forest Int 
 labelDepthForest_ = map (fmap snd) . labelDepthForest
+
+--------------------------------------------------------------------------------
+
+-- | Attaches the number of children to each node. 
+labelNChildrenTree :: Tree a -> Tree (a,Int)
+labelNChildrenTree (Node x subforest) = 
+  Node (x, length subforest) (map labelNChildrenTree subforest)
+  
+labelNChildrenForest :: Forest a -> Forest (a,Int) 
+labelNChildrenForest forest = map labelNChildrenTree forest
+
+labelNChildrenTree_ :: Tree a -> Tree Int
+labelNChildrenTree_ = fmap snd . labelNChildrenTree
+
+labelNChildrenForest_ :: Forest a -> Forest Int 
+labelNChildrenForest_ = map (fmap snd) . labelNChildrenForest
     
 --------------------------------------------------------------------------------
 
