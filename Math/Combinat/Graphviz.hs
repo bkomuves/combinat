@@ -15,8 +15,6 @@ module Math.Combinat.Graphviz
 import Data.Tree
 
 import Control.Applicative
-import Control.Monad.State
-import Data.Traversable (traverse)
 
 import Math.Combinat.Trees.Binary (BinTree(..), BinTree'(..))
 import Math.Combinat.Trees.Nary (addUniqueLabelsTree, addUniqueLabelsForest)

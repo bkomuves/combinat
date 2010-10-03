@@ -28,7 +28,9 @@ module Math.Combinat.Trees.Nary
 import Data.Tree
 
 import Control.Applicative
-import Control.Monad.State
+
+--import Control.Monad.State
+import Control.Monad.Trans.State
 import Data.Traversable (traverse)
 
 import Math.Combinat.Sets (listTensor)
