@@ -90,7 +90,7 @@ labelNChildrenForest_ = map (fmap snd) . labelNChildrenForest
     
 --------------------------------------------------------------------------------
 
--- | Computes the set of equivalence classes of trees (in the 
+-- | Computes the set of equivalence classes of rooted trees (in the 
 -- sense that the leaves of a node are /unordered/) 
 -- with @n = length ks@ leaves where the set of heights of 
 -- the leaves matches the given set of numbers. 
