@@ -9,9 +9,13 @@ module Math.Combinat.Numbers.Primes
     -- * Prime factorization
   , groupIntegerFactors
   , integerFactorsTrialDivision
+    -- * Integer logarithm
+  , integerLog2
+  , ceilingLog2
     -- * Integer square root
   , isSquare
   , integerSquareRoot
+  , ceilingSquareRoot
   , integerSquareRoot' 
   , integerSquareRootNewton'
     -- * Prime testing
@@ -104,8 +108,16 @@ ifactorsTest alg n = and [ product (alg k) == k | k<-[1..n] ]
 --------------------------------------------------------------------------------
 -- Integer logarithm
 
+-- | Largest integer @k@ such that @2^k@ is smaller or equal to @n@
 integerLog2 :: Integer -> Integer
 integerLog2 n = go n where
+  go 0 = -1
+  go k = 1 + go (shiftR k 1)
+
+-- | Smallest integer @k@ such that @2^k@ is larger or equal to @n@
+ceilingLog2 :: Integer -> Integer
+ceilingLog2 0 = 0
+ceilingLog2 n = 1 + go (n-1) where
   go 0 = -1
   go k = 1 + go (shiftR k 1)
   
@@ -124,6 +136,10 @@ isSquare n =
 -- using Newton's method, with a faster (for large numbers) inital guess based on bit shifts.
 integerSquareRoot :: Integer -> Integer
 integerSquareRoot = fst . integerSquareRoot'
+
+-- | Smallest integer whose square is larger or equal to the input
+ceilingSquareRoot :: Integer -> Integer
+ceilingSquareRoot n = (if r>0 then u+1 else u) where (u,r) = integerSquareRoot' n 
 
 -- | We also return the excess residue; that is
 --
