@@ -12,7 +12,8 @@ module Math.Combinat.Numbers.Primes
     -- * Integer square root
   , isSquare
   , integerSquareRoot
-  , integerSquareRoot'
+  , integerSquareRoot' 
+  , integerSquareRootNewton'
     -- * Prime testing
   , millerRabinPrimalityTest
   )
@@ -23,6 +24,7 @@ module Math.Combinat.Numbers.Primes
 -- import Math.Combinat.Numbers
 
 import Data.List ( group , sort )
+import Data.Bits
 
 --------------------------------------------------------------------------------
 -- List of prime numbers 
@@ -100,13 +102,21 @@ ifactorsTest alg n = and [ product (alg k) == k | k<-[1..n] ]
 -}
 
 --------------------------------------------------------------------------------
+-- Integer logarithm
+
+integerLog2 :: Integer -> Integer
+integerLog2 n = go n where
+  go 0 = -1
+  go k = 1 + go (shiftR k 1)
+  
+--------------------------------------------------------------------------------
 -- Integer square root
 
 isSquare :: Integer -> Bool
 isSquare n = snd (integerSquareRoot' n) == 0
 
 -- | Integer square root (largest integer whose square is smaller or equal to the input)
--- using Newton's method. It takes rought log2(n) steps.
+-- using Newton's method, with a faster (for large numbers) inital guess based on bit shifts.
 integerSquareRoot :: Integer -> Integer
 integerSquareRoot = fst . integerSquareRoot'
 
@@ -121,6 +131,24 @@ integerSquareRoot = fst . integerSquareRoot'
 integerSquareRoot' :: Integer -> (Integer,Integer)
 integerSquareRoot' n
   | n<0 = error "integerSquareRoot: negative input"
+  | n<2 = (n,0)
+  | otherwise = go firstGuess 
+  where
+    k = integerLog2 n
+    firstGuess = 2^(div (k+2) 2) -- !! note that (div (k+1) 2) is NOT enough !!
+    go a = 
+      if m < a
+        then go a' 
+        else (a, r + a*(m-a))
+      where
+        (m,r) = divMod n a
+        a' = div (m + a) 2
+
+-- | Newton's method without an initial guess. For very small numbers (<10^10) it
+-- is somewhat faster than the above version.
+integerSquareRootNewton' :: Integer -> (Integer,Integer)
+integerSquareRootNewton' n
+  | n<0 = error "integerSquareRootNewton: negative input"
   | n<2 = (n,0)
   | otherwise = go (div n 2) 
   where
