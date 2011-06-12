@@ -92,6 +92,7 @@ integerFactorsTrialDivision n
   | n<1 = error "integerFactorsTrialDivision: n should be at least 1"
   | otherwise = go n 
   where
+    go 1 = []
     go k = sub ps k where
       sub [] k = [k]
       sub (q:qs) k = case mod k q of
