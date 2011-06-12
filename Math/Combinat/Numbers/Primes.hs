@@ -113,8 +113,13 @@ integerLog2 n = go n where
 -- Integer square root
 
 isSquare :: Integer -> Bool
-isSquare n = snd (integerSquareRoot' n) == 0
-
+isSquare n = 
+  if (fromIntegral $ mod n 32) `elem` rs 
+    then snd (integerSquareRoot' n) == 0
+    else False
+  where
+    rs = [0,1,4,9,16,17,25] :: [Int]
+    
 -- | Integer square root (largest integer whose square is smaller or equal to the input)
 -- using Newton's method, with a faster (for large numbers) inital guess based on bit shifts.
 integerSquareRoot :: Integer -> Integer
