@@ -18,6 +18,8 @@ module Math.Combinat.Numbers.Primes
   , ceilingSquareRoot
   , integerSquareRoot' 
   , integerSquareRootNewton'
+    -- * Modulo @m@ arithmetic
+  , powerMod
     -- * Prime testing
   , millerRabinPrimalityTest
   )
@@ -192,6 +194,30 @@ isqrt_test n1 n2 =
   ]
 -}
 
+--------------------------------------------------------------------------------
+-- Modulo @m@ arithmetic
+
+-- | Efficient powers modulo m.
+-- 
+-- > powerMod a k m == (a^k) `mod` m
+powerMod :: Integer -> Integer -> Integer -> Integer
+powerMod a' k m = {- debug bs $ -} go a bs where
+
+  bs = bin k
+
+  bin 0 = []
+  bin x = (x .&. 1 /= 0) : bin (shiftR x 1)
+
+  a = mod a' m
+
+  go _ [] = 1
+  go x (b:bs) = -- debug (x,b) $ 
+    if b 
+      then mod (x*rest) m
+      else rest
+    where 
+      rest = go (mod (x*x) m) bs 
+      
 --------------------------------------------------------------------------------
 -- Prime testing
  
