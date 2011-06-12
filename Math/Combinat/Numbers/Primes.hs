@@ -1,20 +1,31 @@
 
--- | Prime numbers
+-- | Prime numbers and related number theoretical stuff.
 
 module Math.Combinat.Numbers.Primes 
-  ( primes
+  ( -- * List of prime numbers
+    primes
   , primesSimple
   , primesTMWE
+    -- * Prime factorization
+  , groupIntegerFactors
+  , integerFactorsTrialDivision
+    -- * Integer square root
+  , isSquare
+  , integerSquareRoot
+  , integerSquareRoot'
+    -- * Prime testing
   , millerRabinPrimalityTest
   )
   where
 
 --------------------------------------------------------------------------------
 
-import Math.Combinat.Numbers
+-- import Math.Combinat.Numbers
+
+import Data.List ( group , sort )
 
 --------------------------------------------------------------------------------
--- * Prime numbers 
+-- List of prime numbers 
 
 -- | Infinite list of primes, using the TMWE algorithm.
 primes :: [Integer]
@@ -60,9 +71,79 @@ primesTMWE = 2:3:5:7: gaps 11 wheel (fold3t $ roll 11 wheel primes') where
     GT -> y : union xxs ys
   union xs [] = xs
   union [] ys =ys
-  
+
 --------------------------------------------------------------------------------
--- * Miller-Rabin primality test 
+-- Prime factorization
+
+-- | Groups integer factors. Example: from [2,2,2,3,3,5] we produce [(2,3),(3,2),(5,1)]  
+groupIntegerFactors :: [Integer] -> [(Integer,Int)]
+groupIntegerFactors = map f . group . sort where
+  f xs = (head xs, length xs)
+
+-- | The naive trial division algorithm.
+integerFactorsTrialDivision :: Integer -> [Integer]
+integerFactorsTrialDivision n 
+  | n<1 = error "integerFactorsTrialDivision: n should be at least 1"
+  | otherwise = go n 
+  where
+    go k = sub ps k where
+      sub [] k = [k]
+      sub (q:qs) k = case mod k q of
+        0 -> q : go (div k q)
+        _ -> sub qs k
+      ps = takeWhile (\p -> p*p <= k) primes
+
+{-    
+-- brute force testing of factors
+ifactorsTest :: (Integer -> [Integer]) -> Integer -> Bool
+ifactorsTest alg n = and [ product (alg k) == k | k<-[1..n] ]   
+-}
+
+--------------------------------------------------------------------------------
+-- Integer square root
+
+isSquare :: Integer -> Bool
+isSquare n = snd (integerSquareRoot' n) == 0
+
+-- | Integer square root (largest integer whose square is smaller or equal to the input)
+-- using Newton's method. It takes rought log2(n) steps.
+integerSquareRoot :: Integer -> Integer
+integerSquareRoot = fst . integerSquareRoot'
+
+-- | We also return the excess residue; that is
+--
+-- > (a,r) = integerSquareRoot' n
+-- 
+-- means that
+--
+-- > a*a + r = n
+-- > a*a <= n < (a+1)*(a+1)
+integerSquareRoot' :: Integer -> (Integer,Integer)
+integerSquareRoot' n
+  | n<0 = error "integerSquareRoot: negative input"
+  | n<2 = (n,0)
+  | otherwise = go (div n 2) 
+  where
+    go a = 
+      if m < a
+        then go a' 
+        else (a, r + a*(m-a))
+      where
+        (m,r) = divMod n a
+        a' = div (m + a) 2
+
+{-
+-- brute force test of integer square root
+isqrt_test n1 n2 = 
+  [ k 
+  | k<-[n1..n2] 
+  , let (a,r) = integerSquareRoot' k
+  , (a*a+r/=k) || (a*a>k) || (a+1)*(a+1)<=k 
+  ]
+-}
+
+--------------------------------------------------------------------------------
+-- Prime testing
  
 -- | Miller-Rabin Primality Test (taken from Haskell wiki). 
 -- We test the primality of the first argument @n@ by using the second argument @a@ as a candidate witness.
