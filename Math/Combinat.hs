@@ -1,6 +1,6 @@
 
 -- | A collection of functions to generate combinatorial
--- objects like partitions, combinations, permutations,
+-- objects like partitions, compositions, permutations,
 -- Young tableaux, various trees, etc.
 --
 -- The long-term goals are 
