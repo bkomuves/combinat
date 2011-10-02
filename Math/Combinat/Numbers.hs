@@ -44,6 +44,17 @@ binomial n k
     k' = fromIntegral k
     n' = fromIntegral n
 
+-- | A given row of the Pascal triangle; equivalent to a sequence of binomial 
+-- numbers, but much more efficient. You can also left-fold over it.
+--
+-- > pascalRow n == [ binomial n k | k<-[0..n] ]
+pascalRow :: Integral a => a -> [Integer]
+pascalRow n' = worker 0 1 where
+  n = fromIntegral n'
+  worker j x
+    | j>n   = [] 
+    | True  = let j'=j+1 in x : worker j' (div (x*(n-j)) j') 
+
 multinomial :: Integral a => [a] -> Integer
 multinomial xs = div
   (factorial (sum xs))
