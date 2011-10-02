@@ -92,8 +92,16 @@ groupIntegerFactors = map f . group . sort where
 integerFactorsTrialDivision :: Integer -> [Integer]
 integerFactorsTrialDivision n 
   | n<1 = error "integerFactorsTrialDivision: n should be at least 1"
-  | otherwise = go n 
+  | otherwise = go primes n 
   where
+    go _  1 = []
+    go rs k = sub ps k where
+      sub [] k = [k]
+      sub qqs@(q:qs) k = case mod k q of
+        0 -> q : go qqs (div k q)
+        _ -> sub qs k
+      ps = takeWhile (\p -> p*p <= k) rs  
+{-
     go 1 = []
     go k = sub ps k where
       sub [] k = [k]
@@ -101,6 +109,7 @@ integerFactorsTrialDivision n
         0 -> q : go (div k q)
         _ -> sub qs k
       ps = takeWhile (\p -> p*p <= k) primes
+-}
 
 {-    
 -- brute force testing of factors
