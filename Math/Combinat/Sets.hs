@@ -4,7 +4,7 @@
 module Math.Combinat.Sets 
   ( 
     choose
-  , combine
+  , combine , compose
   , tuplesFromList
   , listTensor
     -- 
@@ -33,6 +33,10 @@ combine :: Int -> [a] -> [[a]]
 combine 0 _  = [[]]
 combine k [] = []
 combine k xxs@(x:xs) = map (x:) (combine (k-1) xxs) ++ combine k xs  
+
+-- | A synonym for 'combine'.
+compose :: Int -> [a] -> [[a]]
+compose = combine
 
 -- | \"Tensor power\" for lists. Special case of 'listTensor':
 --

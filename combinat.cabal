@@ -48,6 +48,7 @@ Library
                        Math.Combinat.Sets
                        Math.Combinat.Tuples 
                        Math.Combinat.Combinations
+                       Math.Combinat.Compositions
                        Math.Combinat.Partitions
                        Math.Combinat.Permutations
                        Math.Combinat.Tableaux

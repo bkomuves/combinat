@@ -29,7 +29,7 @@ module Math.Combinat
   ( module Math.Combinat.Numbers
   , module Math.Combinat.Sets
   , module Math.Combinat.Tuples
-  , module Math.Combinat.Combinations
+  , module Math.Combinat.Compositions
   , module Math.Combinat.Partitions
   , module Math.Combinat.Permutations
   , module Math.Combinat.Tableaux
@@ -40,7 +40,7 @@ module Math.Combinat
 import Math.Combinat.Numbers
 import Math.Combinat.Sets
 import Math.Combinat.Tuples
-import Math.Combinat.Combinations
+import Math.Combinat.Compositions
 import Math.Combinat.Partitions
 import Math.Combinat.Permutations
 import Math.Combinat.Tableaux

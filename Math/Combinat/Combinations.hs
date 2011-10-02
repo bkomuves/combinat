@@ -1,5 +1,8 @@
 
--- | Combinations
+-- | Combinations.
+-- This module is depracated; it is equivalent to the module "Compositions", 
+-- but it turns out that \"compositions\" is the accepted name. I will
+-- remove this module in the future.
 
 module Math.Combinat.Combinations where
 
