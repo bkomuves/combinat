@@ -108,7 +108,7 @@ _dualPartition xs@(k:_) = [ length $ filter (>=i) xs | i <- [1..k] ]
 
 -- | Example:
 --
--- > elements (toPartition [5,2,1]) ==
+-- > elements (toPartition [5,4,1]) ==
 -- > [ (1,1), (1,2), (1,3), (1,4), (1,5)
 -- > , (2,1), (2,2), (2,3), (2,4)
 -- > , (3,1)
