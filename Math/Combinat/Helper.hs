@@ -41,7 +41,24 @@ nubOrd = worker Set.empty where
   worker s (x:xs) 
     | Set.member x s = worker s xs
     | otherwise      = x : worker (Set.insert x s) xs
-    
+
+--------------------------------------------------------------------------------
+
+-- | The boolean argument will @True@ only for the last element
+mapWithLast :: (Bool -> a -> b) -> [a] -> [b]
+mapWithLast f = go where
+  go (x : []) = f True  x : []
+  go (x : xs) = f False x : go xs
+
+mapWithFirst :: (Bool -> a -> b) -> [a] -> [b]
+mapWithFirst f = go True where
+  go b (x:xs) = f b x : go False xs 
+  
+mapWithFirstLast :: (Bool -> Bool -> a -> b) -> [a] -> [b]
+mapWithFirstLast f = go True where
+  go b (x : []) = f b True  x : []
+  go b (x : xs) = f b False x : go False xs
+  
 --------------------------------------------------------------------------------
 
 -- helps testing the random rutines 

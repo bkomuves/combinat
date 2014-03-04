@@ -2,8 +2,23 @@
 -- | N-ary trees.
 
 module Math.Combinat.Trees.Nary 
-  ( 
-    derivTrees
+  (
+    -- * regular trees 
+    ternaryTrees
+  , regularNaryTrees
+    -- * derivation trees
+  , derivTrees
+    -- * ASCII drawings
+  , printTreeVertical_
+  , printTreeVertical
+  , printTreeVerticalLeavesOnly
+  , drawTreeVertical_
+  , drawTreeVertical
+  , drawTreeVerticalLeavesOnly
+    -- * spines
+  , leftSpine  , leftSpine_
+  , rightSpine , rightSpine_
+  , leftSpineLength , rightSpineLength
     -- * unique labels
   , addUniqueLabelsTree
   , addUniqueLabelsForest
@@ -33,16 +48,153 @@ import Control.Applicative
 import Control.Monad.Trans.State
 import Data.Traversable (traverse)
 
-import Math.Combinat.Sets (listTensor)
-import Math.Combinat.Partitions (partitionMultiset)
+import Math.Combinat.Sets         (listTensor)
+import Math.Combinat.Partitions   (partitionMultiset)
+import Math.Combinat.Compositions (compositions)
+
+import Math.Combinat.Helper
 
 --------------------------------------------------------------------------------
 
--- | Adds unique labels to a 'Tree'.
+-- | @regularNaryTrees d n@ returns the list of (rooted) trees on @n@ nodes where each
+-- node has exactly @d$ children. Note that the leaves do not count in @n@.
+-- Naive algorithm.
+regularNaryTrees 
+  :: Int         -- ^ degree = number of children of each node
+  -> Int         -- ^ number of nodes
+  -> [Tree ()]
+regularNaryTrees d = go where
+  go 0 = [ Node () [] ]
+  go n = [ Node () cs
+         | is <- compositions d (n-1) 
+         , cs <- listTensor [ go i | i<-is ] 
+         ]
+  
+-- | Ternary trees on @n@ nodes (synonym for @regularNaryTrees 3@)
+ternaryTrees :: Int -> [Tree ()]  
+ternaryTrees = regularNaryTrees 3
+
+--------------------------------------------------------------------------------
+
+-- | Vertical ASCII drawing of a tree, without labels.
+-- 
+-- Example:
+--
+-- > mapM_ printTreeVertical_ $ regularNaryTrees 2 3 
+--
+printTreeVertical_ :: Tree a -> IO ()
+printTreeVertical_ = putStrLn . drawTreeVertical_
+
+-- | Prints all labels.
+--
+-- Example: 
+--
+-- > printTreeVertical $ addUniqueLabelsTree_ $ (regularNaryTrees 3 9) !! 666
+--
+printTreeVertical :: Show a => Tree a -> IO ()
+printTreeVertical = putStrLn . drawTreeVertical
+
+-- | Prints the labels for the leaves, but not for the nonempty nodes
+printTreeVerticalLeavesOnly :: Show a => Tree a -> IO ()
+printTreeVerticalLeavesOnly = putStrLn . drawTreeVerticalLeavesOnly
+
+
+drawTreeVertical_ :: Tree a -> String
+drawTreeVertical_ tree = unlines (go tree) where
+  go :: Tree b -> [String]
+  go (Node _ cs) = case cs of
+    [] -> ["o"]
+    _  -> concat $ mapWithLast f $ map go cs
+    
+  f :: Bool -> [String] -> [String] 
+  f b (l:ls) = let indent = if b then "  "  else  "| "
+                   branch = if b then "\\-" else  "+-"
+                   gap    = if b then []    else ["| "]
+               in  (branch++l) : map (indent++) ls ++ gap
+
+drawTreeVertical :: Show a => Tree a -> String
+drawTreeVertical tree = unlines (go tree) where
+  go :: Show b => Tree b -> [String]
+  go (Node x cs) = case cs of
+    [] -> ["-- " ++ show x]
+    _  -> concat $ mapWithFirstLast (f (show x)) $ map go cs
+    
+  f :: String -> Bool -> Bool -> [String] -> [String] 
+  f label bf bl (l:ls) =
+        let spaces = (map (const ' ') label  ) 
+            dashes = (map (const '-') spaces ) 
+            indent = if bl then "  " ++spaces++"  " else " |" ++ spaces ++ "  "
+            branch = if bl then " \\"++dashes++"--" 
+                           else if bf 
+                             then "-(" ++ label  ++ ")-"
+                             else " +" ++ dashes ++ "--"
+            gap    = if bl then []                  else [" |" ++ spaces ++ "  "]
+        in  (branch++l) : map (indent++) ls ++ gap
+
+drawTreeVerticalLeavesOnly :: Show a => Tree a -> String
+drawTreeVerticalLeavesOnly tree = unlines (go tree) where
+  go :: Show b => Tree b -> [String]
+  go (Node x cs) = case cs of
+    [] -> [" " ++ show x]
+    _  -> concat $ mapWithLast f $ map go cs
+    
+  f :: Bool -> [String] -> [String] 
+  f b (l:ls) = let indent = if b then "  "  else  "| "
+                   branch = if b then "\\-" else  "+-"
+                   gap    = if b then []    else ["| "]
+               in  (branch++l) : map (indent++) ls ++ gap
+  
+--------------------------------------------------------------------------------
+  
+-- | The leftmost spine (the second element of the pair is the leaf node)
+leftSpine  :: Tree a -> ([a],a)
+leftSpine = go where
+  go (Node x cs) = case cs of
+    [] -> ([],x)
+    _  -> let (xs,y) = go (head cs) in (x:xs,y) 
+
+rightSpine  :: Tree a -> ([a],a)
+rightSpine = go where
+  go (Node x cs) = case cs of
+    [] -> ([],x)
+    _  -> let (xs,y) = go (last cs) in (x:xs,y) 
+
+-- | The leftmost spine without the leaf node
+leftSpine_  :: Tree a -> [a]
+leftSpine_ = go where
+  go (Node x cs) = case cs of
+    [] -> []
+    _  -> x : go (head cs)
+
+rightSpine_ :: Tree a -> [a] 
+rightSpine_ = go where
+  go (Node x cs) = case cs of
+    [] -> []
+    _  -> x : go (last cs) 
+
+-- | The length (number of edges) on the left spine 
+--
+-- > leftSpineLength tree == length (leftSpine_ tree)
+--
+leftSpineLength  :: Tree a -> Int  
+leftSpineLength = go 0 where
+  go n (Node x cs) = case cs of
+    [] -> n
+    _  -> go (n+1) (head cs)
+  
+rightSpineLength :: Tree a -> Int  
+rightSpineLength = go 0 where
+  go n (Node x cs) = case cs of
+    [] -> n
+    _  -> go (n+1) (last cs)
+
+--------------------------------------------------------------------------------
+
+-- | Adds unique labels to the nodes of a 'Tree'.
 addUniqueLabelsTree :: Tree a -> Tree (a,Int) 
 addUniqueLabelsTree tree = head (addUniqueLabelsForest [tree])
 
--- | Adds unique labels to a 'Forest'
+-- | Adds unique labels to the nodes of a 'Forest'
 addUniqueLabelsForest :: Forest a -> Forest (a,Int) 
 addUniqueLabelsForest forest = evalState (mapM globalAction forest) 1 where
   globalAction tree = 
