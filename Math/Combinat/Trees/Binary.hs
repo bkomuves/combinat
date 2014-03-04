@@ -205,7 +205,7 @@ countNestedParentheses = countBinaryTrees
 -- Based on \"Algorithm P\" in Knuth, but less efficient because of
 -- the \"idiomatic\" code.
 fasc4A_algorithm_P :: Int -> [[Paren]]
-fasc4A_algorithm_P 0 = []
+fasc4A_algorithm_P 0 = [[]]
 fasc4A_algorithm_P 1 = [[LeftParen,RightParen]]
 fasc4A_algorithm_P n = unfold next ( start , [] ) where 
   start = concat $ replicate n [RightParen,LeftParen]  -- already reversed!
