@@ -6,6 +6,7 @@ module Math.Combinat.Trees.Nary
     -- * regular trees 
     ternaryTrees
   , regularNaryTrees
+  , semiRegularTrees
   , countTernaryTrees
   , countRegularNaryTrees
     -- * derivation trees
@@ -21,6 +22,8 @@ module Math.Combinat.Trees.Nary
   , classifyTreeNode
   , isTreeLeaf  , isTreeNode
   , isTreeLeaf_ , isTreeNode_
+  , countTreeNodes
+  , countTreeLeaves
     -- * spines
   , leftSpine  , leftSpine_
   , rightSpine , rightSpine_
@@ -47,6 +50,7 @@ module Math.Combinat.Trees.Nary
 --------------------------------------------------------------------------------
 
 import Data.Tree
+import Data.List
 
 import Control.Applicative
 
@@ -64,7 +68,7 @@ import Math.Combinat.Helper
 --------------------------------------------------------------------------------
 
 -- | @regularNaryTrees d n@ returns the list of (rooted) trees on @n@ nodes where each
--- node has exactly @d$ children. Note that the leaves do not count in @n@.
+-- node has exactly @d@ children. Note that the leaves do not count in @n@.
 -- Naive algorithm.
 regularNaryTrees 
   :: Int         -- ^ degree = number of children of each node
@@ -83,16 +87,73 @@ ternaryTrees = regularNaryTrees 3
 
 -- | We have 
 --
--- > length (regularNaryTrees d n) == countRegularNaryTrees == binomial (dn) n / (1+(d-1)n)
+-- > length (regularNaryTrees d n) == countRegularNaryTrees d n == \frac {1} {(d-1)n+1} \binom {dn} {n} 
 --
 countRegularNaryTrees :: (Integral a, Integral b) => a -> b -> Integer
 countRegularNaryTrees d n = binomial (dd*nn) nn `div` ((dd-1)*nn+1) where
   dd = fromIntegral d :: Integer
   nn = fromIntegral n :: Integer 
 
+-- | @\# = \\frac {1} {(2n+1} \\binom {3n} {n}@
 countTernaryTrees :: Integral a => a -> Integer  
 countTernaryTrees = countRegularNaryTrees (3::Int)
 
+--------------------------------------------------------------------------------
+
+-- | All trees on @n@ nodes where the number of children of all nodes is
+-- in element of the given set. Example:
+--
+-- > mapM_ printTreeVertical 
+-- >  $ map labelNChildrenTree_ 
+-- >  $ semiRegularTrees [2,3] n
+-- >
+-- > [ length $ semiRegularTrees [2,3] n | n<-[0..] ] == [1,2,10,66,498,4066,34970,312066,2862562,26824386,...]
+--
+-- The latter sequence is A027307 in OEIS: <https://oeis.org/A027307>
+--
+-- Remark: clearly, we have
+--
+-- > semiRegularTrees [d] n == regularNaryTrees d n
+--
+-- 
+semiRegularTrees 
+  :: [Int]         -- ^ set of allowed number of children
+  -> Int           -- ^ number of nodes
+  -> [Tree ()]
+semiRegularTrees []    n = if n==0 then [Node () []] else []
+semiRegularTrees dset_ n = 
+  if head dset >=1 
+    then go n
+    else error "semiRegularTrees: expecting a list of positive integers"
+  where
+    dset = map head $ group $ sort $ dset_
+    
+    go 0 = [ Node () [] ]
+    go n = [ Node () cs
+           | d <- dset
+           , is <- compositions d (n-1) 
+           , cs <- listTensor [ go i | i<-is ]
+           ]
+           
+{- 
+
+NOTES:
+
+A006318 = [ length $ semiRegularTrees [1,2] n | n<-[0..] ] == [1,2,6,22,90,394,1806,8558,41586,206098,1037718.. ]
+??      = [ length $ semiRegularTrees [1,3] n | n<-[0..] ] == [1,2,8,44,280,1936,14128,107088,834912,6652608 .. ]
+??      = [ length $ semiRegularTrees [1,4] n | n<-[0..] ] == [1,2,10,74,642,6082,60970,635818,6826690
+
+A027307 = [ length $ semiRegularTrees [2,3] n | n<-[0..] ] == [1,2,10,66,498,4066,34970,312066,2862562,26824386,...]
+A219534 = [ length $ semiRegularTrees [2,4] n | n<-[0..] ] == [1,2,12,100,968,10208,113792,1318832 ..]
+??      = [ length $ semiRegularTrees [2,5] n | n<-[0..] ] == [1,2,14,142,1690,21994,303126,4348102 ..]
+
+A144097 = [ length $ semiRegularTrees [3,4] n | n<-[0..] ] == [1,2,14,134,1482,17818,226214,2984206,40503890..]
+
+A107708 = [ length $ semiRegularTrees [1,2,3]   n | n<-[0..] ] == [1,3,18,144,1323,13176,138348,1507977 .. ]
+??      = [ length $ semiRegularTrees [1,2,3,4] n | n<-[0..] ] == [1,4,40,560,9120,161856,3036800,59242240 .. ] 
+
+-}
+             
 --------------------------------------------------------------------------------
 
 -- | Vertical ASCII drawing of a tree, without labels.
@@ -117,20 +178,24 @@ printTreeVertical = putStrLn . drawTreeVertical
 printTreeVerticalLeavesOnly :: Show a => Tree a -> IO ()
 printTreeVerticalLeavesOnly = putStrLn . drawTreeVerticalLeavesOnly
 
-
+-- | Nodes are denoted by @\@@, leaves by @*@.
 drawTreeVertical_ :: Tree a -> String
 drawTreeVertical_ tree = unlines (go tree) where
   go :: Tree b -> [String]
   go (Node _ cs) = case cs of
-    [] -> ["o"]
-    _  -> concat $ mapWithLast f $ map go cs
+    [] -> ["-*"]
+    _  -> concat $ mapWithFirstLast f $ map go cs
     
-  f :: Bool -> [String] -> [String] 
-  f b (l:ls) = let indent = if b then "  "  else  "| "
-                   branch = if b then "\\-" else  "+-"
-                   gap    = if b then []    else ["| "]
-               in  (branch++l) : map (indent++) ls ++ gap
+  f :: Bool -> Bool -> [String] -> [String] 
+  f bf bl (l:ls) = let indent = if bl           then "  "  else  "| "
+                       gap    = if bl           then []    else ["| "]
+                       branch = if bl && not bf 
+                                  then "\\-" 
+                                  else if bf then "@-"
+                                             else "+-"
+                   in  (branch++l) : map (indent++) ls ++ gap
 
+-- | Nodes are denoted by @(label)@, leaves by @label@.
 drawTreeVertical :: Show a => Tree a -> String
 drawTreeVertical tree = unlines (go tree) where
   go :: Show b => Tree b -> [String]
@@ -142,26 +207,31 @@ drawTreeVertical tree = unlines (go tree) where
   f label bf bl (l:ls) =
         let spaces = (map (const ' ') label  ) 
             dashes = (map (const '-') spaces ) 
-            indent = if bl then "  " ++spaces++"  " else " |" ++ spaces ++ "  "
-            branch = if bl then " \\"++dashes++"--" 
+            indent = if bl then "  " ++spaces++"  " else  " |" ++ spaces ++ "  "
+            gap    = if bl then []                  else [" |" ++ spaces ++ "  "]
+            branch = if bl && not bf
+                           then " \\"++dashes++"--" 
                            else if bf 
                              then "-(" ++ label  ++ ")-"
                              else " +" ++ dashes ++ "--"
-            gap    = if bl then []                  else [" |" ++ spaces ++ "  "]
         in  (branch++l) : map (indent++) ls ++ gap
 
+-- | Nodes are denoted by @\@@, leaves by @label@.
 drawTreeVerticalLeavesOnly :: Show a => Tree a -> String
 drawTreeVerticalLeavesOnly tree = unlines (go tree) where
   go :: Show b => Tree b -> [String]
   go (Node x cs) = case cs of
-    [] -> [" " ++ show x]
-    _  -> concat $ mapWithLast f $ map go cs
+    [] -> ["- " ++ show x]
+    _  -> concat $ mapWithFirstLast f $ map go cs
     
-  f :: Bool -> [String] -> [String] 
-  f b (l:ls) = let indent = if b then "  "  else  "| "
-                   branch = if b then "\\-" else  "+-"
-                   gap    = if b then []    else ["| "]
-               in  (branch++l) : map (indent++) ls ++ gap
+  f :: Bool -> Bool -> [String] -> [String] 
+  f bf bl (l:ls) = let indent = if bl           then "  "  else  "| "
+                       gap    = if bl           then []    else ["| "]
+                       branch = if bl && not bf 
+                                  then "\\-" 
+                                  else if bf then "@-"
+                                             else "+-"
+                   in  (branch++l) : map (indent++) ls ++ gap
   
 --------------------------------------------------------------------------------
   
@@ -224,6 +294,18 @@ isTreeLeaf_ (Node x cs) = case cs of { [] -> True ; _ -> False }
   
 isTreeNode_ :: Tree a -> Bool  
 isTreeNode_ (Node x cs) = case cs of { [] -> False ; _ -> True }  
+
+countTreeNodes :: Tree a -> Int
+countTreeNodes = go where
+  go (Node x cs) = case cs of
+    [] -> 0
+    _  -> 1 + sum (map go cs)
+
+countTreeLeaves :: Tree a -> Int
+countTreeLeaves = go where
+  go (Node x cs) = case cs of
+    [] -> 1
+    _  -> sum (map go cs)
 
 --------------------------------------------------------------------------------
 
