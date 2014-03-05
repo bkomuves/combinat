@@ -58,7 +58,32 @@ mapWithFirstLast :: (Bool -> Bool -> a -> b) -> [a] -> [b]
 mapWithFirstLast f = go True where
   go b (x : []) = f b True  x : []
   go b (x : xs) = f b False x : go False xs
-  
+
+--------------------------------------------------------------------------------
+-- helpers for ASCII drawing
+
+-- | extend lines with spaces so that they have the same line
+mkLinesUniformWidth :: [String] -> [String]
+mkLinesUniformWidth old = zipWith worker ls old where
+  ls = map length old
+  m  = maximum ls
+  worker l s = s ++ replicate (m-l) ' '
+
+mkBlocksUniformHeight :: [[String]] -> [[String]]
+mkBlocksUniformHeight old = zipWith worker ls old where
+  ls = map length old
+  m  = maximum ls
+  worker l s = s ++ replicate (m-l) ""
+    
+mkUniformBlocks :: [[String]] -> [[String]] 
+mkUniformBlocks = map mkLinesUniformWidth . mkBlocksUniformHeight
+    
+hConcatLines :: [[String]] -> [String]
+hConcatLines = map concat . transpose . mkUniformBlocks
+
+vConcatLines :: [[String]] -> [String]  
+vConcatLines = concat
+
 --------------------------------------------------------------------------------
 
 -- helps testing the random rutines 

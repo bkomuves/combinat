@@ -7,6 +7,7 @@ module Math.Combinat.Trees.Binary
     BinTree(..)
   , leaf
   , BinTree'(..)
+  , toRoseTree , toRoseTree'
   , forgetNodeDecorations
   , module Data.Tree 
   , Paren(..)
@@ -35,6 +36,9 @@ module Math.Combinat.Trees.Binary
   , binaryTreesNaive
   , randomBinaryTree
   , fasc4A_algorithm_R
+    -- * ASCII drawing
+  , printBinaryTree_
+  , drawBinaryTree_
   ) 
   where
 
@@ -84,20 +88,39 @@ forgetNodeDecorations (Branch' left _ right) =
 forgetNodeDecorations (Leaf' decor) = Leaf decor 
 
 --------------------------------------------------------------------------------
+-- * conversion to Data.Tree
+
+-- | Convert a binary tree to a rose tree (from "Data.Tree")
+toRoseTree :: BinTree a -> Tree (Maybe a)
+toRoseTree = go where
+  go (Branch t1 t2) = Node Nothing  [go t1, go t2]
+  go (Leaf x)       = Node (Just x) [] 
+
+toRoseTree' :: BinTree' a b -> Tree (Either b a)
+toRoseTree' = go where
+  go (Branch' t1 y t2) = Node (Left  y) [go t1, go t2]
+  go (Leaf' x)         = Node (Right x) [] 
+  
+--------------------------------------------------------------------------------
+-- * instances
   
 instance Functor BinTree where
-  fmap f (Branch left right) = Branch (fmap f left) (fmap f right)
-  fmap f (Leaf x) = Leaf (f x)
+  fmap f = go where
+    go (Branch left right) = Branch (go left) (go right)
+    go (Leaf x) = Leaf (f x)
   
 instance Foldable BinTree where
-  foldMap f (Leaf x) = f x
-  foldMap f (Branch left right) = (foldMap f left) `mappend` (foldMap f right)  
+  foldMap f = go where
+    go (Leaf x) = f x
+    go (Branch left right) = (go left) `mappend` (go right)  
 
 instance Traversable BinTree where
-  traverse f (Leaf x) = Leaf <$> f x
-  traverse f (Branch left right) = Branch <$> traverse f left <*> traverse f right
+  traverse f = go where 
+    go (Leaf x) = Leaf <$> f x
+    go (Branch left right) = Branch <$> go left <*> go right
 
 --------------------------------------------------------------------------------
+-- * nester parentheses
 
 data Paren = LeftParen | RightParen deriving (Eq,Ord,Show,Read)
 
@@ -329,5 +352,33 @@ fasc4A_algorithm_R n0 rnd = res where
       (k,b) = x `divMod` 2
       
 --------------------------------------------------------------------------------      
-  
 
+-- | Draws a binary tree in ASCII, ignoring node labels.
+--
+-- Example:
+--
+-- > mapM_ printBinaryTree_ $ binaryTrees 4
+--
+printBinaryTree_ :: BinTree a -> IO ()
+printBinaryTree_ = putStrLn . drawBinaryTree_
+  
+drawBinaryTree_ :: BinTree a -> String
+drawBinaryTree_ = unlines . fst . go where
+
+  go :: BinTree a -> ([String],Int)
+  go (Leaf x) = ([],0)
+  go (Branch t1 t2) = ( new , j1+m ) where
+    (ls1,j1) = go t1
+    (ls2,j2) = go t2
+    w1 = blockWidth ls1
+    w2 = blockWidth ls2
+    m = max 1 $ (w1-j1+j2+2) `div` 2
+    s = 2*m - (w1-j1+j2)
+    spaces = [replicate s ' ']
+    ls = hConcatLines [ ls1 , spaces , ls2 ]
+    top = [ replicate (j1+m-i) ' ' ++ "/" ++ replicate (2*(i-1)) ' ' ++ "\\" | i<-[1..m] ]
+    new = mkLinesUniformWidth $ vConcatLines [ top , ls ] 
+        
+  blockWidth ls = case ls of
+    (l:_) -> length l
+    []    -> 0
