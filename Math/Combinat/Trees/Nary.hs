@@ -6,6 +6,8 @@ module Math.Combinat.Trees.Nary
     -- * regular trees 
     ternaryTrees
   , regularNaryTrees
+  , countTernaryTrees
+  , countRegularNaryTrees
     -- * derivation trees
   , derivTrees
     -- * ASCII drawings
@@ -15,6 +17,10 @@ module Math.Combinat.Trees.Nary
   , drawTreeVertical_
   , drawTreeVertical
   , drawTreeVerticalLeavesOnly
+    -- * classifying nodes
+  , classifyTreeNode
+  , isTreeLeaf  , isTreeNode
+  , isTreeLeaf_ , isTreeNode_
     -- * spines
   , leftSpine  , leftSpine_
   , rightSpine , rightSpine_
@@ -51,6 +57,7 @@ import Data.Traversable (traverse)
 import Math.Combinat.Sets         (listTensor)
 import Math.Combinat.Partitions   (partitionMultiset)
 import Math.Combinat.Compositions (compositions)
+import Math.Combinat.Numbers      (factorial,binomial)
 
 import Math.Combinat.Helper
 
@@ -73,6 +80,18 @@ regularNaryTrees d = go where
 -- | Ternary trees on @n@ nodes (synonym for @regularNaryTrees 3@)
 ternaryTrees :: Int -> [Tree ()]  
 ternaryTrees = regularNaryTrees 3
+
+-- | We have 
+--
+-- > length (regularNaryTrees d n) == countRegularNaryTrees == binomial (dn) n / (1+(d-1)n)
+--
+countRegularNaryTrees :: (Integral a, Integral b) => a -> b -> Integer
+countRegularNaryTrees d n = binomial (dd*nn) nn `div` ((dd-1)*nn+1) where
+  dd = fromIntegral d :: Integer
+  nn = fromIntegral n :: Integer 
+
+countTernaryTrees :: Integral a => a -> Integer  
+countTernaryTrees = countRegularNaryTrees (3::Int)
 
 --------------------------------------------------------------------------------
 
@@ -190,11 +209,29 @@ rightSpineLength = go 0 where
 
 --------------------------------------------------------------------------------
 
--- | Adds unique labels to the nodes of a 'Tree'.
+-- | 'Left' is leaf, 'Right' is node
+classifyTreeNode :: Tree a -> Either a a
+classifyTreeNode (Node x cs) = case cs of { [] -> Left x ; _ -> Right x }
+
+isTreeLeaf :: Tree a -> Maybe a  
+isTreeLeaf (Node x cs) = case cs of { [] -> Just x ; _ -> Nothing }  
+
+isTreeNode :: Tree a -> Maybe a  
+isTreeNode (Node x cs) = case cs of { [] -> Nothing ; _ -> Just x }  
+
+isTreeLeaf_ :: Tree a -> Bool  
+isTreeLeaf_ (Node x cs) = case cs of { [] -> True ; _ -> False }  
+  
+isTreeNode_ :: Tree a -> Bool  
+isTreeNode_ (Node x cs) = case cs of { [] -> False ; _ -> True }  
+
+--------------------------------------------------------------------------------
+
+-- | Adds unique labels to the nodes (including leaves) of a 'Tree'.
 addUniqueLabelsTree :: Tree a -> Tree (a,Int) 
 addUniqueLabelsTree tree = head (addUniqueLabelsForest [tree])
 
--- | Adds unique labels to the nodes of a 'Forest'
+-- | Adds unique labels to the nodes (including leaves) of a 'Forest'
 addUniqueLabelsForest :: Forest a -> Forest (a,Int) 
 addUniqueLabelsForest forest = evalState (mapM globalAction forest) 1 where
   globalAction tree = 
