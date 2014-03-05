@@ -3,6 +3,7 @@
 -- objects like partitions, compositions, permutations,
 -- Young tableaux, various trees, etc.
 --
+--
 -- The long-term goals are 
 --
 --  (1) to be efficient; 
@@ -12,6 +13,7 @@
 --
 -- The short-term goal is to generate 
 -- many interesting structures.
+--
 --
 -- Naming conventions (subject to change): 
 --
@@ -24,6 +26,10 @@
 --    (typically with uniform distribution); 
 --
 --  * \"count\" prefix: counting functions.
+--
+--
+-- This module re-exports the most common modules.
+--
 
 module Math.Combinat 
   ( module Math.Combinat.Numbers
