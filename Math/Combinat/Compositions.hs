@@ -1,14 +1,16 @@
 
 -- | Compositions. 
--- This module is equivalent to the module "Combinations", 
--- but it turns out that \"compositions\" is the accepted name. I will
--- remove the "Combinations" module in the future.
+--
+-- See eg. <http://en.wikipedia.org/wiki/Composition_%28combinatorics%29>
+--
 
 module Math.Combinat.Compositions where
 
 import Math.Combinat.Numbers (factorial,binomial)
 
 -------------------------------------------------------
+
+type Composition = [Int]
 
 -- | Compositions fitting into a given shape and having a given degree.
 --   The order is lexicographic, that is, 
@@ -30,8 +32,13 @@ countCompositions' [] _ = 0
 countCompositions' shape@(s:ss) n = sum 
   [ countCompositions' ss (n-x) | x <- [0..min s n] ] 
 
+-- | All positive compositions of a given number (filtrated by the length). 
+-- Total number of these is @2^(n-1)@
+allCompositions1 :: Int -> [[Composition]]
+allCompositions1 n = map (\d -> compositions1 d n) [1..n] 
+
 -- | All compositions fitting into a given shape.
-allCompositions' :: [Int] -> [[[Int]]]
+allCompositions' :: [Int] -> [[Composition]]
 allCompositions' shape = map (compositions' shape) [0..d] where d = sum shape
 
 -- | Compositions of a given length.
