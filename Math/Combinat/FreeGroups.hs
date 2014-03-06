@@ -256,6 +256,27 @@ countWordReductionsZ2 gens_ nn_ kk_
     
     n = div nn 2
     k = div kk 2
-          
+
+-- | Counts the number of words (without inverse generators) of length @n@ 
+-- which reduce to the identity element, using the relations @x^3=1@.
+--
+-- > countIdentityWordsZ3NoInv g n == sum [ 1 | w <- allWordsNoInv g n, 0 == length (reduceWordZ2 w) ]
+--
+-- In mathematica, the formula is: @Sum[ g^k * (g-1)^(n-k) * k/n * Binomial[3*n-k-1, n-k] , {k, 1,n} ]@
+--
+countIdentityWordsZ3NoInv
+  :: Int   -- ^ g = number of generators in the free group
+  -> Int   -- ^ n = length of the unreduced word
+  -> Integer
+countIdentityWordsZ3NoInv gens_ nn_ 
+  | nn==0           = 1
+  | mod nn 3 == 0   = sum [ ( binomial (3*n-i-1) (n-i) * g^i * (g-1)^(n-i) * i ) `div` n | i<-[1..n] ]
+  | otherwise       = 0
+  where
+    g  = fromIntegral gens_ :: Integer
+    nn = fromIntegral nn_   :: Integer
+    
+    n = div nn 3
+  
 --------------------------------------------------------------------------------
       
