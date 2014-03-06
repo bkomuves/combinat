@@ -26,7 +26,7 @@
 -- > 1, 1, 2, 12, 286, 33592, 23178480, ...
 --
 -- OEIS:A003121, \"Strict sense ballot numbers\", 
--- <http://www.research.att.com/~njas/sequences/A003121>.
+-- <https://oeis.org/A003121>.
 --
 -- See 
 -- R. M. Thrall, A combinatorial problem, Michigan Math. J. 1, (1952), 81-88.

@@ -2,7 +2,7 @@
 -- | A few important number sequences. 
 --  
 -- See the \"On-Line Encyclopedia of Integer Sequences\",
--- <http://www.research.att.com/~njas/sequences/> .
+-- <https://oeis.org> .
 
 module Math.Combinat.Numbers where
 

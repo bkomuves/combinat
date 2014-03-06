@@ -1,9 +1,10 @@
 Name:                combinat
 Version:             0.2.5.0
 Synopsis:            Generation of various combinatorial objects.
-Description:         A collection of functions to generate combinatorial
-                     objects like partitions, compositions, permutations,
-                     Young tableaux, various trees, etc.
+Description:         A collection of functions to generate (and if there is 
+                     a formula, count) combinatorial objects like partitions, 
+                     compositions, permutations, Young tableaux, various trees, 
+                     etc.
 License:             BSD3
 License-file:        LICENSE
 Author:              Balazs Komuves
