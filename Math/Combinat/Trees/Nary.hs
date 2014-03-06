@@ -22,9 +22,13 @@ module Math.Combinat.Trees.Nary
   , classifyTreeNode
   , isTreeLeaf  , isTreeNode
   , isTreeLeaf_ , isTreeNode_
+  , treeNodeNumberOfChildren 
+    -- * counting nodes
   , countTreeNodes
   , countTreeLeaves
-    -- * spines
+  , countTreeLabelsWith
+  , countTreeNodesWith 
+    -- * left and right spines
   , leftSpine  , leftSpine_
   , rightSpine , rightSpine_
   , leftSpineLength , rightSpineLength
@@ -295,6 +299,12 @@ isTreeLeaf_ (Node x cs) = case cs of { [] -> True ; _ -> False }
 isTreeNode_ :: Tree a -> Bool  
 isTreeNode_ (Node x cs) = case cs of { [] -> False ; _ -> True }  
 
+treeNodeNumberOfChildren :: Tree a -> Int
+treeNodeNumberOfChildren (Node _ cs) = length cs
+
+--------------------------------------------------------------------------------
+-- counting
+
 countTreeNodes :: Tree a -> Int
 countTreeNodes = go where
   go (Node x cs) = case cs of
@@ -306,6 +316,14 @@ countTreeLeaves = go where
   go (Node x cs) = case cs of
     [] -> 1
     _  -> sum (map go cs)
+
+countTreeLabelsWith :: (a -> Bool) -> Tree a -> Int
+countTreeLabelsWith f = go where
+  go (Node label cs) = (if f label then 1 else 0) + sum (map go cs)
+
+countTreeNodesWith :: (Tree a -> Bool) -> Tree a -> Int
+countTreeNodesWith f = go where
+  go node@(Node _ cs) = (if f node then 1 else 0) + sum (map go cs)
 
 --------------------------------------------------------------------------------
 
