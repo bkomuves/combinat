@@ -15,7 +15,7 @@ import Math.Combinat.Numbers
 -- | A generator of a (free) group
 data Generator a 
   = Gen a          -- @a@
-  | Inv a          -- @a^{-1}@
+  | Inv a          -- @a^(-1)@
   deriving (Eq,Ord,Show,Read)
 
 -- | A /word/, describing (non-uniquely) an element of a group.
@@ -76,8 +76,8 @@ allWordsNoInv g = go where
 multiplyFree :: Eq a => Word a -> Word a -> Word a
 multiplyFree w1 w2 = reduceWordFree (w1++w2)
 
--- | Reduces a word in a free group by repeatedly removing @x*x^{-1}@ and
--- @x^{-1}*x@ pairs. The set of /reduced words/ forms the free group; the
+-- | Reduces a word in a free group by repeatedly removing @x*x^(-1)@ and
+-- @x^(-1)*x@ pairs. The set of /reduced words/ forms the free group; the
 -- multiplication is obtained by concatenation followed by reduction.
 --
 reduceWordFree :: Eq a => Word a -> Word a
@@ -182,34 +182,56 @@ reduceWordZ3 = loop where
       (Inv x : Gen y : rest)         | x==y           -> go True rest
       (Gen x : Gen y : Gen z : rest) | x==y && y==z   -> go True rest
       (Inv x : Inv y : Inv z : rest) | x==y && y==z   -> go True rest
+      (Gen x : Gen y : rest)         | x==y           -> go True (Inv x : rest)       -- !!!
+      (Inv x : Inv y : rest)         | x==y           -> go True (Gen x : rest)
       (this : rest)                                   -> liftM (this:) $ go changed rest
       _                                               -> if changed then Just w else Nothing
       
 -- | Reduces a word, where each generator @x@ satisfies the additional relation @x^m=1@
 -- (that is, free products of Zm's)
 reduceWordZm :: Eq a => Int -> Word a -> Word a
-reduceWordZm k = loop where
+reduceWordZm m = loop where
+
   loop w = case reduceStep w of
     Nothing -> w
     Just w' -> loop w'
+
+  halfm = div m 2  -- if we encounter strictly more than m/2 equal elements in a row, we replace them by the inverses
  
   reduceStep :: Eq a => Word a -> Maybe (Word a)
   reduceStep = go False where   
     go changed w = case w of
-      (Gen x : Inv y : rest) | x==y                  -> go True rest
-      (Inv x : Gen y : rest) | x==y                  -> go True rest
-      something              | Just rest <- dropk w  -> go True rest
-      (this : rest)                                  -> liftM (this:) $ go changed rest
-      _                                              -> if changed then Just w else Nothing
+      (Gen x : Inv y : rest) | x==y                        -> go True rest
+      (Inv x : Gen y : rest) | x==y                        -> go True rest
+--      something              | Just rest <- dropk w        -> go True rest
+      something | Just (k,rest) <- dropIfMoreThanHalf w    -> go True (replicate (m-k) (inverseGen (head w)) ++ rest)
+      (this : rest)                                        -> liftM (this:) $ go changed rest
+      _                                                    -> if changed then Just w else Nothing
   
-  dropk :: Eq a => Word a -> Maybe (Word a)    
-  dropk []     = Nothing
-  dropk (x:xs) = go (k-1) xs where
+  dropIfMoreThanHalf :: Eq a => Word a -> Maybe (Int, Word a)
+  dropIfMoreThanHalf w = 
+    let (k,rest) = dropWhileEqual w 
+    in  if k > halfm then Just (k,rest)
+                     else Nothing
+                     
+  dropWhileEqual :: Eq a => Word a -> (Int, Word a) 
+  dropWhileEqual []     = (0,[])
+  dropWhileEqual (x0:rest) = go 1 rest where
+    go k []         = (k,[])
+    go k xxs@(x:xs) = if k==m then (m,xxs) 
+                              else if x==x0 then go (k+1) xs 
+                                            else (k,xxs)
+
+{-  
+  dropm :: Eq a => Word a -> Maybe (Word a)    
+  dropm []     = Nothing
+  dropm (x:xs) = go (m-1) xs where
     go 0 rest    = Just rest
     go j (y:ys)  = if y==x 
       then go (j-1) ys
       else Nothing 
     go j []      = Nothing
+-}
 
 --------------------------------------------------------------------------------
 
