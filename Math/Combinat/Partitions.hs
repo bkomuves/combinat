@@ -1,9 +1,10 @@
 
--- | Partitions. Partitions are nonincreasing sequences of positive integers.
+-- | Partitions of integers and multisets. 
+-- Integer partitions are nonincreasing sequences of positive integers.
 --
 -- See also 
 --   Donald E. Knuth: The Art of Computer Programming, vol 4, pre-fascicle 3B.
-
+--
 module Math.Combinat.Partitions
   ( -- * Type and basic stuff
     Partition
@@ -33,6 +34,13 @@ module Math.Combinat.Partitions
   , allPartitions 
   , countAllPartitions'
   , countAllPartitions
+    -- * Ferrer diagrams
+  , printFerrerDiagram 
+  , ferrerDiagram 
+  , ferrerDiagramEnglishNotation 
+  , ferrerDiagramFrenchNotation 
+  , ferrerDiagramEnglishNotation'
+  , ferrerDiagramFrenchNotation'
     -- * Paritions of multisets, vector partitions
   , partitionMultiset
   , IntVector
@@ -50,7 +58,7 @@ import Math.Combinat.Numbers (factorial,binomial,multinomial)
 
 --------------------------------------------------------------------------------
 
--- | The additional invariant enforced here is that partitions 
+-- | A partition of an integer. The additional invariant enforced here is that partitions 
 --   are monotone decreasing sequences of positive integers.
 newtype Partition = Partition [Int] deriving (Eq,Ord,Show,Read)
 
@@ -62,7 +70,7 @@ mkPartition xs = Partition $ sortBy (reverseCompare) $ filter (>0) xs
 toPartitionUnsafe :: [Int] -> Partition
 toPartitionUnsafe = Partition
 
--- | Checks whether the input is a partition. See the note at 'isPartition'!
+-- | Checks whether the input is an integer partition. See the note at 'isPartition'!
 toPartition :: [Int] -> Partition
 toPartition xs = if isPartition xs
   then toPartitionUnsafe xs
@@ -119,7 +127,7 @@ elements (Partition part) = _elements part
 _elements :: [Int] -> [(Int,Int)]
 _elements shape = [ (i,j) | (i,l) <- zip [1..] shape, j<-[1..l] ] 
 
--- | Computes the number of \"automorphisms\" of a given partition.
+-- | Computes the number of \"automorphisms\" of a given integer partition.
 countAutomorphisms :: Partition -> Integer  
 countAutomorphisms = _countAutomorphisms . fromPartition
 
@@ -128,7 +136,7 @@ _countAutomorphisms = multinomial . map length . group
  
 ---------------------------------------------------------------------------------
 
--- | Partitions of d, fitting into a given rectangle, as lists.
+-- | Integer partitions of @d@, fitting into a given rectangle, as lists.
 _partitions' 
   :: (Int,Int)     -- ^ (height,width)
   -> Int           -- ^ d
@@ -153,24 +161,24 @@ countPartitions' (_,0) d = if d==0 then 1 else 0
 countPartitions' (h,w) d = sum
   [ countPartitions' (i,w-1) (d-i) | i <- [1..min d h] ] 
 
--- | Partitions of d, as lists
+-- | Partitions of @d@, as lists
 _partitions :: Int -> [[Int]]
 _partitions d = _partitions' (d,d) d
 
--- | Partitions of d.
+-- | Partitions of @d@.
 partitions :: Int -> [Partition]
 partitions d = partitions' (d,d) d
 
 countPartitions :: Int -> Integer
 countPartitions d = countPartitions' (d,d) d
 
--- | All partitions fitting into a given rectangle.
+-- | All integer partitions fitting into a given rectangle.
 allPartitions'  
   :: (Int,Int)        -- ^ (height,width)
   -> [[Partition]]
 allPartitions' (h,w) = [ partitions' (h,w) i | i <- [0..d] ] where d = h*w
 
--- | All partitions up to a given degree.
+-- | All integer partitions up to a given degree (that is, all integer partitions whose sum is less or equal to @d@)
 allPartitions :: Int -> [[Partition]]
 allPartitions d = [ partitions i | i <- [0..d] ]
 
@@ -182,6 +190,32 @@ countAllPartitions' (h,w) =
 
 countAllPartitions :: Int -> Integer
 countAllPartitions d = sum [ countPartitions i | i <- [0..d] ]
+
+--------------------------------------------------------------------------------
+-- * Ferrer diagrams
+
+printFerrerDiagram :: Partition -> IO ()
+printFerrerDiagram = putStrLn . ferrerDiagram
+
+-- | Synonym for 'ferrerDiagramEnglishNotation'
+ferrerDiagram :: Partition -> String
+ferrerDiagram = ferrerDiagramEnglishNotation
+
+ferrerDiagramEnglishNotation :: Partition -> String
+ferrerDiagramEnglishNotation = ferrerDiagramEnglishNotation' '@'
+
+ferrerDiagramFrenchNotation :: Partition -> String
+ferrerDiagramFrenchNotation  = ferrerDiagramFrenchNotation'  '@'
+
+ferrerDiagramEnglishNotation' :: Char -> Partition -> String
+ferrerDiagramEnglishNotation' ch part = unlines (map f ys) where
+  ys  = fromPartition part
+  f n = replicate n ch 
+
+ferrerDiagramFrenchNotation' :: Char -> Partition -> String
+ferrerDiagramFrenchNotation' ch part = unlines (map f ys) where
+  ys  = reverse $ fromPartition $ dualPartition part
+  f n = replicate n ch 
 
 --------------------------------------------------------------------------------
 
