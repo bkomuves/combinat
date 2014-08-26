@@ -1,11 +1,17 @@
 
+-- | Miscellaneous helper functions
+
 module Math.Combinat.Helper where
+
+--------------------------------------------------------------------------------
 
 import Control.Monad
 
 import Data.List
 import Data.Ord
-import qualified Data.Set as Set
+
+import Data.Set (Set) ; import qualified Data.Set as Set
+import Data.Map (Map) ; import qualified Data.Map as Map
 
 import Debug.Trace
 
@@ -14,10 +20,17 @@ import Debug.Trace
 debug :: Show a => a -> b -> b
 debug x y = trace ("-- " ++ show x ++ "\n") y
 
-{-# SPECIALIZE swap :: (a,a) -> (a,a) #-}
+{-# SPECIALIZE swap :: (a  ,a  ) -> (a  ,a  ) #-}
 {-# SPECIALIZE swap :: (Int,Int) -> (Int,Int) #-}
 swap :: (a,b) -> (b,a)
 swap (x,y) = (y,x)
+
+--------------------------------------------------------------------------------
+
+{-# SPECIALIZE sum' :: [Int]     -> Int     #-}
+{-# SPECIALIZE sum' :: [Integer] -> Integer #-}
+sum' :: Num a => [a] -> a
+sum' = foldl' (+) 0
 
 --------------------------------------------------------------------------------
 
@@ -60,6 +73,18 @@ mapWithFirstLast f = go True where
   go b (x : xs) = f b False x : go False xs
 
 --------------------------------------------------------------------------------
+
+pairs :: [a] -> [(a,a)]
+pairs = go where
+  go (x:xs@(y:_)) = (x,y) : go xs
+  go _            = []
+
+pairsWith :: (a -> a -> b) -> [a] -> [b]
+pairsWith f = go where
+  go (x:xs@(y:_)) = f x y : go xs
+  go _            = []
+
+--------------------------------------------------------------------------------
 -- helpers for ASCII drawing
 
 -- | extend lines with spaces so that they have the same line
@@ -89,6 +114,10 @@ vConcatLines = concat
 -- helps testing the random rutines 
 count :: Eq a => a -> [a] -> Int
 count x xs = length $ filter (==x) xs
+
+histogram :: (Eq a, Ord a) => [a] -> [(a,Int)]
+histogram xs = Map.toList table where
+  table = Map.fromListWith (+) [ (x,1) | x<-xs ] 
 
 --------------------------------------------------------------------------------
 
