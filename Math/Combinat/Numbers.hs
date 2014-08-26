@@ -10,6 +10,8 @@ module Math.Combinat.Numbers where
 
 import Data.Array
 
+import Math.Combinat.Helper ( sum' )
+
 --------------------------------------------------------------------------------
 
 -- | @(-1)^k@
@@ -102,6 +104,9 @@ signedStirling1stArray n
 -- | (Signed) Stirling numbers of the first kind. OEIS:A008275.
 -- This function uses 'signedStirling1stArray', so it shouldn't be used
 -- to compute /many/ Stirling numbers.
+--
+-- Argument order: @signedStirling1st n k@
+--
 signedStirling1st :: Integral a => a -> a -> Integer
 signedStirling1st n k 
   | k < 1     = 0
@@ -114,6 +119,9 @@ unsignedStirling1st n k = abs (signedStirling1st n k)
 
 -- | Stirling numbers of the second kind. OEIS:A008277.
 -- This function uses an explicit formula.
+-- 
+-- Argument order: @stirling2nd n k@
+--
 stirling2nd :: Integral a => a -> a -> Integer
 stirling2nd n k 
   | k < 1     = 0
@@ -138,5 +146,32 @@ bernoulli n
         / toRational (k+1)
 
 --------------------------------------------------------------------------------
+-- * Bell numbers
+
+-- | Bell numbers (Sloane's A000110) from B(0) up to B(n). B(0)=B(1)=1, B(2)=2, etc. 
+--
+-- The Bell numbers count the number of /set partitions/ of a set of size @n@
+-- 
+-- See <http://en.wikipedia.org/wiki/Bell_number>
+--
+bellNumbersArray :: Integral a => a -> Array Int Integer
+bellNumbersArray nn = arr where
+  arr = array (0::Int,n) kvs 
+  n = fromIntegral nn :: Int
+  kvs = (0,1) : [ (k, f k) | k<-[1..n] ] 
+  f n = sum' [ binomial (n-1) k * arr ! k | k<-[0..n-1] ]
+
+-- | The n-th Bell number B(n), using the Stirling numbers of the second kind.
+-- This may be slower than using 'bellNumbersArray'.
+bellNumber :: Integral a => a -> Integer
+bellNumber nn
+  | n <  0     = error "bellNumber: expecting a nonnegative index"
+  | n == 0     = 1
+  | otherwise  = sum' [ stirling2nd n k | k<-[1..n] ] 
+  where
+    n = fromIntegral nn :: Int
+
+--------------------------------------------------------------------------------
+
 
  
