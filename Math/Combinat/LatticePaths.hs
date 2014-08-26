@@ -18,7 +18,7 @@ data Step
   | DownStep       -- ^ the step @(1,-1)@
   deriving (Eq,Ord,Show)
 
--- | A lattice path is a path using only the allowed steps. 
+-- | A lattice path is a path using only the allowed steps, never going below the zero level line @y=0@. 
 --
 -- Note that if you rotate such a path by 45 degrees counterclockwise,
 -- you get a path which uses only the steps @(1,0)@ and @(0,1)@, and stays

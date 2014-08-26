@@ -1,17 +1,24 @@
 
 -- | A collection of functions to generate combinatorial
 -- objects like partitions, compositions, permutations,
--- Young tableaux, various trees, etc.
+-- Young tableaux, various trees, etc etc.
 --
 --
 -- The long-term goals are 
 --
---  (1) to be efficient; 
+--  (1) generate most of the standard structures;
+-- 
+--  (2) while being efficient; 
 --
---  (2) to be able to enumerate the structures 
---      with constant memory usage. 
+--  (3) to be able to enumerate the structures 
+--      with constant memory usage;
 --
--- The short-term goal is to generate 
+--  (4) and to be able to randomly sample from them.
+--
+--  (5) finally, be a repository of algorithms
+--
+--
+-- The short-term goal is simply to generate 
 -- many interesting structures.
 --
 --
@@ -40,6 +47,7 @@ module Math.Combinat
   , module Math.Combinat.Permutations
   , module Math.Combinat.Tableaux
   , module Math.Combinat.Trees
+  , module Math.Combinat.LatticePaths
   , module Math.Combinat.Graphviz
   ) where
 
@@ -51,4 +59,5 @@ import Math.Combinat.Partitions
 import Math.Combinat.Permutations
 import Math.Combinat.Tableaux
 import Math.Combinat.Trees
+import Math.Combinat.LatticePaths
 import Math.Combinat.Graphviz

@@ -16,9 +16,13 @@ import Data.Map (Map) ; import qualified Data.Map as Map
 import Debug.Trace
 
 --------------------------------------------------------------------------------
+-- * debugging
 
 debug :: Show a => a -> b -> b
 debug x y = trace ("-- " ++ show x ++ "\n") y
+
+--------------------------------------------------------------------------------
+-- * pairs
 
 {-# SPECIALIZE swap :: (a  ,a  ) -> (a  ,a  ) #-}
 {-# SPECIALIZE swap :: (Int,Int) -> (Int,Int) #-}
@@ -26,6 +30,7 @@ swap :: (a,b) -> (b,a)
 swap (x,y) = (y,x)
 
 --------------------------------------------------------------------------------
+-- * lists
 
 {-# SPECIALIZE sum' :: [Int]     -> Int     #-}
 {-# SPECIALIZE sum' :: [Integer] -> Integer #-}
@@ -33,6 +38,19 @@ sum' :: Num a => [a] -> a
 sum' = foldl' (+) 0
 
 --------------------------------------------------------------------------------
+
+pairs :: [a] -> [(a,a)]
+pairs = go where
+  go (x:xs@(y:_)) = (x,y) : go xs
+  go _            = []
+
+pairsWith :: (a -> a -> b) -> [a] -> [b]
+pairsWith f = go where
+  go (x:xs@(y:_)) = f x y : go xs
+  go _            = []
+
+--------------------------------------------------------------------------------
+-- * equality and ordering 
 
 equating :: Eq b => (a -> b) -> a -> a -> Bool
 equating f x y = (f x == f y)
@@ -56,6 +74,7 @@ nubOrd = worker Set.empty where
     | otherwise      = x : worker (Set.insert x s) xs
 
 --------------------------------------------------------------------------------
+-- * first \/ last 
 
 -- | The boolean argument will @True@ only for the last element
 mapWithLast :: (Bool -> a -> b) -> [a] -> [b]
@@ -73,19 +92,7 @@ mapWithFirstLast f = go True where
   go b (x : xs) = f b False x : go False xs
 
 --------------------------------------------------------------------------------
-
-pairs :: [a] -> [(a,a)]
-pairs = go where
-  go (x:xs@(y:_)) = (x,y) : go xs
-  go _            = []
-
-pairsWith :: (a -> a -> b) -> [a] -> [b]
-pairsWith f = go where
-  go (x:xs@(y:_)) = f x y : go xs
-  go _            = []
-
---------------------------------------------------------------------------------
--- helpers for ASCII drawing
+-- * helpers for ASCII drawing
 
 -- | extend lines with spaces so that they have the same line
 mkLinesUniformWidth :: [String] -> [String]
@@ -110,6 +117,7 @@ vConcatLines :: [[String]] -> [String]
 vConcatLines = concat
 
 --------------------------------------------------------------------------------
+-- * counting
 
 -- helps testing the random rutines 
 count :: Eq a => a -> [a] -> Int
@@ -120,12 +128,14 @@ histogram xs = Map.toList table where
   table = Map.fromListWith (+) [ (x,1) | x<-xs ] 
 
 --------------------------------------------------------------------------------
+-- * maybe
 
 fromJust :: Maybe a -> a
 fromJust (Just x) = x
 fromJust Nothing = error "fromJust: Nothing"
 
 --------------------------------------------------------------------------------
+-- * bool
 
 intToBool :: Int -> Bool
 intToBool 0 = False
@@ -137,6 +147,7 @@ boolToInt False = 0
 boolToInt True  = 1
 
 --------------------------------------------------------------------------------
+-- * iteration
     
 -- iterated function application
 nest :: Int -> (a -> a) -> a -> a

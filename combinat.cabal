@@ -51,6 +51,7 @@ Library
                        Math.Combinat.Trees
                        Math.Combinat.Trees.Binary
                        Math.Combinat.Trees.Nary
+                       Math.Combinat.LatticePaths
                        Math.Combinat.FreeGroups
                        Math.Combinat.Graphviz
                        Math.Combinat.Helper

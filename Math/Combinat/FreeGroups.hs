@@ -1,5 +1,6 @@
 
--- | Words in free groups (and free powers of cyclic groups) 
+-- | Words in free groups (and free powers of cyclic groups).
+-- This module is not re-exported by "Math.Combinat"
 --
 {-# LANGUAGE PatternGuards #-}
 module Math.Combinat.FreeGroups where

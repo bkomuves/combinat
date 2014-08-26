@@ -17,6 +17,8 @@ import Math.Combinat.Helper
 --------------------------------------------------------------------------------
 -- * generating all compositions
 
+-- | A /composition/ of an integer @n@ into @k@ parts is an ordered @k@-tuple of nonnegative (sometimes positive) integers
+-- whose sum is @n@.
 type Composition = [Int]
 
 -- | Compositions fitting into a given shape and having a given degree.

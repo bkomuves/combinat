@@ -208,7 +208,11 @@ binaryTreeToForest = worker where
 --------------------------------------------------------------------------------
 -- * Nested parentheses
 
--- | Synonym for 'fasc4A_algorithm_P'.
+-- | Generates all sequences of nested parentheses of length @2n@ in
+-- lexigraphic order.
+-- 
+-- Synonym for 'fasc4A_algorithm_P'.
+--
 nestedParentheses :: Int -> [[Paren]]
 nestedParentheses = fasc4A_algorithm_P
 
