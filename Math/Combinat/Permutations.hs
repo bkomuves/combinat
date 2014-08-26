@@ -66,6 +66,7 @@ import Data.List hiding (permutations)
 
 import Data.Array
 import Data.Array.ST
+import Data.Array.Unsafe
 
 import Math.Combinat.Helper
 import Math.Combinat.Numbers (factorial,binomial)
