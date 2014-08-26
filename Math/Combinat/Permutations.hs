@@ -51,7 +51,7 @@ module Math.Combinat.Permutations
 #ifdef QUICKCHECK
     -- * QuickCheck 
   , checkAll
-#endif QUICKCHECK
+#endif 
   ) 
   where
 
