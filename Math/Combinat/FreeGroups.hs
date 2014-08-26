@@ -6,11 +6,17 @@ module Math.Combinat.FreeGroups where
 
 --------------------------------------------------------------------------------
 
-import Control.Monad (liftM)
+import Data.Char     ( chr )
+import Data.List     ( mapAccumL )
+
+import Control.Monad ( liftM )
+import System.Random
 
 import Math.Combinat.Numbers
+import Math.Combinat.Helper
 
 --------------------------------------------------------------------------------
+-- * Words
 
 -- | A generator of a (free) group
 data Generator a 
@@ -18,9 +24,26 @@ data Generator a
   | Inv a          -- @a^(-1)@
   deriving (Eq,Ord,Show,Read)
 
+-- | The index of a generator
+unGen :: Generator a -> a
+unGen g = case g of
+  Gen x -> x
+  Inv x -> x
+
 -- | A /word/, describing (non-uniquely) an element of a group.
 -- The identity element is represented (among others) by the empty word.
 type Word a = [Generator a] 
+
+--------------------------------------------------------------------------------
+
+-- | Generators are shown as small letters: @a@, @b@, @c@, ...
+-- and their inverses are shown as capital letters, so @A=a^-1@, @B=b^-1@, etc.
+showGen :: Generator Int -> Char
+showGen (Gen i) = chr (96+i)
+showGen (Inv i) = chr (64+i)
+
+showWord :: Word Int -> String
+showWord = map showGen
 
 --------------------------------------------------------------------------------
   
@@ -64,6 +87,45 @@ allWordsNoInv g = go where
   go 0 = [[]]
   go n = [ x:xs | xs <- go (n-1) , x <- elems ]
   elems = [ Gen a | a<-[1..g] ]
+
+--------------------------------------------------------------------------------
+-- * Random words
+
+-- | A random group generator (or its inverse) between @1@ and @g@
+randomGenerator
+  :: RandomGen g
+  => Int         -- ^ @g@ = number of generators 
+  -> g -> (Generator Int, g)
+randomGenerator d g0 = (gen,g2) where
+  (b,g1) = random g0
+  (k,g2) = randomR (1,d) g1
+  gen = if b then Gen k else Inv k
+
+-- | A random group generator (but never its inverse) between @1@ and @g@
+randomGeneratorNoInv
+  :: RandomGen g
+  => Int         -- ^ @g@ = number of generators 
+  -> g -> (Generator Int, g)
+randomGeneratorNoInv d g0 = (Gen k,g1) where
+  (k,g1) = randomR (1,d) g0
+
+-- | A random word of length @n@ using @g@ generators (or their inverses)
+randomWord 
+  :: RandomGen g
+  => Int         -- ^ @g@ = number of generators 
+  -> Int         -- ^ @n@ = length of the word
+  -> g -> (Word Int, g)
+randomWord d n g0 = (word,g1) where
+  (g1,word) = mapAccumL (\g _ -> swap (randomGenerator d g)) g0 [1..n]   
+
+-- | A random word of length @n@ using @g@ generators (but not their inverses)
+randomWordNoInv
+  :: RandomGen g
+  => Int         -- ^ @g@ = number of generators 
+  -> Int         -- ^ @n@ = length of the word
+  -> g -> (Word Int, g)
+randomWordNoInv d n g0 = (word,g1) where
+  (g1,word) = mapAccumL (\g _ -> swap (randomGeneratorNoInv d g)) g0 [1..n]   
   
 --------------------------------------------------------------------------------
 -- * The free group on @g@ generators
