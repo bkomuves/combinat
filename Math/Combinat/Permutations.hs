@@ -347,7 +347,7 @@ randomPermutationDurstenfeldSattolo isSattolo n rnd = res where
     ar <- newArray_ (1,n) 
     forM_ [1..n] $ \i -> writeArray ar i i
     rnd' <- worker n (if isSattolo then n-1 else n) rnd ar 
-    perm <- unsafeFreeze ar
+    perm <- Data.Array.Unsafe.unsafeFreeze ar
     return (Permutation perm, rnd')
   worker :: RandomGen g => Int -> Int -> g -> STUArray s Int Int -> ST s g 
   worker n m rnd ar = 

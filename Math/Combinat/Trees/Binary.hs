@@ -335,7 +335,7 @@ fasc4A_algorithm_R n0 rnd = res where
   res = runST $ do
     ar <- newArray (0,2*n0) 0
     rnd' <- worker rnd 1 ar
-    links <- unsafeFreeze ar
+    links <- Data.Array.Unsafe.unsafeFreeze ar
     return (toTree links, rnd')
   toTree links = f (links!0) where
     f i = if odd i 
