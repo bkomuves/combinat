@@ -109,9 +109,10 @@ signedStirling1stArray n
 --
 signedStirling1st :: Integral a => a -> a -> Integer
 signedStirling1st n k 
-  | k < 1     = 0
-  | k > n     = 0
-  | otherwise = signedStirling1stArray n ! (fromIntegral k)
+  | k==0 && n==0 = 1
+  | k < 1        = 0
+  | k > n        = 0
+  | otherwise    = signedStirling1stArray n ! (fromIntegral k)
 
 -- | (Unsigned) Stirling numbers of the first kind. See 'signedStirling1st'.
 unsignedStirling1st :: Integral a => a -> a -> Integer
@@ -124,8 +125,9 @@ unsignedStirling1st n k = abs (signedStirling1st n k)
 --
 stirling2nd :: Integral a => a -> a -> Integer
 stirling2nd n k 
-  | k < 1     = 0
-  | k > n     = 0
+  | k==0 && n==0 = 1
+  | k < 1        = 0
+  | k > n        = 0
   | otherwise = sum xs `div` factorial k where
       xs = [ paritySign (k-i) * binomial k i * (fromIntegral i)^n | i<-[0..k] ]
 
