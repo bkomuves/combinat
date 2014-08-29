@@ -228,7 +228,7 @@ countNestedParentheses :: Int -> Integer
 countNestedParentheses = countBinaryTrees
 
 -- | Generates all sequences of nested parentheses of length 2n.
--- Order is lexigraphic (when right parentheses are considered 
+-- Order is lexicographical (when right parentheses are considered 
 -- smaller then left ones).
 -- Based on \"Algorithm P\" in Knuth, but less efficient because of
 -- the \"idiomatic\" code.
@@ -249,6 +249,7 @@ fasc4A_algorithm_P n = unfold next ( start , [] ) where
 	      LeftParen  -> 
 	        {- debug ("---",reverse ls,l,r,rs) $ -}
 	        findj ( lls , [] ) ( reverse (RightParen:rs) , [] ) 
+  next _ = error "fasc4A_algorithm_P: fatal error shouldn't happen"
 
   findj :: ([Paren],[Paren]) -> ([Paren],[Paren]) -> Maybe ([Paren],[Paren])
   findj ( [] , _ ) _ = Nothing
@@ -259,6 +260,7 @@ fasc4A_algorithm_P n = unfold next ( start , [] ) where
 	      (a:_:as) -> findj ( ls, RightParen:rs ) ( as , LeftParen:a:ys )
 	      _ -> findj ( lls, [] ) ( reverse rs ++ xs , ys) 
 	    RightParen -> Just ( reverse ys ++ xs ++ reverse (LeftParen:rs) ++ ls , [] )
+  findj _ _ = error "fasc4A_algorithm_P: fatal error shouldn't happen"
     
 -- | Generates a uniformly random sequence of nested parentheses of length 2n.    
 -- Based on \"Algorithm W\" in Knuth.

@@ -45,6 +45,8 @@ Library
                        Math.Combinat.Tuples 
                        Math.Combinat.Compositions
                        Math.Combinat.Partitions
+                       Math.Combinat.Partitions.Set
+                       Math.Combinat.Partitions.NonCrossing
                        Math.Combinat.Permutations
                        Math.Combinat.Tableaux
                        Math.Combinat.Tableaux.Kostka

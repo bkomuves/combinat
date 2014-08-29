@@ -29,16 +29,6 @@ debug x y = trace ("-- " ++ show x ++ "\n") y
 swap :: (a,b) -> (b,a)
 swap (x,y) = (y,x)
 
---------------------------------------------------------------------------------
--- * lists
-
-{-# SPECIALIZE sum' :: [Int]     -> Int     #-}
-{-# SPECIALIZE sum' :: [Integer] -> Integer #-}
-sum' :: Num a => [a] -> a
-sum' = foldl' (+) 0
-
---------------------------------------------------------------------------------
-
 pairs :: [a] -> [(a,a)]
 pairs = go where
   go (x:xs@(y:_)) = (x,y) : go xs
@@ -48,6 +38,14 @@ pairsWith :: (a -> a -> b) -> [a] -> [b]
 pairsWith f = go where
   go (x:xs@(y:_)) = f x y : go xs
   go _            = []
+
+--------------------------------------------------------------------------------
+-- * lists
+
+{-# SPECIALIZE sum' :: [Int]     -> Int     #-}
+{-# SPECIALIZE sum' :: [Integer] -> Integer #-}
+sum' :: Num a => [a] -> a
+sum' = foldl' (+) 0
 
 --------------------------------------------------------------------------------
 -- * equality and ordering 
@@ -62,6 +60,9 @@ reverseOrdering EQ = EQ
 
 reverseCompare :: Ord a => a -> a -> Ordering
 reverseCompare x y = reverseOrdering $ compare x y
+
+reverseSort :: Ord a => [a] -> [a]
+reverseSort = sortBy reverseCompare
 
 groupSortBy :: (Eq b, Ord b) => (a -> b) -> [a] -> [[a]]
 groupSortBy f = groupBy (equating f) . sortBy (comparing f) 
