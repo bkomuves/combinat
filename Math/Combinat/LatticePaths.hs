@@ -6,6 +6,8 @@ module Math.Combinat.LatticePaths where
 
 --------------------------------------------------------------------------------
 
+import System.Random
+
 import Math.Combinat.Numbers
 import Math.Combinat.Trees.Binary
 
@@ -101,8 +103,26 @@ pathNumberOfTouches' h = go 0 0 0 where
 -- Remark: Dyck paths are obviously in bijection with nested parentheses, and thus
 -- also with binary trees.
 --
+-- Order is reverse lexicographical:
+--
+-- > sort (dyckPaths m) == reverse (dyckPaths m)
+-- 
 dyckPaths :: Int -> [LatticePath]
 dyckPaths = map nestedParensToDyckPath . nestedParentheses 
+
+-- | @dyckPaths m@ lists all Dyck paths from @(0,0)@ to @(2m,0)@. 
+--
+-- > sort (dyckPathsNaive m) == sort (dyckPaths m) 
+--  
+-- Naive recursive algorithm, order is ad-hoc
+--
+dyckPathsNaive :: Int -> [LatticePath]
+dyckPathsNaive = worker where
+  worker  0 = [[]]
+  worker  m = as ++ bs where
+    as = [ bracket p      | p <- worker (m-1) ] 
+    bs = [ bracket p ++ q | k <- [1..m-1] , p <- worker (k-1) , q <- worker (m-k) ]
+  bracket p = UpStep : p ++ [DownStep]
 
 -- | The number of Dyck paths from @(0,0)@ to @(2m,0)@ is simply the m\'th Catalan number.
 countDyckPaths :: Int -> Integer
@@ -260,3 +280,12 @@ countPeakingDyckPaths k m
   | otherwise = div (binomial m k * binomial m (k-1)) (fromIntegral m)
 
 --------------------------------------------------------------------------------
+-- * Random lattice paths
+
+-- | A uniformly random Dyck path of length @2m@
+randomDyckPath :: RandomGen g => Int -> g -> (LatticePath,g)
+randomDyckPath m g0 = (nestedParensToDyckPath parens, g1) where
+  (parens,g1) = randomNestedParentheses m g0
+
+--------------------------------------------------------------------------------
+
