@@ -36,6 +36,14 @@ isValidPath = go 0 where
                  in  if y'<0 then False 
                              else go y' ts
 
+-- | A Dyck path is a lattice path whose last point lies on the @y=0@ line
+isDyckPath :: LatticePath -> Bool
+isDyckPath = go 0 where
+  go !y []     = y==0
+  go !y (t:ts) = let y' = case t of { UpStep -> y+1 ; DownStep -> y-1 }
+                 in  if y'<0 then False 
+                             else go y' ts
+
 -- | Maximal height of a lattice path
 pathHeight :: LatticePath -> Int
 pathHeight = go 0 0 where
@@ -53,13 +61,20 @@ pathEndpoint = go 0 0 where
     DownStep -> go (x+1) (y-1) ts
 
 -- | Returns the coordinates of the path (excluding the starting point @(0,0)@, but including
--- the endpoint
+-- the endpoint)
 pathCoordinates :: LatticePath -> [(Int,Int)]
 pathCoordinates = go 0 0 where
   go _  _  []     = []
   go !x !y (t:ts) = let x' = x + 1
                         y' = case t of { UpStep -> y+1 ; DownStep -> y-1 }
                     in  (x',y') : go x' y' ts
+
+-- | Number of peaks of a path (excluding the endpoint)
+pathNumberOfPeaks :: LatticePath -> Int
+pathNumberOfPeaks = go 0 where
+  go !k (x:xs@(y:_)) = go (if x==UpStep && y==DownStep then k+1 else k) xs
+  go !k [x] = k
+  go !k [ ] = k
 
 -- | Number of points on the path which touch the @y=0@ zero level line
 -- (excluding the starting point @(0,0)@, but including the endpoint; that is, for Dyck paths it this is always positive!).
@@ -87,12 +102,21 @@ pathNumberOfTouches' h = go 0 0 0 where
 -- also with binary trees.
 --
 dyckPaths :: Int -> [LatticePath]
-dyckPaths = map (map f) . nestedParentheses where
-  f p = case p of { LeftParen -> UpStep ; RightParen -> DownStep }
+dyckPaths = map nestedParensToDyckPath . nestedParentheses 
 
 -- | The number of Dyck paths from @(0,0)@ to @(2m,0)@ is simply the m\'th Catalan number.
 countDyckPaths :: Int -> Integer
 countDyckPaths m = catalan m
+
+-- | The trivial bijection
+nestedParensToDyckPath :: [Paren] -> LatticePath
+nestedParensToDyckPath = map f where
+  f p = case p of { LeftParen -> UpStep ; RightParen -> DownStep }
+
+-- | The trivial bijection in the other direction
+dyckPathToNestedParens :: LatticePath -> [Paren]
+dyckPathToNestedParens = map g where
+  g s = case s of { UpStep -> LeftParen ; DownStep -> RightParen }
 
 --------------------------------------------------------------------------------
 -- * Bounded Dyck paths
@@ -163,7 +187,7 @@ latticePathsNaive (x,y) = worker x y where
 --------------------------------------------------------------------------------
 -- * Zero-level touches
 
--- | @touchingDyckPathsNaive k m@ lists all Dyck paths from @(0,0)@ to @(2m,0)@ which touch the 
+-- | @touchingDyckPaths k m@ lists all Dyck paths from @(0,0)@ to @(2m,0)@ which touch the 
 -- zero level line @y=0@ exactly @k@ times (excluding the starting point, but including the endpoint;
 -- thus, @k@ should be positive). Synonym for 'touchingDyckPathsNaive'.
 touchingDyckPaths
@@ -196,4 +220,43 @@ touchingDyckPathsNaive = worker where
       bracket p = UpStep : p ++ [DownStep] 
 
 --------------------------------------------------------------------------------
+-- * Dyck paths with given number of peaks
 
+-- | @peakingDyckPathsNaive k m@ lists all Dyck paths from @(0,0)@ to @(2m,0)@ with exactly @k@ peaks.
+--
+-- > sort (peakingDyckPathsNaive k m) = sort [ p | p <- dyckPaths m , pathNumberOfPeaks p == k ]
+--  
+-- Naive recursive algorithm, resulting order is pretty ad-hoc.
+--
+peakingDyckPathsNaive 
+  :: Int      -- ^ @k@ = number of peaks
+  -> Int      -- ^ @m@ = half-length
+  -> [LatticePath]
+peakingDyckPathsNaive = worker where
+  worker !k !m
+    | m == 0    = if k==0 then [[]] else []       
+    | k <= 0    = []
+    | m <  0    = []
+    | k == 1    = [ singlePeak m ] 
+    | otherwise = as ++ bs ++ cs
+    where
+      as = [ bracket p      |                                 p <- worker k (m-1)                           ]
+      bs = [ smallHill ++ q |                                                       q <- worker (k-1) (m-1) ]
+      cs = [ bracket p ++ q | l <- [2..m-1] , a <- [1..k-1] , p <- worker a (l-1) , q <- worker (k-a) (m-l) ]
+      smallHill     = [ UpStep , DownStep ]
+      singlePeak !m = replicate m UpStep ++ replicate m DownStep 
+      bracket p = UpStep : p ++ [DownStep] 
+
+-- | Dyck paths of length @2m@ with @k@ peaks are counted by the Narayana numbers @N(m,k) = \binom{m}{k} \binom{m}{k-1} / m@
+countPeakingDyckPaths
+  :: Int      -- ^ @k@ = number of peaks
+  -> Int      -- ^ @m@ = half-length
+  -> Integer
+countPeakingDyckPaths k m 
+  | m == 0    = if k==0 then 1 else 0
+  | k <= 0    = 0
+  | m <  0    = 0
+  | k == 1    = 1
+  | otherwise = div (binomial m k * binomial m (k-1)) (fromIntegral m)
+
+--------------------------------------------------------------------------------
