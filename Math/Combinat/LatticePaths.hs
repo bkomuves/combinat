@@ -242,6 +242,16 @@ touchingDyckPathsNaive = worker where
 --------------------------------------------------------------------------------
 -- * Dyck paths with given number of peaks
 
+-- | @peakingDyckPaths k m@ lists all Dyck paths from @(0,0)@ to @(2m,0)@ with exactly @k@ peaks.
+--
+-- Synonym for 'peakingDyckPathsNaive'
+--
+peakingDyckPaths
+  :: Int      -- ^ @k@ = number of peaks
+  -> Int      -- ^ @m@ = half-length
+  -> [LatticePath]
+peakingDyckPaths = peakingDyckPathsNaive 
+
 -- | @peakingDyckPathsNaive k m@ lists all Dyck paths from @(0,0)@ to @(2m,0)@ with exactly @k@ peaks.
 --
 -- > sort (peakingDyckPathsNaive k m) = sort [ p | p <- dyckPaths m , pathNumberOfPeaks p == k ]

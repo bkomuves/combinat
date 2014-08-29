@@ -2,9 +2,14 @@
 -- | Partitions of integers and multisets. 
 -- Integer partitions are nonincreasing sequences of positive integers.
 --
--- See also 
---   Donald E. Knuth: The Art of Computer Programming, vol 4, pre-fascicle 3B.
+-- See:
 --
+--  * Donald E. Knuth: The Art of Computer Programming, vol 4, pre-fascicle 3B.
+--
+--  * <http://en.wikipedia.org/wiki/Partition_(number_theory)>
+--
+
+{-# LANGUAGE BangPatterns #-}
 module Math.Combinat.Partitions
   ( -- * Type and basic stuff
     Partition
@@ -23,6 +28,7 @@ module Math.Combinat.Partitions
   , _elements
   , countAutomorphisms
   , _countAutomorphisms
+  , HasNumberOfParts(..)
     -- * Generation
   , partitions'  
   , _partitions' 
@@ -30,10 +36,12 @@ module Math.Combinat.Partitions
   , partitions
   , _partitions
   , countPartitions
+  , partitionsWithKParts
   , allPartitions'  
   , allPartitions 
   , countAllPartitions'
   , countAllPartitions
+  , countPartitionsWithKParts
     -- * Ferrer diagrams
   , printFerrerDiagram 
   , ferrerDiagram 
@@ -103,7 +111,7 @@ heightWidth part = (height part, width part)
 -- | The weight of the partition 
 --   (that is, the sum of the corresponding sequence).
 weight :: Partition -> Int
-weight (Partition part) = sum part
+weight (Partition part) = sum' part
 
 -- | The dual (or conjugate) partition.
 dualPartition :: Partition -> Partition
@@ -133,7 +141,15 @@ countAutomorphisms = _countAutomorphisms . fromPartition
 
 _countAutomorphisms :: [Int] -> Integer
 _countAutomorphisms = multinomial . map length . group
- 
+
+---------------------------------------------------------------------------------
+
+class HasNumberOfParts p where
+  numberOfParts :: p -> Int
+
+instance HasNumberOfParts Partition where
+  numberOfParts (Partition p) = length p
+  
 ---------------------------------------------------------------------------------
 
 -- | Integer partitions of @d@, fitting into a given rectangle, as lists.
@@ -142,9 +158,9 @@ _partitions'
   -> Int           -- ^ d
   -> [[Int]]        
 _partitions' _ 0 = [[]] 
-_partitions' (0,_) d = if d==0 then [[]] else []
-_partitions' (_,0) d = if d==0 then [[]] else []
-_partitions' (h,w) d = 
+_partitions' ( 0 , _) d = if d==0 then [[]] else []
+_partitions' ( _ , 0) d = if d==0 then [[]] else []
+_partitions' (!h ,!w) d = 
   [ i:xs | i <- [1..min d h] , xs <- _partitions' (i,w-1) (d-i) ]
 
 -- | Partitions of d, fitting into a given rectangle. The order is again lexicographic.
@@ -189,7 +205,44 @@ countAllPartitions' (h,w) =
   --sum [ countPartitions' (h,w) i | i <- [0..d] ] where d = h*w
 
 countAllPartitions :: Int -> Integer
-countAllPartitions d = sum [ countPartitions i | i <- [0..d] ]
+countAllPartitions d = sum' [ countPartitions i | i <- [0..d] ]
+
+--------------------------------------------------------------------------------
+-- partitions with given number of parts
+
+-- | Lists partitions of @n@ into @k@ parts.
+--
+-- > sort (partitionsWithKParts k n) == sort [ p | p <- partitions n , numberOfParts p == k ]
+--
+-- Naive recursive algorithm.
+--
+partitionsWithKParts 
+  :: Int    -- ^ @k@ = number of parts
+  -> Int    -- ^ @n@ = the integer we partition
+  -> [Partition]
+partitionsWithKParts k n = map Partition $ go n k n where
+{-
+  h = max height
+  k = number of parts
+  n = integer
+-}
+  go !h !k !n 
+    | k <  0     = []
+    | k == 0     = if h>=0 && n==0 then [[] ] else []
+    | k == 1     = if h>=n && n>=1 then [[n]] else []
+    | otherwise  = [ a:p | a <- [1..(min h (n-k+1))] , p <- go a (k-1) (n-a) ]
+
+countPartitionsWithKParts 
+  :: Int    -- ^ @k@ = number of parts
+  -> Int    -- ^ @n@ = the integer we partition
+  -> Integer
+countPartitionsWithKParts k n = go n k n where
+  go !h !k !n 
+    | k <  0     = 0
+    | k == 0     = if h>=0 && n==0 then 1 else 0
+    | k == 1     = if h>=n && n>=1 then 1 else 0
+    | otherwise  = sum' [ go a (k-1) (n-a) | a<-[1..(min h (n-k+1))] ]
+
 
 --------------------------------------------------------------------------------
 -- * Ferrer diagrams
@@ -269,7 +322,7 @@ fasc3B_algorithm_M xs = worker [start] where
           reverse first ++ 
           (c,u,v-1) :  
           [ (c,u,u) | (c,u,_) <- reverse second ] 
-      _ -> error "should not happen"
+      _ -> error "fasc3B_algorithm_M: should not happen"
         
   to_vector cuvs = 
     accumArray (flip const) 0 (1,m)

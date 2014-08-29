@@ -20,6 +20,7 @@ import Math.Combinat.Numbers
 import Math.Combinat.LatticePaths
 import Math.Combinat.Helper
 import Math.Combinat.Partitions.Set
+import Math.Combinat.Partitions ( HasNumberOfParts(..) )
 
 --------------------------------------------------------------------------------
 -- * The type of non-crossing partitions
@@ -81,6 +82,9 @@ setPartitionToNonCrossing (SetPartition zzs0) =
     else Nothing
   where
     zzs = _standardizeNonCrossing zzs0
+
+instance HasNumberOfParts NonCrossing where
+  numberOfParts (NonCrossing p) = length p
 
 --------------------------------------------------------------------------------
 -- * Bijection to Dyck paths
@@ -160,8 +164,26 @@ testnc = NonCrossing [[3],[5,4,2],[7,6,1],[9,8]]
 nonCrossingPartitions :: Int -> [NonCrossing]
 nonCrossingPartitions = map dyckPathToNonCrossingPartition . dyckPaths
 
+-- | Lists all non-crossing partitions of @[1..n]@ into @k@ parts.
+--
+-- > sort (nonCrossingPartitionsWithKParts k n) == sort [ p | p <- nonCrossingPartitions n , numberOfParts p == k ]
+--
+nonCrossingPartitionsWithKParts 
+  :: Int   -- ^ @k@ = number of parts 
+  -> Int   -- ^ @n@ = size of the set
+  -> [NonCrossing]
+nonCrossingPartitionsWithKParts k n = map dyckPathToNonCrossingPartition $ peakingDyckPaths k n
+
+-- | Non-crossing partitions are counted by the Catalan numbers
 countNonCrossingPartitions :: Int -> Integer
 countNonCrossingPartitions = countDyckPaths
+
+-- | Non-crossing partitions with @k@ parts are counted by the Naranaya numbers
+countNonCrossingPartitionsWithKParts 
+  :: Int   -- ^ @k@ = number of parts 
+  -> Int   -- ^ @n@ = size of the set
+  -> Integer
+countNonCrossingPartitionsWithKParts = countPeakingDyckPaths
 
 --------------------------------------------------------------------------------
 

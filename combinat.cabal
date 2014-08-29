@@ -59,7 +59,7 @@ Library
                        Math.Combinat.Helper
 
   Extensions:          CPP, MultiParamTypeClasses, ScopedTypeVariables, 
-                       GeneralizedNewtypeDeriving 
+                       GeneralizedNewtypeDeriving, BangPatterns 
 
   Hs-Source-Dirs:      .
 
