@@ -6,6 +6,7 @@ module Math.Combinat.LatticePaths where
 
 --------------------------------------------------------------------------------
 
+import Data.List
 import System.Random
 
 import Math.Combinat.Numbers
@@ -27,6 +28,32 @@ data Step
 -- above the main diagonal (hence the name, we just use a different convention).
 --
 type LatticePath = [Step]
+
+--------------------------------------------------------------------------------
+
+-- | Draws the path to the terminal
+printAsciiPath :: LatticePath -> IO ()
+printAsciiPath = putStrLn . asciiPath
+
+-- | Draws the path into a string
+asciiPath :: LatticePath -> String
+asciiPath = unlines . asciiPath'
+
+-- | Draws the path into a list of lines
+asciiPath' :: LatticePath -> [String]
+asciiPath' p = transpose (go 0 p) where
+
+  go !h [] = []
+  go !h (x:xs) = case x of
+    UpStep   -> ee  h    x : go (h+1) xs
+    DownStep -> ee (h-1) x : go (h-1) xs
+
+  maxh   = pathHeight p
+
+  ee h x = replicate (maxh-h-1) ' ' ++ [ch x] ++ replicate h ' '
+  ch x   = case x of 
+    UpStep   -> '/' 
+    DownStep -> '\\' 
 
 --------------------------------------------------------------------------------
 
