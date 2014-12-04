@@ -204,6 +204,12 @@ latticePathsNaive (x,y) = worker x y where
       as = [ UpStep : p     | p <- worker (x-1) (y-1) ]
       bs = [ bracket p ++ q | k <- [1..(div x 2)] , p <- dyckPaths (k-1) , q <- worker (x-2*k) y ]
 
+-- | Lattice paths are counted by the numbers in the Catalan triangle.
+countLatticePaths :: (Int,Int) -> Integer
+countLatticePaths (x,y) 
+  | even (x+y)  = catalanTriangle (div (x+y) 2) (div (x-y) 2)
+  | otherwise   = 0
+
 --------------------------------------------------------------------------------
 -- * Zero-level touches
 

@@ -81,7 +81,7 @@ catalanTriangle :: Integral a => a -> a -> Integer
 catalanTriangle n k
   | k > n     = 0
   | k < 0     = 0
-  | otherwise = binomial (n+k) n * fromIntegral (n-k+1) `div` fromIntegral (n+1)
+  | otherwise = (binomial (n+k) n * fromIntegral (n-k+1)) `div` fromIntegral (n+1)
 
 --------------------------------------------------------------------------------
 -- * Stirling numbers
