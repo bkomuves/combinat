@@ -30,6 +30,7 @@ data Step
 type LatticePath = [Step]
 
 --------------------------------------------------------------------------------
+-- * ascii drawing of paths
 
 -- | Draws the path to the terminal
 printAsciiPath :: LatticePath -> IO ()
@@ -56,6 +57,7 @@ asciiPath' p = transpose (go 0 p) where
     DownStep -> '\\' 
 
 --------------------------------------------------------------------------------
+-- * elementary queries
 
 -- | A lattice path is called \"valid\", if it never goes below the @y=0@ line.
 isValidPath :: LatticePath -> Bool
@@ -98,6 +100,25 @@ pathCoordinates = go 0 0 where
                         y' = case t of { UpStep -> y+1 ; DownStep -> y-1 }
                     in  (x',y') : go x' y' ts
 
+-- | Counts the up-steps
+pathNumberOfUpSteps :: LatticePath -> Int
+pathNumberOfUpSteps   = fst . pathNumberOfUpDownSteps
+
+-- | Counts the down-steps
+pathNumberOfDownSteps :: LatticePath -> Int
+pathNumberOfDownSteps = snd . pathNumberOfUpDownSteps
+
+-- | Counts both the up-steps and down-steps
+pathNumberOfUpDownSteps :: LatticePath -> (Int,Int)
+pathNumberOfUpDownSteps = go 0 0 where 
+  go !u !d (p:ps) = case p of 
+    UpStep   -> go (u+1)  d    ps  
+    DownStep -> go  u    (d+1) ps    
+  go !u !d []     = (u,d)
+
+--------------------------------------------------------------------------------
+-- * path-specific queries
+
 -- | Number of peaks of a path (excluding the endpoint)
 pathNumberOfPeaks :: LatticePath -> Int
 pathNumberOfPeaks = go 0 where
@@ -120,7 +141,6 @@ pathNumberOfTouches' h = go 0 0 0 where
   go !cnt !x !y (t:ts) = let y'   = case t of { UpStep -> y+1 ; DownStep -> y-1 }
                              cnt' = if y'==h then cnt+1 else cnt
                          in  go cnt' (x+1) y' ts
-
 
 --------------------------------------------------------------------------------
 -- * Dyck paths
