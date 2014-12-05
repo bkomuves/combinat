@@ -244,7 +244,7 @@ countLatticePaths (x,y)
 -- zero level line @y=0@ exactly @k@ times (excluding the starting point, but including the endpoint;
 -- thus, @k@ should be positive). Synonym for 'touchingDyckPathsNaive'.
 touchingDyckPaths
-  :: Int   -- ^ @k@ = number of touches
+  :: Int   -- ^ @k@ = number of zero-touches
   -> Int   -- ^ @m@ = half-length
   -> [LatticePath]
 touchingDyckPaths = touchingDyckPathsNaive
@@ -259,7 +259,7 @@ touchingDyckPaths = touchingDyckPathsNaive
 -- Naive recursive algorithm, resulting order is pretty ad-hoc.
 --
 touchingDyckPathsNaive
-  :: Int   -- ^ @k@ = number of touches
+  :: Int   -- ^ @k@ = number of zero-touches
   -> Int   -- ^ @m@ = half-length
   -> [LatticePath]
 touchingDyckPathsNaive = worker where
@@ -271,6 +271,18 @@ touchingDyckPathsNaive = worker where
     | otherwise = [ bracket p ++ q | l <- [1..m-1] , p <- dyckPaths (l-1) , q <- worker (k-1) (m-l) ]
     where
       bracket p = UpStep : p ++ [DownStep] 
+
+
+-- | There is a bijection from the set of non-empty Dyck paths of length @2n@ which touch the zero lines @t@ times,
+-- to lattice paths from @(0,0)@ to @(2n-t-1,t-1)@ (just remove all the down-steps just before touching
+-- the zero line, and also the very first up-step). This gives us a counting formula.
+countTouchingDyckPaths 
+  :: Int   -- ^ @k@ = number of zero-touches
+  -> Int   -- ^ @m@ = half-length
+  -> Integer
+countTouchingDyckPaths t n
+  | t==0 && n==0   = 1
+  | otherwise      = countLatticePaths (2*n-t-1,t-1)
 
 --------------------------------------------------------------------------------
 -- * Dyck paths with given number of peaks
