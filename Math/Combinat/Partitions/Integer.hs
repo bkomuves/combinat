@@ -213,9 +213,33 @@ printFerrerDiagram = putStrLn . ferrerDiagram
 ferrerDiagram :: Partition -> String
 ferrerDiagram = ferrerDiagramEnglishNotation
 
+-- | Standard English notation. For example [5,4,1] corresponds to
+-- 
+-- >  @@@@@
+-- >  @@@@
+-- >  @
+--
 ferrerDiagramEnglishNotation :: Partition -> String
 ferrerDiagramEnglishNotation = ferrerDiagramEnglishNotation' '@'
 
+-- | English notation rotated by 90 degrees counter-clockwise.
+-- For example [5,4,1] corresponds to
+--
+-- > @  
+-- > @@
+-- > @@
+-- > @@
+-- > @@@
+--
+ferrerDiagramEnglishNotationCCW :: Partition -> String
+ferrerDiagramEnglishNotationCCW = ferrerDiagramEnglishNotationCCW' '@'
+
+-- | French notation. For example [5,4,1] corresponds to
+-- 
+-- >  @
+-- >  @@@@
+-- >  @@@@@
+--
 ferrerDiagramFrenchNotation :: Partition -> String
 ferrerDiagramFrenchNotation  = ferrerDiagramFrenchNotation'  '@'
 
@@ -224,9 +248,14 @@ ferrerDiagramEnglishNotation' ch part = unlines (map f ys) where
   ys  = fromPartition part
   f n = replicate n ch 
 
+ferrerDiagramEnglishNotationCCW' :: Char -> Partition -> String
+ferrerDiagramEnglishNotationCCW' ch part = unlines (map f ys) where
+  ys  = reverse $ fromPartition $ dualPartition part
+  f n = replicate n ch 
+
 ferrerDiagramFrenchNotation' :: Char -> Partition -> String
 ferrerDiagramFrenchNotation' ch part = unlines (map f ys) where
-  ys  = reverse $ fromPartition $ dualPartition part
+  ys  = reverse $ fromPartition $ part
   f n = replicate n ch 
 
 --------------------------------------------------------------------------------
