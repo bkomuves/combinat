@@ -12,7 +12,7 @@
 {-# LANGUAGE BangPatterns #-}
 module Math.Combinat.Partitions
   ( -- * Type and basic stuff
-    Partition
+    Partition(..)
   , toPartition
   , toPartitionUnsafe
   , mkPartition
