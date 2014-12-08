@@ -167,7 +167,45 @@ countAllPartitions :: Int -> Integer
 countAllPartitions d = sum' [ countPartitions i | i <- [0..d] ]
 
 --------------------------------------------------------------------------------
--- partitions with given number of parts
+-- * Sub-partitions of a given partition
+
+-- | Sub-partitions of a given partition with the given weight
+subPartitions :: Int -> Partition -> [Partition]
+subPartitions d (Partition ps) = map Partition (_subPartitions d ps)
+
+_subPartitions :: Int -> [Int] -> [[Int]]
+_subPartitions d big
+  | null big       = if d==0 then [[]] else []
+  | d > sum' big   = []
+  | d < 0          = []
+  | otherwise      = go d (head big) big
+  where
+    go :: Int -> Int -> [Int] -> [[Int]]
+    go !k !h []      = if k==0 then [[]] else []
+    go !k !h (b:bs) 
+      | k<0 || h<0   = []
+      | k==0         = [[]]
+      | h==0         = []
+      | otherwise    = [ this:rest | this <- [1..min h b] , rest <- go (k-this) this bs ]
+
+--------------------------------------------------------------------------------
+
+-- | All sub-partitions of a given partition
+allSubPartitions :: Partition -> [Partition]
+allSubPartitions (Partition ps) = map Partition (_allSubPartitions ps)
+
+_allSubPartitions :: [Int] -> [[Int]]
+_allSubPartitions big 
+  | null big   = [[]]
+  | otherwise  = go (head big) big
+  where
+    go _  [] = [[]]
+    go !h (b:bs) 
+      | h==0         = []
+      | otherwise    = [] : [ this:rest | this <- [1..min h b] , rest <- go this bs ]
+
+--------------------------------------------------------------------------------
+-- * Partitions with given number of parts
 
 -- | Lists partitions of @n@ into @k@ parts.
 --

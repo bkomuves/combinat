@@ -48,43 +48,14 @@ unsafeStackLayers (bottom:rest) = PlanePart $ foldl addLayer (fromPlanePart $ si
   addLayer :: [[Int]] -> Partition -> [[Int]]
   addLayer xxs (Partition ps) = [ zipWith (+) xs (replicate p 1 ++ repeat 0) | (xs,p) <- zip xxs (ps ++ repeat 0) ] 
 
-
---------------------------------------------------------------------------------
-
-subPartitions :: Int -> Partition -> [Partition]
-subPartitions d (Partition ps) = map Partition (_subPartitions d ps)
-
--- | Sub-partitions of a given partition with the given weight
-_subPartitions :: Int -> [Int] -> [[Int]]
-_subPartitions d big
-  | null big       = if d==0 then [[]] else []
-  | d > sum' big   = []
-  | d < 0          = []
-  | otherwise      = go d (head big) big
-  where
-    go :: Int -> Int -> [Int] -> [[Int]]
-    go !k !h []      = if k==0 then [[]] else []
-    go !k !h (b:bs) 
-      | k<0 || h<0   = []
-      | k==0         = [[]]
-      | h==0         = []
-      | otherwise    = [ this:rest | this <- [1..min h b] , rest <- go (k-this) this bs ]
-
---------------------------------------------------------------------------------
-
-allSubPartitions :: Partition -> [Partition]
-allSubPartitions (Partition ps) = map Partition (_allSubPartitions ps)
-
--- | All sub-partitions of a given partition
-_allSubPartitions :: [Int] -> [[Int]]
-_allSubPartitions big 
-  | null big   = [[]]
-  | otherwise  = go (head big) big
-  where
-    go _  [] = [[]]
-    go !h (b:bs) 
-      | h==0         = []
-      | otherwise    = [] : [ this:rest | this <- [1..min h b] , rest <- go this bs ]
+-- | The \"layers\" of a plane partition (in direction @Z@). We should have
+--
+-- > unsafeStackLayers (planePartLayers pp) == pp
+-- 
+planePartLayers :: PlanePart -> [Partition]
+planePartLayers pp@(PlanePart xs) = [ layer h | h<-[1..planePartZHeight pp] ] where
+  layer h = Partition $ filter (>0) $ map sum' $ (map . map) (f h) xs
+  f h = \k -> if k>=h then 1 else 0
 
 --------------------------------------------------------------------------------
 -- * generating plane partitions
@@ -99,6 +70,5 @@ planePartitions d
     go :: Int -> [Partition] -> [PlanePart]
     go  0   acc       = [unsafeStackLayers (reverse acc)]
     go !rem acc@(h:_) = concat [ go (rem-k) (this:acc) | k<-[1..rem] , this <- subPartitions k h ]
-
 
 --------------------------------------------------------------------------------
