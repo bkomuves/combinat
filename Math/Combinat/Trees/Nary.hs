@@ -62,10 +62,10 @@ import Control.Applicative
 import Control.Monad.Trans.State
 import Data.Traversable (traverse)
 
-import Math.Combinat.Sets         (listTensor)
-import Math.Combinat.Partitions   (partitionMultiset)
-import Math.Combinat.Compositions (compositions)
-import Math.Combinat.Numbers      (factorial,binomial)
+import Math.Combinat.Sets                  ( listTensor )
+import Math.Combinat.Partitions.Multiset   ( partitionMultiset )
+import Math.Combinat.Compositions          ( compositions )
+import Math.Combinat.Numbers               ( factorial, binomial )
 
 import Math.Combinat.Helper
 

@@ -45,9 +45,12 @@ Library
                        Math.Combinat.Tuples 
                        Math.Combinat.Compositions
                        Math.Combinat.Partitions
+                       Math.Combinat.Partitions.Integer
                        Math.Combinat.Partitions.Set
                        Math.Combinat.Partitions.NonCrossing
                        Math.Combinat.Partitions.Plane
+                       Math.Combinat.Partitions.Multiset
+                       Math.Combinat.Partitions.Vector
                        Math.Combinat.Permutations
                        Math.Combinat.Tableaux
                        Math.Combinat.Tableaux.Kostka
