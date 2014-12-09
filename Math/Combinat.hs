@@ -54,7 +54,6 @@ module Math.Combinat
   , module Math.Combinat.Trees
   , module Math.Combinat.LatticePaths
   , module Math.Combinat.ASCII
-  , module Math.Combinat.Graphviz
   ) where
 
 import Math.Combinat.Numbers
@@ -67,4 +66,3 @@ import Math.Combinat.Tableaux
 import Math.Combinat.Trees
 import Math.Combinat.LatticePaths
 import Math.Combinat.ASCII
-import Math.Combinat.Graphviz

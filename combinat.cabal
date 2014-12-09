@@ -61,10 +61,10 @@ Library
                        Math.Combinat.Trees
                        Math.Combinat.Trees.Binary
                        Math.Combinat.Trees.Nary
+                       Math.Combinat.Trees.Graphviz
                        Math.Combinat.LatticePaths
                        Math.Combinat.FreeGroups
                        Math.Combinat.ASCII
-                       Math.Combinat.Graphviz
                        Math.Combinat.Helper
 
   Extensions:          CPP, MultiParamTypeClasses, ScopedTypeVariables, 

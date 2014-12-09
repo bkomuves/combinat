@@ -2,8 +2,8 @@
 -- | N-ary trees.
 
 module Math.Combinat.Trees.Nary 
-  (
-    -- * regular trees 
+  (      
+    -- * Regular trees 
     ternaryTrees
   , regularNaryTrees
   , semiRegularTrees
@@ -15,31 +15,35 @@ module Math.Combinat.Trees.Nary
   , asciiTreeVertical_
   , asciiTreeVertical
   , asciiTreeVerticalLeavesOnly
-    -- * classifying nodes
+    -- * Graphviz drawing
+  , Dot
+  , graphvizDotTree  
+  , graphvizDotForest
+    -- * Classifying nodes
   , classifyTreeNode
   , isTreeLeaf  , isTreeNode
   , isTreeLeaf_ , isTreeNode_
   , treeNodeNumberOfChildren 
-    -- * counting nodes
+    -- * Counting nodes
   , countTreeNodes
   , countTreeLeaves
   , countTreeLabelsWith
   , countTreeNodesWith 
-    -- * left and right spines
+    -- * Left and right spines
   , leftSpine  , leftSpine_
   , rightSpine , rightSpine_
   , leftSpineLength , rightSpineLength
-    -- * unique labels
+    -- * Unique labels
   , addUniqueLabelsTree
   , addUniqueLabelsForest
   , addUniqueLabelsTree_
   , addUniqueLabelsForest_
-    -- * labelling by depth
+    -- * Labelling by depth
   , labelDepthTree
   , labelDepthForest
   , labelDepthTree_
   , labelDepthForest_
-    -- * labelling by number of children
+    -- * Labelling by number of children
   , labelNChildrenTree
   , labelNChildrenForest
   , labelNChildrenTree_
@@ -63,6 +67,8 @@ import Math.Combinat.Sets                  ( listTensor )
 import Math.Combinat.Partitions.Multiset   ( partitionMultiset )
 import Math.Combinat.Compositions          ( compositions )
 import Math.Combinat.Numbers               ( factorial, binomial )
+
+import Math.Combinat.Trees.Graphviz ( Dot , graphvizDotForest , graphvizDotTree )
 
 import Math.Combinat.ASCII as ASCII
 import Math.Combinat.Helper

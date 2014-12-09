@@ -31,6 +31,12 @@ module Math.Combinat.Trees.Binary
   , fasc4A_algorithm_R
     -- * ASCII drawing
   , asciiBinaryTree_
+    -- * Graphviz drawing
+  , Dot
+  , graphvizDotBinTree
+  , graphvizDotBinTree'
+  , graphvizDotForest
+  , graphvizDotTree  
     -- * Bijections
   , forestToNestedParentheses
   , forestToBinaryTree
@@ -63,6 +69,12 @@ import Data.Traversable (Traversable(traverse))
 import System.Random
 
 import Math.Combinat.Numbers (factorial,binomial)
+
+import Math.Combinat.Trees.Graphviz 
+  ( Dot 
+  , graphvizDotBinTree , graphvizDotBinTree' 
+  , graphvizDotForest , graphvizDotTree 
+  )
 
 import Math.Combinat.Helper
 import Math.Combinat.ASCII as ASCII

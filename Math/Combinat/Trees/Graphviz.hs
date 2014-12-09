@@ -1,12 +1,12 @@
 
--- | Creates graphviz @.dot@ files from various structures, for example trees.
+-- | Creates graphviz @.dot@ files from trees.
 
-module Math.Combinat.Graphviz 
+module Math.Combinat.Trees.Graphviz 
   ( Dot
-  , binTreeDot
-  , binTree'Dot
-  , treeDot
-  , forestDot
+  , graphvizDotBinTree
+  , graphvizDotBinTree'
+  , graphvizDotForest
+  , graphvizDotTree
   )
   where
 
@@ -16,8 +16,8 @@ import Data.Tree
 
 import Control.Applicative
 
-import Math.Combinat.Trees.Binary (BinTree(..), BinTree'(..))
-import Math.Combinat.Trees.Nary (addUniqueLabelsTree, addUniqueLabelsForest)
+import {-# SOURCE #-} Math.Combinat.Trees.Binary ( BinTree(..)         , BinTree'(..)          )
+import {-# SOURCE #-} Math.Combinat.Trees.Nary   ( addUniqueLabelsTree , addUniqueLabelsForest )
 
 --------------------------------------------------------------------------------
 
@@ -31,12 +31,12 @@ digraphBracket name lines =
   
 --------------------------------------------------------------------------------
 
-binTreeDot :: Show a => String -> BinTree a -> Dot
-binTreeDot graphname tree = 
+graphvizDotBinTree :: Show a => String -> BinTree a -> Dot
+graphvizDotBinTree graphname tree = 
   digraphBracket graphname $ binTreeDot' tree
 
-binTree'Dot :: (Show a, Show b) => String -> BinTree' a b -> Dot
-binTree'Dot graphname tree = 
+graphvizDotBinTree' :: (Show a, Show b) => String -> BinTree' a b -> Dot
+graphvizDotBinTree' graphname tree = 
   digraphBracket graphname $ binTree'Dot' tree
   
 binTreeDot' :: Show a => BinTree a -> [String]
@@ -74,14 +74,14 @@ binTree'Dot' tree = lines where
 -- | Generates graphviz @.dot@ file from a forest. The first argument tells whether
 -- to make the individual trees clustered subgraphs; the second is the name of the
 -- graph.
-forestDot 
+graphvizDotForest
   :: Show a 
   => Bool        -- ^ make the individual trees clustered subgraphs
   -> Bool        -- ^ reverse the direction of the arrows
   -> String      -- ^ name of the graph
   -> Forest a 
   -> Dot
-forestDot clustered revarrows graphname forest = digraphBracket graphname lines where
+graphvizDotForest clustered revarrows graphname forest = digraphBracket graphname lines where
   lines = concat $ zipWith cluster [(1::Int)..] (addUniqueLabelsForest forest) 
   name unique = "node_"++show unique
   cluster j tree = let treelines = worker (0::Int) tree in case clustered of
@@ -96,13 +96,13 @@ forestDot clustered revarrows graphname forest = digraphBracket graphname lines 
       
 -- | Generates graphviz @.dot@ file from a tree. The first argument is
 -- the name of the graph.
-treeDot 
+graphvizDotTree
   :: Show a 
   => Bool     -- ^ reverse the direction of the arrow
   -> String   -- ^ name of the graph
   -> Tree a 
   -> Dot
-treeDot revarrows graphname tree = digraphBracket graphname lines where
+graphvizDotTree revarrows graphname tree = digraphBracket graphname lines where
   lines = worker (0::Int) (addUniqueLabelsTree tree) 
   name unique = "node_"++show unique
   worker depth (Node (label,unique) subtrees) = vertex : edges ++ concatMap (worker (depth+1)) subtrees where
