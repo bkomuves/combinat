@@ -3,6 +3,11 @@
 -- objects like partitions, compositions, permutations,
 -- Young tableaux, various trees, etc etc.
 --
+-- 
+-- See also the @combinat-diagrams@ library for generating
+-- graphical representations of these structure using 
+-- the @diagrams@ library.
+--
 --
 -- The long-term goals are 
 --

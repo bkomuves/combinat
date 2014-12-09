@@ -31,7 +31,7 @@ import Math.Combinat.Numbers (factorial,binomial,multinomial)
 -- * Type and basic stuff
 
 -- | A partition of an integer. The additional invariant enforced here is that partitions 
---   are monotone decreasing sequences of positive integers.
+-- are monotone decreasing sequences of positive integers. The @Ord@ instance is lexicographical.
 newtype Partition = Partition [Int] deriving (Eq,Ord,Show,Read)
 
 ---------------------------------------------------------------------------------
@@ -109,12 +109,29 @@ elements (Partition part) = _elements part
 _elements :: [Int] -> [(Int,Int)]
 _elements shape = [ (i,j) | (i,l) <- zip [1..] shape, j<-[1..l] ] 
 
+---------------------------------------------------------------------------------
+-- * Automorphisms 
+
 -- | Computes the number of \"automorphisms\" of a given integer partition.
 countAutomorphisms :: Partition -> Integer  
 countAutomorphisms = _countAutomorphisms . fromPartition
 
 _countAutomorphisms :: [Int] -> Integer
 _countAutomorphisms = multinomial . map length . group
+
+---------------------------------------------------------------------------------
+-- * Dominance order 
+
+-- | @q \`dominates\` p@ returns @True@ if @q >= p@ in the dominance order of partitions
+-- (this is partial ordering on the set of partitions of @n@).
+--
+-- See <http://en.wikipedia.org/wiki/Dominance_order>
+--
+dominates :: Partition -> Partition -> Bool
+dominates (Partition qs) (Partition ps) 
+  = and $ zipWith (>=) (sums (qs ++ repeat 0)) (sums ps)
+  where
+    sums = scanl (+) 0
 
 ---------------------------------------------------------------------------------
 -- * Generating partitions
@@ -175,44 +192,6 @@ countAllPartitions :: Int -> Integer
 countAllPartitions d = sum' [ countPartitions i | i <- [0..d] ]
 
 --------------------------------------------------------------------------------
--- * Sub-partitions of a given partition
-
--- | Sub-partitions of a given partition with the given weight
-subPartitions :: Int -> Partition -> [Partition]
-subPartitions d (Partition ps) = map Partition (_subPartitions d ps)
-
-_subPartitions :: Int -> [Int] -> [[Int]]
-_subPartitions d big
-  | null big       = if d==0 then [[]] else []
-  | d > sum' big   = []
-  | d < 0          = []
-  | otherwise      = go d (head big) big
-  where
-    go :: Int -> Int -> [Int] -> [[Int]]
-    go !k !h []      = if k==0 then [[]] else []
-    go !k !h (b:bs) 
-      | k<0 || h<0   = []
-      | k==0         = [[]]
-      | h==0         = []
-      | otherwise    = [ this:rest | this <- [1..min h b] , rest <- go (k-this) this bs ]
-
---------------------------------------------------------------------------------
-
--- | All sub-partitions of a given partition
-allSubPartitions :: Partition -> [Partition]
-allSubPartitions (Partition ps) = map Partition (_allSubPartitions ps)
-
-_allSubPartitions :: [Int] -> [[Int]]
-_allSubPartitions big 
-  | null big   = [[]]
-  | otherwise  = go (head big) big
-  where
-    go _  [] = [[]]
-    go !h (b:bs) 
-      | h==0         = []
-      | otherwise    = [] : [ this:rest | this <- [1..min h b] , rest <- go this bs ]
-
---------------------------------------------------------------------------------
 -- * Partitions with given number of parts
 
 -- | Lists partitions of @n@ into @k@ parts.
@@ -248,6 +227,54 @@ countPartitionsWithKParts k n = go n k n where
     | k == 1     = if h>=n && n>=1 then 1 else 0
     | otherwise  = sum' [ go a (k-1) (n-a) | a<-[1..(min h (n-k+1))] ]
 
+
+--------------------------------------------------------------------------------
+-- * Sub-partitions of a given partition
+
+-- | Returns @True@ of the first partition is a subpartition (that is, fit inside) of the second.
+-- This includes equality
+isSubPartitionOf :: Partition -> Partition -> Bool
+isSubPartitionOf (Partition ps) (Partition qs) = and $ zipWith (<=) ps (qs ++ repeat 0)
+
+----------------------------------------
+
+-- | Sub-partitions of a given partition with the given weight:
+--
+-- > sort (subPartitions d q) == sort [ p | p <- partitions d, isSubPartitionOf p q ]
+--
+subPartitions :: Int -> Partition -> [Partition]
+subPartitions d (Partition ps) = map Partition (_subPartitions d ps)
+
+_subPartitions :: Int -> [Int] -> [[Int]]
+_subPartitions d big
+  | null big       = if d==0 then [[]] else []
+  | d > sum' big   = []
+  | d < 0          = []
+  | otherwise      = go d (head big) big
+  where
+    go :: Int -> Int -> [Int] -> [[Int]]
+    go !k !h []      = if k==0 then [[]] else []
+    go !k !h (b:bs) 
+      | k<0 || h<0   = []
+      | k==0         = [[]]
+      | h==0         = []
+      | otherwise    = [ this:rest | this <- [1..min h b] , rest <- go (k-this) this bs ]
+
+----------------------------------------
+
+-- | All sub-partitions of a given partition
+allSubPartitions :: Partition -> [Partition]
+allSubPartitions (Partition ps) = map Partition (_allSubPartitions ps)
+
+_allSubPartitions :: [Int] -> [[Int]]
+_allSubPartitions big 
+  | null big   = [[]]
+  | otherwise  = go (head big) big
+  where
+    go _  [] = [[]]
+    go !h (b:bs) 
+      | h==0         = []
+      | otherwise    = [] : [ this:rest | this <- [1..min h b] , rest <- go this bs ]
 
 --------------------------------------------------------------------------------
 -- * ASCII Ferrer diagrams
