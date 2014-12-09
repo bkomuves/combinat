@@ -25,6 +25,7 @@ module Math.Combinat.Partitions.Integer where
 import Data.List
 
 import Math.Combinat.Helper
+import Math.Combinat.ASCII as ASCII
 import Math.Combinat.Numbers (factorial,binomial,multinomial)
 
 --------------------------------------------------------------------------------
@@ -99,10 +100,11 @@ _dualPartition xs@(k:_) = [ length $ filter (>=i) xs | i <- [1..k] ]
 -- | Example:
 --
 -- > elements (toPartition [5,4,1]) ==
--- > [ (1,1), (1,2), (1,3), (1,4), (1,5)
--- > , (2,1), (2,2), (2,3), (2,4)
--- > , (3,1)
--- > ]
+-- >   [ (1,1), (1,2), (1,3), (1,4), (1,5)
+-- >   , (2,1), (2,2), (2,3), (2,4)
+-- >   , (3,1)
+-- >   ]
+--
 elements :: Partition -> [(Int,Int)]
 elements (Partition part) = _elements part
 
@@ -277,26 +279,19 @@ _allSubPartitions big
       | otherwise    = [] : [ this:rest | this <- [1..min h b] , rest <- go this bs ]
 
 --------------------------------------------------------------------------------
--- * ASCII Ferrer diagrams
+-- * ASCII Ferrers diagrams
 
-printFerrerDiagram :: Partition -> IO ()
-printFerrerDiagram = putStrLn . ferrerDiagram
-
--- | Synonym for 'ferrerDiagramEnglishNotation'
-ferrerDiagram :: Partition -> String
-ferrerDiagram = ferrerDiagramEnglishNotation
-
--- | Standard English notation. For example [5,4,1] corresponds to
+-- | Which orientation to draw the Ferrers diagrams.
+-- For example, the partition [5,4,1] corrsponds to:
+--
+-- In standard English notation:
 -- 
 -- >  @@@@@
 -- >  @@@@
 -- >  @
 --
-ferrerDiagramEnglishNotation :: Partition -> String
-ferrerDiagramEnglishNotation = ferrerDiagramEnglishNotation' '@'
-
--- | English notation rotated by 90 degrees counter-clockwise.
--- For example [5,4,1] corresponds to
+--
+-- In English notation rotated by 90 degrees counter-clockwise:
 --
 -- > @  
 -- > @@
@@ -304,31 +299,36 @@ ferrerDiagramEnglishNotation = ferrerDiagramEnglishNotation' '@'
 -- > @@
 -- > @@@
 --
-ferrerDiagramEnglishNotationCCW :: Partition -> String
-ferrerDiagramEnglishNotationCCW = ferrerDiagramEnglishNotationCCW' '@'
-
--- | French notation. For example [5,4,1] corresponds to
+--
+-- And in French notation:
+--
 -- 
 -- >  @
 -- >  @@@@
 -- >  @@@@@
 --
-ferrerDiagramFrenchNotation :: Partition -> String
-ferrerDiagramFrenchNotation  = ferrerDiagramFrenchNotation'  '@'
+--
+data PartitionConvention
+  = EnglishNotation          -- ^ English notation
+  | EnglishNotationCCW       -- ^ English notation rotated by 90 degrees counterclockwise
+  | FrenchNotation           -- ^ French notation (mirror of English notation to the x axis)
+  deriving (Eq,Show)
 
-ferrerDiagramEnglishNotation' :: Char -> Partition -> String
-ferrerDiagramEnglishNotation' ch part = unlines (map f ys) where
-  ys  = fromPartition part
-  f n = replicate n ch 
+-- | Synonym for @asciiFerrersDiagram\' EnglishNotation \'\@\'@
+--
+-- Try for example:
+--
+-- > autoTabulate RowMajor (Right 8) (map asciiFerrersDiagram $ partitions 9)
+--
+asciiFerrersDiagram :: Partition -> ASCII
+asciiFerrersDiagram = asciiFerrersDiagram' EnglishNotation '@'
 
-ferrerDiagramEnglishNotationCCW' :: Char -> Partition -> String
-ferrerDiagramEnglishNotationCCW' ch part = unlines (map f ys) where
-  ys  = reverse $ fromPartition $ dualPartition part
+asciiFerrersDiagram' :: PartitionConvention -> Char -> Partition -> ASCII
+asciiFerrersDiagram' conv ch part = ASCII.asciiFromLines (map f ys) where
   f n = replicate n ch 
-
-ferrerDiagramFrenchNotation' :: Char -> Partition -> String
-ferrerDiagramFrenchNotation' ch part = unlines (map f ys) where
-  ys  = reverse $ fromPartition $ part
-  f n = replicate n ch 
+  ys  = case conv of
+          EnglishNotation    -> fromPartition part
+          EnglishNotationCCW -> reverse $ fromPartition $ dualPartition part
+          FrenchNotation     -> reverse $ fromPartition $ part
 
 --------------------------------------------------------------------------------

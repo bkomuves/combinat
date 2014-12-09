@@ -209,14 +209,20 @@ tabulate (halign,valign) (hsep,vsep) rects0 = final where
   final  = vCatWith HLeft vsep 
          $ map (hCatWith VTop hsep) rects2
 
+-- | Order of elements in a matrix
+data MatrixOrder 
+  = RowMajor
+  | ColMajor
+  deriving (Eq,Ord,Show,Read)
+
 -- | Automatically tabulates ASCII rectangles.
 --
 autoTabulate 
-  :: Bool             -- ^ when False, we use row-major order, when True, column-major
+  :: MatrixOrder      -- ^ whether to use row-major or column-major ordering of the elements
   -> Either Int Int   -- ^ @(Right x)@ creates x columns, while @(Left y)$ creates y rows
   -> [ASCII]          -- ^ list of ASCII rectangles
   -> ASCII
-autoTabulate colmajor ei list = final where
+autoTabulate mtxorder ei list = final where
   
   final = tabulate (HLeft,VBottom) (HSepSpaces 2,VSepSpaces 1) rects 
 
@@ -224,11 +230,13 @@ autoTabulate colmajor ei list = final where
 
   rects = case ei of
 
-    Left y  -> if colmajor then transpose (parts y list)
-                           else invparts y list
+    Left y  -> case mtxorder of
+                 ColMajor -> transpose (parts y list)
+                 RowMajor -> invparts y list
 
-    Right x -> if colmajor then transpose (invparts x list)
-                           else parts x list
+    Right x -> case mtxorder of
+                 ColMajor -> transpose (invparts x list)
+                 RowMajor -> parts x list
 
   transposeIf b = if b then transpose else id
 
