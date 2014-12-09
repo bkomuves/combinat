@@ -3,6 +3,16 @@
 --
 -- See eg. <http://en.wikipedia.org/wiki/Noncrossing_partition>
 --
+-- Non-crossing partitions of the set @[1..n]@ are encoded as lists of lists
+-- in standard form: Entries decreasing in each block  and blocks listed in increasing order of their first entries.
+-- For example the partition in the diagram
+--
+-- <<svg/noncrossing.svg>>
+--
+-- is represented as
+--
+-- > NonCrossing [[3],[5,4,2],[7,6,1],[9,8]]
+--
 
 {-# LANGUAGE BangPatterns #-}
 module Math.Combinat.Partitions.NonCrossing where

@@ -1,5 +1,11 @@
 
 -- | Dyck paths, lattice paths, etc
+--
+-- For example, the following figure represents a Dyck path of height 5 with 3 zero-touches (not counting the starting point,
+-- but counting the endpoint) and 7 peaks:
+--
+-- <<svg/dyck_path.svg>>
+--
 
 {-# LANGUAGE BangPatterns #-}
 module Math.Combinat.LatticePaths where

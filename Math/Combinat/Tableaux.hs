@@ -6,11 +6,13 @@
 --   The convention is that we use 
 --   the English notation, and we store the tableaux as lists of the rows.
 -- 
---   That is, the following standard tableau of shape [5,4,1]
+--   That is, the following standard Young tableau of shape [5,4,1]
 -- 
 -- >  1  3  4  6  7
 -- >  2  5  8 10
 -- >  9
+--
+-- <<svg/young_tableau.svg>>
 --
 --   is encoded conveniently as
 -- 

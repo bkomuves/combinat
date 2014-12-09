@@ -14,8 +14,13 @@ Homepage:            http://code.haskell.org/~bkomuves/
 Stability:           Experimental
 Category:            Math
 Tested-With:         GHC == 7.8.3
-Cabal-Version:       >= 1.6
+Cabal-Version:       >= 1.10
 Build-Type:          Simple
+
+extra-doc-files:     svg/*.svg 
+
+extra-source-files:  svg/*.svg
+                     svg/src/gen_figures.hs                     
 
 Flag withQuickCheck
   Description: Compile with the QuickCheck tests. 
@@ -35,7 +40,6 @@ Library
 
   if flag(withQuickCheck)
     Build-Depends:       QuickCheck
-
 
   Exposed-Modules:     Math.Combinat
                        Math.Combinat.Numbers

@@ -1,6 +1,21 @@
 
 -- | Plane partitions. See eg. <http://en.wikipedia.org/wiki/Plane_partition>
-
+--
+-- Plane partitions are encoded as lists of lists of Z heights. For example the plane 
+-- partition in the picture
+-- 
+-- <<svg/plane_partition.svg>>
+--
+-- is encoded as
+--
+-- > PlanePart [ [5,4,3,3,1]
+-- >           , [4,4,2,1]
+-- >           , [3,2]
+-- >           , [2,1]
+-- >           , [1]
+-- >           , [1]
+-- >           ]
+-- 
 {-# LANGUAGE BangPatterns #-}
 module Math.Combinat.Partitions.Plane where
 

@@ -8,6 +8,14 @@
 --
 --  * <http://en.wikipedia.org/wiki/Partition_(number_theory)>
 --
+-- For example the partition
+--
+-- > Partition [8,6,3,3,1]
+--
+-- can be represented by the (English notation) Ferrers diagram:
+--
+-- <<svg/ferrers.svg>>
+-- 
 
 {-# LANGUAGE BangPatterns #-}
 module Math.Combinat.Partitions.Integer where
