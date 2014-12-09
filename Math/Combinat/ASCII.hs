@@ -204,10 +204,10 @@ tabulate (halign,valign) (hsep,vsep) rects0 = final where
   rects1 = map (\rs -> rs ++ replicate (m - length rs) emptyRect) rects0
   ys = map (\rs -> maximum (map asciiYSize rs)) rects1
   xs = map (\rs -> maximum (map asciiXSize rs)) (transpose rects1)
-  rects2 = map (\rs -> [ hExtendTo halign x r | (x,r) <- zip xs rs ]) rects1
-  rects3 = [ map (vExtendTo valign y) rs | (y,rs) <- zip ys rects2 ]  
+  rects2 = map (\rs -> [      hExtendTo halign x  r  | (x,r ) <- zip xs rs     ]) rects1
+  rects3 =             [ map (vExtendTo valign y) rs | (y,rs) <- zip ys rects2 ]  
   final  = vCatWith HLeft vsep 
-         $ map (hCatWith VTop hsep) rects2
+         $ map (hCatWith VTop hsep) rects3
 
 -- | Order of elements in a matrix
 data MatrixOrder 
