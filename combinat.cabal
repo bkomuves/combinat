@@ -14,7 +14,7 @@ Homepage:            http://code.haskell.org/~bkomuves/
 Stability:           Experimental
 Category:            Math
 Tested-With:         GHC == 7.8.3
-Cabal-Version:       >= 1.10
+Cabal-Version:       >= 1.18
 Build-Type:          Simple
 
 extra-doc-files:     svg/*.svg 
@@ -67,8 +67,11 @@ Library
                        Math.Combinat.ASCII
                        Math.Combinat.Helper
 
-  Extensions:          CPP, MultiParamTypeClasses, ScopedTypeVariables, 
+  Default-Extensions:  CPP, BangPatterns
+  Other-Extensions:    MultiParamTypeClasses, ScopedTypeVariables, 
                        GeneralizedNewtypeDeriving, BangPatterns 
+
+  Default-Language:    Haskell2010
 
   Hs-Source-Dirs:      .
 
