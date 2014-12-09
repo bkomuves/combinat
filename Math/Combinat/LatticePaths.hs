@@ -17,6 +17,7 @@ import System.Random
 
 import Math.Combinat.Numbers
 import Math.Combinat.Trees.Binary
+import Math.Combinat.ASCII as ASCII
 
 --------------------------------------------------------------------------------
 -- * Types
@@ -38,17 +39,12 @@ type LatticePath = [Step]
 --------------------------------------------------------------------------------
 -- * ascii drawing of paths
 
--- | Draws the path to the terminal
-printAsciiPath :: LatticePath -> IO ()
-printAsciiPath = putStrLn . asciiPath
-
--- | Draws the path into a string
-asciiPath :: LatticePath -> String
-asciiPath = unlines . asciiPath'
-
--- | Draws the path into a list of lines
-asciiPath' :: LatticePath -> [String]
-asciiPath' p = transpose (go 0 p) where
+-- | Draws the path into a list of lines. For example try:
+--
+-- > autotabulate RowMajor (Right 5) (map asciiPath $ dyckPaths 4)
+--
+asciiPath :: LatticePath -> ASCII
+asciiPath p = asciiFromLines $ transpose (go 0 p) where
 
   go !h [] = []
   go !h (x:xs) = case x of
