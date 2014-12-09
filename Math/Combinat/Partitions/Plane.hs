@@ -22,6 +22,7 @@ module Math.Combinat.Partitions.Plane where
 --------------------------------------------------------------------------------
 
 import Data.List
+import Data.Array
 
 import Math.Combinat.Partitions
 import Math.Combinat.Tableaux as Tableaux
@@ -36,10 +37,29 @@ newtype PlanePart = PlanePart [[Int]] deriving (Eq,Ord,Show)
 fromPlanePart :: PlanePart -> [[Int]]
 fromPlanePart (PlanePart xs) = xs
 
--- | The XY projected shape, as a partition
+isValidPlanePart :: [[Int]] -> Bool
+isValidPlanePart pps = 
+  and [ table!(i,j) >= table!(i  ,j+1) &&
+        table!(i,j) >= table!(i+1,j  )
+      | i<-[0..y-1] , j<-[0..x-1] 
+      ]
+  where
+    table :: Array (Int,Int) Int
+    table = accumArray const 0 ((0,0),(y,x)) [ ((i,j),k) | (i,ps) <- zip [0..] pps , (j,k) <- zip [0..] ps ]
+    y = length pps
+    x = maximum (map length pps)
+
+-- | Throws an exception if the input is not a plane partition
+toPlanePart :: [[Int]] -> PlanePart
+toPlanePart pps = if isValidPlanePart pps
+  then PlanePart $ filter (not . null) $ map (filter (>0)) $ pps
+  else error "toPlanePart: not a plane partition"
+
+-- | The XY projected shape of a plane partition, as an integer partition
 planePartShape :: PlanePart -> Partition
 planePartShape = Tableaux.shape . fromPlanePart
 
+-- | The Z height of a plane partition
 planePartZHeight :: PlanePart -> Int
 planePartZHeight (PlanePart xs) = 
   case xs of
@@ -54,6 +74,13 @@ planePartWeight (PlanePart xs) = sum' (map sum' xs)
 
 singleLayer :: Partition -> PlanePart
 singleLayer = PlanePart . map (\k -> replicate k 1) . fromPartition 
+
+-- |  Stacks layers of partitions into a plane partition.
+-- Throws an exception if they do not form a plane partition.
+stackLayers :: [Partition] -> PlanePart
+stackLayers layers = if and [ isSubPartitionOf p q | (q,p) <- pairs layers ]
+  then unsafeStackLayers layers
+  else error "stackLayers: the layers do not form a plane partition"
 
 -- | Stacks layers of partitions into a plane partition.
 -- This is unsafe in the sense that we don't check that the partitions fit on the top of each other.
