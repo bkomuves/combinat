@@ -6,7 +6,7 @@
 -- 
 -- See also the @combinat-diagrams@ library for generating
 -- graphical representations of these structure using 
--- the @diagrams@ library.
+-- the @diagrams@ library (<http://projects.haskell.org/diagrams>).
 --
 --
 -- The long-term goals are 
@@ -53,6 +53,7 @@ module Math.Combinat
   , module Math.Combinat.Tableaux
   , module Math.Combinat.Trees
   , module Math.Combinat.LatticePaths
+  , module Math.Combinat.ASCII
   , module Math.Combinat.Graphviz
   ) where
 
@@ -65,5 +66,5 @@ import Math.Combinat.Permutations
 import Math.Combinat.Tableaux
 import Math.Combinat.Trees
 import Math.Combinat.LatticePaths
+import Math.Combinat.ASCII
 import Math.Combinat.Graphviz
-

@@ -63,6 +63,7 @@ Library
                        Math.Combinat.Trees.Nary
                        Math.Combinat.LatticePaths
                        Math.Combinat.FreeGroups
+                       Math.Combinat.ASCII
                        Math.Combinat.Graphviz
                        Math.Combinat.Helper
 
