@@ -111,9 +111,9 @@ countTernaryTrees = countRegularNaryTrees (3::Int)
 -- | All trees on @n@ nodes where the number of children of all nodes is
 -- in element of the given set. Example:
 --
--- > mapM_ printTreeVertical 
--- >  $ map labelNChildrenTree_ 
--- >  $ semiRegularTrees [2,3] n
+-- > autoTabulate RowMajor (Right 5) $ map asciiTreeVertical 
+-- >                                 $ map labelNChildrenTree_ 
+-- >                                 $ semiRegularTrees [2,3] 2
 -- >
 -- > [ length $ semiRegularTrees [2,3] n | n<-[0..] ] == [1,2,10,66,498,4066,34970,312066,2862562,26824386,...]
 --

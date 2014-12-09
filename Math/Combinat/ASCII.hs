@@ -19,7 +19,10 @@ import Math.Combinat.Helper
 -- * The basic type
 
 -- | The type of a (rectangular) ASCII figure. 
--- Internally it is a list of lines of the same length
+-- Internally it is a list of lines of the same length plus the size.
+--
+-- Note: The Show instance is pretty-printing, so that it\'s convenient in ghci.
+--
 data ASCII = ASCII 
   { asciiSize  :: (Int,Int) 
   , asciiLines :: [String]

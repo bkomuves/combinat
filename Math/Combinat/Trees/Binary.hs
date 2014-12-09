@@ -2,6 +2,10 @@
 -- | Binary trees, forests, etc. See:
 --   Donald E. Knuth: The Art of Computer Programming, vol 4, pre-fascicle 4A.
 --
+-- For example, here are all the binary trees on 4 nodes:
+--
+-- <<svg/bintrees.svg>>
+--
 
 module Math.Combinat.Trees.Binary 
   ( -- * Types
