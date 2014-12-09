@@ -93,7 +93,7 @@ mapWithFirstLast f = go True where
   go b (x : xs) = f b False x : go False xs
 
 --------------------------------------------------------------------------------
--- * helpers for ASCII drawing
+-- * older helpers for ASCII drawing
 
 -- | extend lines with spaces so that they have the same line
 mkLinesUniformWidth :: [String] -> [String]

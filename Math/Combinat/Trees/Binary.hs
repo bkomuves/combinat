@@ -1,18 +1,36 @@
 
 -- | Binary trees, forests, etc. See:
 --   Donald E. Knuth: The Art of Computer Programming, vol 4, pre-fascicle 4A.
+--
 
 module Math.Combinat.Trees.Binary 
   ( -- * Types
     BinTree(..)
   , leaf
   , BinTree'(..)
-  , toRoseTree , toRoseTree'
   , forgetNodeDecorations
-  , module Data.Tree 
   , Paren(..)
   , parenthesesToString
   , stringToParentheses
+  -- * Conversion to rose trees (@Data.Tree@)
+  , toRoseTree , toRoseTree'
+  , module Data.Tree 
+    -- * Nested parentheses
+  , nestedParentheses 
+  , randomNestedParentheses
+  , nthNestedParentheses
+  , countNestedParentheses
+  , fasc4A_algorithm_P
+  , fasc4A_algorithm_W
+  , fasc4A_algorithm_U
+    -- * Generating binary trees
+  , binaryTrees
+  , countBinaryTrees
+  , binaryTreesNaive
+  , randomBinaryTree
+  , fasc4A_algorithm_R
+    -- * ASCII drawing
+  , asciiBinaryTree_
     -- * Bijections
   , forestToNestedParentheses
   , forestToBinaryTree
@@ -22,23 +40,6 @@ module Math.Combinat.Trees.Binary
   , nestedParenthesesToBinaryTreeUnsafe
   , binaryTreeToForest
   , binaryTreeToNestedParentheses
-    -- * Nested parentheses
-  , nestedParentheses 
-  , randomNestedParentheses
-  , nthNestedParentheses
-  , countNestedParentheses
-  , fasc4A_algorithm_P
-  , fasc4A_algorithm_W
-  , fasc4A_algorithm_U
-    -- * Binary trees
-  , binaryTrees
-  , countBinaryTrees
-  , binaryTreesNaive
-  , randomBinaryTree
-  , fasc4A_algorithm_R
-    -- * ASCII drawing
-  , printBinaryTree_
-  , drawBinaryTree_
   ) 
   where
 
@@ -61,8 +62,10 @@ import Data.Traversable (Traversable(traverse))
 
 import System.Random
 
-import Math.Combinat.Helper
 import Math.Combinat.Numbers (factorial,binomial)
+
+import Math.Combinat.Helper
+import Math.Combinat.ASCII as ASCII
 
 --------------------------------------------------------------------------------
 -- * Types
@@ -89,7 +92,7 @@ forgetNodeDecorations (Branch' left _ right) =
 forgetNodeDecorations (Leaf' decor) = Leaf decor 
 
 --------------------------------------------------------------------------------
--- * conversion to Data.Tree
+-- * conversion to 'Data.Tree'
 
 -- | Convert a binary tree to a rose tree (from "Data.Tree")
 toRoseTree :: BinTree a -> Tree (Maybe a)
@@ -103,7 +106,7 @@ toRoseTree' = go where
   go (Leaf' x)         = Node (Right x) [] 
   
 --------------------------------------------------------------------------------
--- * instances
+-- instances
   
 instance Functor BinTree where
   fmap f = go where
@@ -121,9 +124,12 @@ instance Traversable BinTree where
     go (Branch left right) = Branch <$> go left <*> go right
 
 --------------------------------------------------------------------------------
--- * nester parentheses
+-- * Nested parentheses
 
-data Paren = LeftParen | RightParen deriving (Eq,Ord,Show,Read)
+data Paren 
+  = LeftParen 
+  | RightParen 
+  deriving (Eq,Ord,Show,Read)
 
 parenToChar :: Paren -> Char
 parenToChar LeftParen = '('
@@ -299,7 +305,7 @@ fasc4A_algorithm_U n' bign0 = reverse $ worker (bign0,c0,n,n,[]) where
       c' = ((q+1)*(q-p)*c) `div` ((q+p)*(q-p+1))
   
 --------------------------------------------------------------------------------
--- * Binary trees
+-- * Generating binary trees
 
 -- | Generates all binary trees with n nodes. 
 --   At the moment just a synonym for 'binaryTreesNaive'.
@@ -359,18 +365,16 @@ fasc4A_algorithm_R n0 rnd = res where
       (k,b) = x `divMod` 2
       
 --------------------------------------------------------------------------------      
+-- * ASCII drawing  
 
 -- | Draws a binary tree in ASCII, ignoring node labels.
 --
 -- Example:
 --
--- > mapM_ printBinaryTree_ $ binaryTrees 4
+-- > autoTabulate RowMajor (Right 5) $ map asciiBinaryTree_ $ binaryTrees 4
 --
-printBinaryTree_ :: BinTree a -> IO ()
-printBinaryTree_ = putStrLn . drawBinaryTree_
-  
-drawBinaryTree_ :: BinTree a -> String
-drawBinaryTree_ = unlines . fst . go where
+asciiBinaryTree_ :: BinTree a -> ASCII
+asciiBinaryTree_ = ASCII.asciiFromLines . fst . go where
 
   go :: BinTree a -> ([String],Int)
   go (Leaf x) = ([],0)
@@ -389,3 +393,5 @@ drawBinaryTree_ = unlines . fst . go where
   blockWidth ls = case ls of
     (l:_) -> length l
     []    -> 0
+
+--------------------------------------------------------------------------------      

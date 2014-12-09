@@ -9,15 +9,12 @@ module Math.Combinat.Trees.Nary
   , semiRegularTrees
   , countTernaryTrees
   , countRegularNaryTrees
-    -- * derivation trees
+    -- * \"derivation trees\"
   , derivTrees
     -- * ASCII drawings
-  , printTreeVertical_
-  , printTreeVertical
-  , printTreeVerticalLeavesOnly
-  , drawTreeVertical_
-  , drawTreeVertical
-  , drawTreeVerticalLeavesOnly
+  , asciiTreeVertical_
+  , asciiTreeVertical
+  , asciiTreeVerticalLeavesOnly
     -- * classifying nodes
   , classifyTreeNode
   , isTreeLeaf  , isTreeNode
@@ -67,6 +64,7 @@ import Math.Combinat.Partitions.Multiset   ( partitionMultiset )
 import Math.Combinat.Compositions          ( compositions )
 import Math.Combinat.Numbers               ( factorial, binomial )
 
+import Math.Combinat.ASCII as ASCII
 import Math.Combinat.Helper
 
 --------------------------------------------------------------------------------
@@ -160,31 +158,14 @@ A107708 = [ length $ semiRegularTrees [1,2,3]   n | n<-[0..] ] == [1,3,18,144,13
              
 --------------------------------------------------------------------------------
 
--- | Vertical ASCII drawing of a tree, without labels.
--- 
--- Example:
+-- | Vertical ASCII drawing of a tree, without labels. Example:
 --
--- > mapM_ printTreeVertical_ $ regularNaryTrees 2 3 
+-- > autoTabulate RowMajor (Right 5) $ map asciiTreeVertical_ $ regularNaryTrees 2 4 
 --
-printTreeVertical_ :: Tree a -> IO ()
-printTreeVertical_ = putStrLn . drawTreeVertical_
-
--- | Prints all labels.
+-- Nodes are denoted by @\@@, leaves by @*@.
 --
--- Example: 
---
--- > printTreeVertical $ addUniqueLabelsTree_ $ (regularNaryTrees 3 9) !! 666
---
-printTreeVertical :: Show a => Tree a -> IO ()
-printTreeVertical = putStrLn . drawTreeVertical
-
--- | Prints the labels for the leaves, but not for the nonempty nodes
-printTreeVerticalLeavesOnly :: Show a => Tree a -> IO ()
-printTreeVerticalLeavesOnly = putStrLn . drawTreeVerticalLeavesOnly
-
--- | Nodes are denoted by @\@@, leaves by @*@.
-drawTreeVertical_ :: Tree a -> String
-drawTreeVertical_ tree = unlines (go tree) where
+asciiTreeVertical_ :: Tree a -> ASCII
+asciiTreeVertical_ tree = ASCII.asciiFromLines (go tree) where
   go :: Tree b -> [String]
   go (Node _ cs) = case cs of
     [] -> ["-*"]
@@ -199,9 +180,14 @@ drawTreeVertical_ tree = unlines (go tree) where
                                              else "+-"
                    in  (branch++l) : map (indent++) ls ++ gap
 
--- | Nodes are denoted by @(label)@, leaves by @label@.
-drawTreeVertical :: Show a => Tree a -> String
-drawTreeVertical tree = unlines (go tree) where
+-- | Prints all labels. Example:
+-- 
+-- > asciiTreeVertical $ addUniqueLabelsTree_ $ (regularNaryTrees 3 9) !! 666
+--
+-- Nodes are denoted by @(label)@, leaves by @label@.
+--
+asciiTreeVertical :: Show a => Tree a -> ASCII
+asciiTreeVertical tree = ASCII.asciiFromLines (go tree) where
   go :: Show b => Tree b -> [String]
   go (Node x cs) = case cs of
     [] -> ["-- " ++ show x]
@@ -220,9 +206,9 @@ drawTreeVertical tree = unlines (go tree) where
                              else " +" ++ dashes ++ "--"
         in  (branch++l) : map (indent++) ls ++ gap
 
--- | Nodes are denoted by @\@@, leaves by @label@.
-drawTreeVerticalLeavesOnly :: Show a => Tree a -> String
-drawTreeVerticalLeavesOnly tree = unlines (go tree) where
+-- | Prints the labels for the leaves, but not for the  nodes.
+asciiTreeVerticalLeavesOnly :: Show a => Tree a -> ASCII
+asciiTreeVerticalLeavesOnly tree = ASCII.asciiFromLines (go tree) where
   go :: Show b => Tree b -> [String]
   go (Node x cs) = case cs of
     [] -> ["- " ++ show x]
