@@ -131,7 +131,7 @@ asciiTriangularArray :: Show a => TriangularArray a -> ASCII
 asciiTriangularArray = asciiTableau . fromTriangularArray
 
 asciiTableau :: Show a => Tableau a -> ASCII
-asciiTableau xxs = tabulate (HLeft,VTop) (HSepSpaces 1, VSepEmpty) 
+asciiTableau xxs = tabulate (HRight,VTop) (HSepSpaces 1, VSepEmpty) 
                  $ (map . map) asciiShow
                  $ xxs
 

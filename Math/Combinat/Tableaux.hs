@@ -29,11 +29,17 @@ import Data.List
 import Math.Combinat.Helper
 import Math.Combinat.Numbers (factorial,binomial)
 import Math.Combinat.Partitions
+import Math.Combinat.ASCII
 
 --------------------------------------------------------------------------------
 -- * Basic stuff
 
 type Tableau a = [[a]]
+
+asciiTableau :: Show a => Tableau a -> ASCII
+asciiTableau t = tabulate (HRight,VTop) (HSepSpaces 1, VSepEmpty) 
+           $ (map . map) asciiShow
+           $ t
 
 _shape :: Tableau a -> [Int]
 _shape t = map length t 

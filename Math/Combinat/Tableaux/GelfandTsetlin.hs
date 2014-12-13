@@ -56,7 +56,7 @@ type GT = [[Int]]
 
 
 asciiGT :: GT -> ASCII
-asciiGT gt = tabulate (HLeft,VTop) (HSepSpaces 1, VSepEmpty) 
+asciiGT gt = tabulate (HRight,VTop) (HSepSpaces 1, VSepEmpty) 
            $ (map . map) asciiShow
            $ gt
 
