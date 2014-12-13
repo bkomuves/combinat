@@ -57,6 +57,7 @@ Library
                        Math.Combinat.Partitions.Vector
                        Math.Combinat.Permutations
                        Math.Combinat.Tableaux
+                       Math.Combinat.Tableaux.GelfandTsetlin
                        Math.Combinat.Tableaux.GelfandTsetlin.Cone
                        Math.Combinat.Trees
                        Math.Combinat.Trees.Binary
