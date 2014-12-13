@@ -21,7 +21,7 @@
 -- >  4  5  6  7 
 -- 
 -- Let us call the tableaux with maximal content (that is, @m = binomial (k+1) 2@)
--- /standard/. The number of standard tableaux are
+-- /standard/. The number of such standard tableaux are
 --
 -- > 1, 1, 2, 12, 286, 33592, 23178480, ...
 --
@@ -41,24 +41,32 @@
 -- >  k=5 |   286    858   1001    572    165     22     1
 -- >  k=6 | 33592 167960 361114 436696 326196 155584 47320 8892 962 52 1 
 --
--- We call these \"Kostka tableaux\" (in the lack of a better name), since
+-- We call these \"GT simplex tableaux\" (in the lack of a better name), since
 -- they are in bijection with the simplicial cones in a canonical simplicial 
 -- decompositions of the Gelfand-Tsetlin cones (the content corresponds
 -- to the dimension), which encode the combinatorics of Kostka numbers.
 --
 
-module Math.Combinat.Tableaux.Kostka 
+module Math.Combinat.Tableaux.GelfandTsetlin.Cone
   ( 
+    -- * Types
     Tableau
   , Tri(..)
   , TriangularArray
   , fromTriangularArray
   , triangularArrayUnsafe
-  , kostkaTableaux
-  , _kostkaTableaux
-  , countKostkaTableaux
-  , kostkaContent
-  , _kostkaContent
+    -- * ASCII
+  , asciiTriangularArray
+  , asciiTableau
+    -- * Content
+  , gtSimplexContent
+  , _gtSimplexContent
+  , invertGTSimplexTableau
+  , _invertGTSimplexTableau
+    -- * Enumeration
+  , gtSimplexTableaux
+  , _gtSimplexTableaux
+  , countGTSimplexTableaux
   ) 
   where
 
@@ -76,6 +84,7 @@ import Data.Array.ST
 
 import Math.Combinat.Tableaux (Tableau)
 import Math.Combinat.Helper
+import Math.Combinat.ASCII
 
 --------------------------------------------------------------------------------
 
@@ -115,7 +124,17 @@ triangularArrayUnsafe tableau = listArray (Tri (1,1),Tri (k,k)) (concat tableau)
 fromTriangularArray :: TriangularArray a -> Tableau a
 fromTriangularArray arr = (map.map) snd $ groupBy (equating f) $ assocs arr
   where f = fst . unTri . fst
-  
+
+--------------------------------------------------------------------------------
+
+asciiTriangularArray :: Show a => TriangularArray a -> ASCII
+asciiTriangularArray = asciiTableau . fromTriangularArray
+
+asciiTableau :: Show a => Tableau a -> ASCII
+asciiTableau xxs = tabulate (HLeft,VTop) (HSepSpaces 1, VSepEmpty) 
+                 $ (map . map) asciiShow
+                 $ xxs
+
 --------------------------------------------------------------------------------
 
 -- "fractional fillings"
@@ -136,11 +155,11 @@ reverseTableau = reverse . map reverse
 
 --------------------------------------------------------------------------------
 
-kostkaContent :: TriangularArray Int -> Int
-kostkaContent arr = arr ! (snd (bounds arr))
+gtSimplexContent :: TriangularArray Int -> Int
+gtSimplexContent arr = max (arr ! (fst (bounds arr))) (arr ! (snd (bounds arr)))   -- we also handle inverted tableau
 
-_kostkaContent :: Tableau Int -> Int
-_kostkaContent = last . last
+_gtSimplexContent :: Tableau Int -> Int
+_gtSimplexContent t = max (head $ head t) (last $ last t)   -- we also handle inverted tableau
  
 normalize :: ReverseHoleTableau -> TriangularArray Int 
 normalize = snd . normalize'
@@ -187,36 +206,52 @@ newLines :: [Int] -> [[Hole]]
 newLines lastReversed = newLines' (head lastReversed) lastReversed
 
 -- | Generates all tableaux of size @k@. Effective for @k<=6@.
-kostkaTableaux :: Int -> [TriangularArray Int]
-kostkaTableaux 0 = [ triangularArrayUnsafe [] ]
-kostkaTableaux 1 = [ triangularArrayUnsafe [[1]] ]
-kostkaTableaux k = map normalize $ concatMap f smalls where
+gtSimplexTableaux :: Int -> [TriangularArray Int]
+gtSimplexTableaux 0 = [ triangularArrayUnsafe [] ]
+gtSimplexTableaux 1 = [ triangularArrayUnsafe [[1]] ]
+gtSimplexTableaux k = map normalize $ concatMap f smalls where
   smalls :: [ [[Int]] ]
-  smalls = map (reverseTableau . fromTriangularArray) $ kostkaTableaux (k-1)
+  smalls = map (reverseTableau . fromTriangularArray) $ gtSimplexTableaux (k-1)
   f :: [[Int]] -> [ [[Hole]] ]
   f small = map (:smallhole) $ map reverse $ newLines (head small) where
     smallhole = map (map toHole) small
 
-_kostkaTableaux :: Int -> [Tableau Int]
-_kostkaTableaux k = map fromTriangularArray $ kostkaTableaux k
+_gtSimplexTableaux :: Int -> [Tableau Int]
+_gtSimplexTableaux k = map fromTriangularArray $ gtSimplexTableaux k
 
 --------------------------------------------------------------------------------
 
-countKostkaTableaux :: Int -> [Int]
-countKostkaTableaux = elems . sizes'
+-- | Note: This is slow (it actually generates all the tableaux)
+countGTSimplexTableaux :: Int -> [Int]
+countGTSimplexTableaux = elems . sizes'
 
 sizes' :: Int -> UArray Int Int
 sizes' k = 
   runSTUArray $ do
     let (a,b) = ( 2*k-1 , binom2 (k+1) )
     ar <- newArray (a,b) 0 :: ST s (STUArray s Int Int)   
-    mapM_ (worker ar) $ kostkaTableaux k 
+    mapM_ (worker ar) $ gtSimplexTableaux k 
     return ar
   where
     worker :: STUArray s Int Int -> TriangularArray Int -> ST s ()
     worker ar t = do
-      let c = kostkaContent t 
+      let c = gtSimplexContent t 
       n <- readArray ar c  
       writeArray ar c (n+1)
      
+--------------------------------------------------------------------------------
+
+-- | We can flip the numbers in the tableau so that the interval @[1..c]@ becomes
+-- @[c..1]@. This way we a get a maybe more familiar form, when each row and each
+-- column is strictly /decreasing/ (to the right and to the bottom).
+invertGTSimplexTableau :: TriangularArray Int -> TriangularArray Int 
+invertGTSimplexTableau t = amap f t where
+  c = gtSimplexContent t 
+  f x = c+1-x  
+
+_invertGTSimplexTableau :: [[Int]] -> [[Int]]
+_invertGTSimplexTableau t = (map . map) f t where
+  c = _gtSimplexContent t  
+  f x = c+1-x
+
 --------------------------------------------------------------------------------
