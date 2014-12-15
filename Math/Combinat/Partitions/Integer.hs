@@ -24,6 +24,9 @@ module Math.Combinat.Partitions.Integer where
 
 import Data.List
 
+-- import Data.Map (Map)
+-- import qualified Data.Map as Map
+
 import Math.Combinat.Helper
 import Math.Combinat.ASCII as ASCII
 import Math.Combinat.Numbers (factorial,binomial,multinomial)
@@ -322,7 +325,7 @@ countPartitionsWithKParts k n = go n k n where
     | otherwise  = sum' [ go a (k-1) (n-a) | a<-[1..(min h (n-k+1))] ]
 
 --------------------------------------------------------------------------------
--- * partition with only odd\/distinct parts
+-- * Partitions with only odd\/distinct parts
 
 -- | Partitions of @n@ with only odd parts
 partitionsWithOddParts :: Int -> [Partition]
@@ -398,6 +401,58 @@ _allSubPartitions big
     go !h (b:bs) 
       | h==0         = []
       | otherwise    = [] : [ this:rest | this <- [1..min h b] , rest <- go this bs ]
+
+--------------------------------------------------------------------------------
+-- * The Pieri rule
+
+-- | The Pieri rule computes @s[lambda]*h[n]@ as a sum of @s[mu]@-s (each with coefficient 1).
+--
+-- See for example <http://en.wikipedia.org/wiki/Pieri's_formula>
+--
+pieriRule :: Partition -> Int -> [Partition] 
+pieriRule (Partition lambda) n = map Partition (_pieriRule lambda n) where
+
+  -- | We assume here that @lambda@ is a partition (non-increasing sequence of /positive/ integers)! 
+  _pieriRule :: [Int] -> Int -> [[Int]] 
+  _pieriRule lambda n
+    | n == 0     = [lambda]
+    | n <  0     = [] 
+    | otherwise  = go n diffs dsums (lambda++[0]) 
+    where
+      diffs = n : diffSequence lambda                 -- maximum we can add to a given row
+      dsums = reverse $ scanl1 (+) (reverse diffs)    -- partial sums of remaining total we can add
+      go !k (d:ds) (p:ps@(q:_)) (l:ls) 
+        | k > p     = []
+        | otherwise = [ h:tl | a <- [ max 0 (k-q) .. min d k ] , let h = l+a , tl <- go (k-a) ds ps ls ]
+      go !k [d]    _      [l]    = if k <= d 
+                                     then if l+k>0 then [[l+k]] else [[]]
+                                     else []
+      go !k []     _      _      = if k==0 then [[]] else []
+
+-- | The dual Pieri rule computes @s[lambda]*e[n]@ as a sum of @s[mu]@-s (each with coefficient 1)
+dualPieriRule :: Partition -> Int -> [Partition] 
+dualPieriRule lam n = map dualPartition $ pieriRule (dualPartition lam) n
+
+{-
+-- | Computes the Schur expansion of @h[n1]*h[n2]*h[n3]*...*h[nk]@ via iterating the Pieri rule
+iteratedPieriRule :: Num coeff => [Int] -> Map Partition coeff
+iteratedPieriRule = iteratedPieriRule' (Partition [])
+
+-- | Iterating the Pieri rule, we can compute the Schur expansion of
+-- @h[lambda]*h[n1]*h[n2]*h[n3]*...*h[nk]@
+iteratedPieriRule' :: Num coeff => Partition -> [Int] -> Map Partition coeff
+iteratedPieriRule' plambda ns = iteratedPieriRule'' (plambda,1) ns
+
+{-# SPECIALIZE iteratedPieriRule'' :: (Partition,Int    ) -> [Int] -> Map Partition Int     #-}
+{-# SPECIALIZE iteratedPieriRule'' :: (Partition,Integer) -> [Int] -> Map Partition Integer #-}
+iteratedPieriRule'' :: Num coeff => (Partition,coeff) -> [Int] -> Map Partition coeff
+iteratedPieriRule'' (plambda,coeff0) ns = worker (Map.singleton plambda coeff0) ns where
+  worker old []     = old
+  worker old (n:ns) = worker new ns where
+    stuff = [ (coeff, pieriRule lam n) | (lam,coeff) <- Map.toList old ] 
+    new   = foldl' f Map.empty stuff 
+    f t0 (c,ps) = foldl' (\t p -> Map.insertWith (+) p c t) t0 ps  
+-}
 
 --------------------------------------------------------------------------------
 -- * ASCII Ferrers diagrams
