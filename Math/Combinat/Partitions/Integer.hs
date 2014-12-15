@@ -59,12 +59,12 @@ toPartition xs = if isPartition xs
   then toPartitionUnsafe xs
   else error "toPartition: not a partition"
   
--- | Note: we only check that the sequence is ordered, but we /do not/ check for
--- negative elements. This can be useful when working with symmetric functions.
--- It may also change in the future...
+-- | This returns @True@ if the input is non-increasing sequence of 
+-- /positive/ integers (possibly empty); @False@ otherwise.
+--
 isPartition :: [Int] -> Bool
 isPartition []  = True
-isPartition [_] = True
+isPartition [x] = x > 0
 isPartition (x:xs@(y:_)) = (x >= y) && isPartition xs
 
 fromPartition :: Partition -> [Int]
@@ -76,7 +76,7 @@ height (Partition part) = case part of
   (p:_) -> p
   [] -> 0
   
--- | The length of the sequence.
+-- | The length of the sequence (that is, the number of parts).
 width :: Partition -> Int
 width (Partition part) = length part
 
@@ -92,10 +92,44 @@ weight (Partition part) = sum' part
 dualPartition :: Partition -> Partition
 dualPartition (Partition part) = Partition (_dualPartition part)
 
--- (we could be more efficient, but it hardly matters)
+data Pair = Pair !Int !Int
+
 _dualPartition :: [Int] -> [Int]
 _dualPartition [] = []
-_dualPartition xs@(k:_) = [ length $ filter (>=i) xs | i <- [1..k] ]
+_dualPartition xs = go 0 (diffSequence xs) [] where
+  go !i (d:ds) acc = go (i+1) ds (d:acc)
+  go n  []     acc = finish n acc 
+  finish !j (k:ks) = replicate k j ++ finish (j-1) ks
+  finish _  []     = []
+
+{-
+-- more variations:
+
+_dualPartition_b :: [Int] -> [Int]
+_dualPartition_b [] = []
+_dualPartition_b xs = go 1 (diffSequence xs) [] where
+  go !i (d:ds) acc = go (i+1) ds ((d,i):acc)
+  go _  []     acc = concatMap (\(d,i) -> replicate d i) acc
+
+_dualPartition_c :: [Int] -> [Int]
+_dualPartition_c [] = []
+_dualPartition_c xs = reverse $ concat $ zipWith f [1..] (diffSequence xs) where
+  f _ 0 = []
+  f k d = replicate d k
+-}
+
+-- | A simpler, but bit slower (about twice?) implementation of dual partition
+_dualPartitionNaive :: [Int] -> [Int]
+_dualPartitionNaive [] = []
+_dualPartitionNaive xs@(k:_) = [ length $ filter (>=i) xs | i <- [1..k] ]
+
+-- | From a sequence @[a1,a2,..,an]@ computes the sequence of differences
+-- @[a1-a2,a2-a3,...,an-0]@
+diffSequence :: [Int] -> [Int]
+diffSequence = go where
+  go (x:ys@(y:_)) = (x-y) : go ys 
+  go [x] = [x]
+  go []  = []
 
 -- | Example:
 --
@@ -122,6 +156,77 @@ _countAutomorphisms :: [Int] -> Integer
 _countAutomorphisms = multinomial . map length . group
 
 ---------------------------------------------------------------------------------
+-- * Generating partitions
+
+-- | Partitions of @d@.
+partitions :: Int -> [Partition]
+partitions = map Partition . _partitions
+
+-- | Partitions of @d@, as lists
+_partitions :: Int -> [[Int]]
+_partitions d = go d d where
+  go _  0  = [[]]
+  go !h !n = [ a:as | a<-[1..min n h], as <- go a (n-a) ]
+
+countPartitions :: Int -> Integer
+countPartitions d = countPartitions' (d,d) d
+
+-- | All integer partitions up to a given degree (that is, all integer partitions whose sum is less or equal to @d@)
+allPartitions :: Int -> [Partition]
+allPartitions d = concat [ partitions i | i <- [0..d] ]
+
+-- | All integer partitions up to a given degree (that is, all integer partitions whose sum is less or equal to @d@),
+-- grouped by weight
+allPartitionsGrouped :: Int -> [[Partition]]
+allPartitionsGrouped d = [ partitions i | i <- [0..d] ]
+
+-- | All integer partitions fitting into a given rectangle.
+allPartitions'  
+  :: (Int,Int)        -- ^ (height,width)
+  -> [Partition]
+allPartitions' (h,w) = concat [ partitions' (h,w) i | i <- [0..d] ] where d = h*w
+
+-- | All integer partitions fitting into a given rectangle, grouped by weight.
+allPartitionsGrouped'  
+  :: (Int,Int)        -- ^ (height,width)
+  -> [[Partition]]
+allPartitionsGrouped' (h,w) = [ partitions' (h,w) i | i <- [0..d] ] where d = h*w
+
+-- | # = \\binom { h+w } { h }
+countAllPartitions' :: (Int,Int) -> Integer
+countAllPartitions' (h,w) = 
+  binomial (h+w) (min h w)
+  --sum [ countPartitions' (h,w) i | i <- [0..d] ] where d = h*w
+
+countAllPartitions :: Int -> Integer
+countAllPartitions d = sum' [ countPartitions i | i <- [0..d] ]
+
+-- | Integer partitions of @d@, fitting into a given rectangle, as lists.
+_partitions' 
+  :: (Int,Int)     -- ^ (height,width)
+  -> Int           -- ^ d
+  -> [[Int]]        
+_partitions' _ 0 = [[]] 
+_partitions' ( 0 , _) d = if d==0 then [[]] else []
+_partitions' ( _ , 0) d = if d==0 then [[]] else []
+_partitions' (!h ,!w) d = 
+  [ i:xs | i <- [1..min d h] , xs <- _partitions' (i,w-1) (d-i) ]
+
+-- | Partitions of d, fitting into a given rectangle. The order is again lexicographic.
+partitions'  
+  :: (Int,Int)     -- ^ (height,width)
+  -> Int           -- ^ d
+  -> [Partition]
+partitions' hw d = map toPartitionUnsafe $ _partitions' hw d        
+
+countPartitions' :: (Int,Int) -> Int -> Integer
+countPartitions' _ 0 = 1
+countPartitions' (0,_) d = if d==0 then 1 else 0
+countPartitions' (_,0) d = if d==0 then 1 else 0
+countPartitions' (h,w) d = sum
+  [ countPartitions' (i,w-1) (d-i) | i <- [1..min d h] ] 
+
+---------------------------------------------------------------------------------
 -- * Dominance order 
 
 -- | @q \`dominates\` p@ returns @True@ if @q >= p@ in the dominance order of partitions
@@ -134,6 +239,7 @@ dominates (Partition qs) (Partition ps)
   = and $ zipWith (>=) (sums (qs ++ repeat 0)) (sums ps)
   where
     sums = scanl (+) 0
+
 
 -- | Lists all partitions of the same weight as @lambda@ and also dominated by @lambda@
 -- (that is, all partial sums are less or equal):
@@ -179,64 +285,6 @@ _dominatingPartitions mu     = go w w dsums 0 where
     | w == 0  = [[]]
     | w <  0  = error "_dominatingPartitions: fatal error; shouldn't happen"
 
----------------------------------------------------------------------------------
--- * Generating partitions
-
--- | Integer partitions of @d@, fitting into a given rectangle, as lists.
-_partitions' 
-  :: (Int,Int)     -- ^ (height,width)
-  -> Int           -- ^ d
-  -> [[Int]]        
-_partitions' _ 0 = [[]] 
-_partitions' ( 0 , _) d = if d==0 then [[]] else []
-_partitions' ( _ , 0) d = if d==0 then [[]] else []
-_partitions' (!h ,!w) d = 
-  [ i:xs | i <- [1..min d h] , xs <- _partitions' (i,w-1) (d-i) ]
-
--- | Partitions of d, fitting into a given rectangle. The order is again lexicographic.
-partitions'  
-  :: (Int,Int)     -- ^ (height,width)
-  -> Int           -- ^ d
-  -> [Partition]
-partitions' hw d = map toPartitionUnsafe $ _partitions' hw d        
-
-countPartitions' :: (Int,Int) -> Int -> Integer
-countPartitions' _ 0 = 1
-countPartitions' (0,_) d = if d==0 then 1 else 0
-countPartitions' (_,0) d = if d==0 then 1 else 0
-countPartitions' (h,w) d = sum
-  [ countPartitions' (i,w-1) (d-i) | i <- [1..min d h] ] 
-
--- | Partitions of @d@, as lists
-_partitions :: Int -> [[Int]]
-_partitions d = _partitions' (d,d) d
-
--- | Partitions of @d@.
-partitions :: Int -> [Partition]
-partitions d = partitions' (d,d) d
-
-countPartitions :: Int -> Integer
-countPartitions d = countPartitions' (d,d) d
-
--- | All integer partitions fitting into a given rectangle.
-allPartitions'  
-  :: (Int,Int)        -- ^ (height,width)
-  -> [[Partition]]
-allPartitions' (h,w) = [ partitions' (h,w) i | i <- [0..d] ] where d = h*w
-
--- | All integer partitions up to a given degree (that is, all integer partitions whose sum is less or equal to @d@)
-allPartitions :: Int -> [[Partition]]
-allPartitions d = [ partitions i | i <- [0..d] ]
-
--- | # = \\binom { h+w } { h }
-countAllPartitions' :: (Int,Int) -> Integer
-countAllPartitions' (h,w) = 
-  binomial (h+w) (min h w)
-  --sum [ countPartitions' (h,w) i | i <- [0..d] ] where d = h*w
-
-countAllPartitions :: Int -> Integer
-countAllPartitions d = sum' [ countPartitions i | i <- [0..d] ]
-
 --------------------------------------------------------------------------------
 -- * Partitions with given number of parts
 
@@ -273,6 +321,36 @@ countPartitionsWithKParts k n = go n k n where
     | k == 1     = if h>=n && n>=1 then 1 else 0
     | otherwise  = sum' [ go a (k-1) (n-a) | a<-[1..(min h (n-k+1))] ]
 
+--------------------------------------------------------------------------------
+-- * partition with only odd\/distinct parts
+
+-- | Partitions of @n@ with only odd parts
+partitionsWithOddParts :: Int -> [Partition]
+partitionsWithOddParts d = map Partition (go d d) where
+  go _  0  = [[]]
+  go !h !n = [ a:as | a<-[1,3..min n h], as <- go a (n-a) ]
+
+{-
+-- | Partitions of @n@ with only even parts
+--
+-- Note: this is not very interesting, it's just @(map.map) (2*) $ _partitions (div n 2)@
+--
+partitionsWithEvenParts :: Int -> [Partition]
+partitionsWithEvenParts d = map Partition (go d d) where
+  go _  0  = [[]]
+  go !h !n = [ a:as | a<-[2,4..min n h], as <- go a (n-a) ]
+-}
+
+-- | Partitions of @n@ with distinct parts.
+-- 
+-- Note:
+--
+-- > length (partitionsWithDistinctParts d) == length (partitionsWithOddParts d)
+--
+partitionsWithDistinctParts :: Int -> [Partition]
+partitionsWithDistinctParts d = map Partition (go d d) where
+  go _  0  = [[]]
+  go !h !n = [ a:as | a<-[1..min n h], as <- go (a-1) (n-a) ]
 
 --------------------------------------------------------------------------------
 -- * Sub-partitions of a given partition
@@ -282,7 +360,6 @@ countPartitionsWithKParts k n = go n k n where
 isSubPartitionOf :: Partition -> Partition -> Bool
 isSubPartitionOf (Partition ps) (Partition qs) = and $ zipWith (<=) ps (qs ++ repeat 0)
 
-----------------------------------------
 
 -- | Sub-partitions of a given partition with the given weight:
 --
@@ -374,5 +451,45 @@ asciiFerrersDiagram' conv ch part = ASCII.asciiFromLines (map f ys) where
           EnglishNotation    -> fromPartition part
           EnglishNotationCCW -> reverse $ fromPartition $ dualPartition part
           FrenchNotation     -> reverse $ fromPartition $ part
+
+--------------------------------------------------------------------------------
+
+{-
+
+-- * Tests
+
+-- we need some custom types for quickcheck generating not too large partitions...
+
+newtype PartitionWeight     = PartitionWeight     Int
+data    PartitionWeightPair = PartitionWeightPair Int Int     
+data    PartitionPair       = PartitionPair Partition Int     
+
+prop_partitions_in_bigbox :: PartitionWeight -> Bool
+prop_partitions_in_bigbox (PartitionWeight n) = (partitions n == partitions' (n,n) n)
+
+prop_kparts :: PartitionWeightPair -> Bool
+prop_kparts (PartitionWeightPair n k) = (partitionsWithKParts k n == [ mu | mu <- partitions n, numberOfParts mu == k ])
+
+prop_odd_partitions :: PartitionWeight -> Bool
+prop_odd_partitions (PartitionWeight n) = 
+  (partitionsWithOddParts n == [ mu | mu <- partitions n, and (map odd (fromPartition mu)) ])
+
+prop_distinct_partitions :: PartitionWeight -> Bool
+prop_distinct_partitions (PartitionWeight n) = 
+  (partitionsWithDistinctParts n == [ mu | mu <- partitions n, let xs = fromPartition mu, xs == nub xs ])
+
+prop_subparts :: PartitionPair -> Bool
+prop_subparts (PartitionPair lam d) = (subPartitions d lam) == sort [ p | p <- partitions d, isSubPartitionOf p lam ]
+
+prop_dual_dual :: Partition -> Bool
+prop_dual_dual lam = (lam == dualPartition (dualPartition lam))
+
+prop_dominated_list :: Partition -> Bool
+prop_dominated_list  lam = (dominatedPartitions  lam == [ mu  | mu  <- partitions (weight lam), lam `dominates` mu ])
+
+prop_dominating_list :: Partition -> Bool
+prop_dominating_list mu  = (dominatingPartitions mu  == [ lam | lam <- partitions (weight mu ), lam `dominates` mu ])
+
+-}
 
 --------------------------------------------------------------------------------
