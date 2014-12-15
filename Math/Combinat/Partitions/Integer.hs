@@ -17,7 +17,7 @@
 -- <<svg/ferrers.svg>>
 -- 
 
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE CPP, BangPatterns #-}
 module Math.Combinat.Partitions.Integer where
 
 --------------------------------------------------------------------------------
@@ -32,7 +32,7 @@ import Math.Combinat.Numbers (factorial,binomial,multinomial)
 -- * Type and basic stuff
 
 -- | A partition of an integer. The additional invariant enforced here is that partitions 
--- are monotone decreasing sequences of positive integers. The @Ord@ instance is lexicographical.
+-- are monotone decreasing sequences of /positive/ integers. The @Ord@ instance is lexicographical.
 newtype Partition = Partition [Int] deriving (Eq,Ord,Show,Read)
 
 ---------------------------------------------------------------------------------
@@ -134,6 +134,50 @@ dominates (Partition qs) (Partition ps)
   = and $ zipWith (>=) (sums (qs ++ repeat 0)) (sums ps)
   where
     sums = scanl (+) 0
+
+-- | Lists all partitions of the same weight as @lambda@ and also dominated by @lambda@
+-- (that is, all partial sums are less or equal):
+--
+-- > dominatedPartitions lam == [ mu | mu <- partitions (weight lam), lam `dominates` mu ]
+-- 
+dominatedPartitions :: Partition -> [Partition]    
+dominatedPartitions (Partition lambda) = map Partition (_dominatedPartitions lambda)
+
+_dominatedPartitions :: [Int] -> [[Int]]
+_dominatedPartitions []     = [[]]
+_dominatedPartitions lambda = go (head lambda) w dsums 0 where
+
+  n = length lambda
+  w = sum    lambda
+  dsums = scanl1 (+) (lambda ++ repeat 0)
+
+  go _   0 _       _  = [[]]
+  go !h !w (!d:ds) !e  
+    | w >  0  = [ (a:as) | a <- [1..min h (d-e)] , as <- go a (w-a) ds (e+a) ] 
+    | w == 0  = [[]]
+    | w <  0  = error "_dominatedPartitions: fatal error; shouldn't happen"
+
+-- | Lists all partitions of the sime weight as @mu@ and also dominating @mu@
+-- (that is, all partial sums are greater or equal):
+--
+-- > dominatingPartitions mu == [ lam | lam <- partitions (weight mu), lam `dominates` mu ]
+-- 
+dominatingPartitions :: Partition -> [Partition]    
+dominatingPartitions (Partition mu) = map Partition (_dominatingPartitions mu)
+
+_dominatingPartitions :: [Int] -> [[Int]]
+_dominatingPartitions []     = [[]]
+_dominatingPartitions mu     = go w w dsums 0 where
+
+  n = length mu
+  w = sum    mu
+  dsums = scanl1 (+) (mu ++ repeat 0)
+
+  go _   0 _       _  = [[]]
+  go !h !w (!d:ds) !e  
+    | w >  0  = [ (a:as) | a <- [max 0 (d-e)..min h w] , as <- go a (w-a) ds (e+a) ] 
+    | w == 0  = [[]]
+    | w <  0  = error "_dominatingPartitions: fatal error; shouldn't happen"
 
 ---------------------------------------------------------------------------------
 -- * Generating partitions
