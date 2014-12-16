@@ -14,9 +14,11 @@ module Math.Combinat.Numbers.Series where
 --------------------------------------------------------------------------------
 
 import Data.List
-import Math.Combinat.Helper
+
+import Math.Combinat.Sign
 import Math.Combinat.Numbers
 import Math.Combinat.Partitions.Integer
+import Math.Combinat.Helper
 
 #ifdef QUICKCHECK
 import System.Random
@@ -433,11 +435,13 @@ convolveWithPSeries' aks series1 = ys where
   worker ((a,k):aks) ys = xs where
     xs = zipWith (+) (replicate k 0 ++ map (*a) ys) (worker aks ys)
 
+{-
 data Sign = Plus | Minus deriving (Eq,Show)
 
 signValue :: Num a => Sign -> a
 signValue Plus  =  1
 signValue Minus = -1
+-}
 
 signedPSeries :: [(Sign,Int)] -> [Integer] 
 signedPSeries aks = convolveWithSignedPSeries aks unitSeries

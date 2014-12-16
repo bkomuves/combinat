@@ -1,10 +1,10 @@
 Name:                combinat
 Version:             0.2.7.1
-Synopsis:            Generation of various combinatorial objects.
-Description:         A collection of functions to generate (and if there is 
-                     a formula, count) combinatorial objects like partitions, 
-                     compositions, permutations, Young tableaux, various trees, 
-                     etc.
+Synopsis:            Generate and manipulate various combinatorial objects.
+Description:         A collection of functions to generate, count and manipulate
+                     all kinds of combinatorial objects like partitions, 
+                     compositions, permutations, Young tableaux, binary trees, 
+                     and so on.
 License:             BSD3
 License-file:        LICENSE
 Author:              Balazs Komuves
@@ -45,6 +45,7 @@ Library
                        Math.Combinat.Numbers
                        Math.Combinat.Numbers.Series
                        Math.Combinat.Numbers.Primes
+                       Math.Combinat.Sign
                        Math.Combinat.Sets
                        Math.Combinat.Tuples 
                        Math.Combinat.Compositions

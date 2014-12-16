@@ -1,11 +1,11 @@
 
--- | A collection of functions to generate combinatorial
--- objects like partitions, compositions, permutations,
--- Young tableaux, various trees, etc etc.
+-- | A collection of functions to generate and manipulate
+-- combinatorial objects like partitions, compositions, 
+-- permutations, Young tableaux, various trees, etc etc.
 --
 -- 
 -- See also the @combinat-diagrams@ library for generating
--- graphical representations of these structure using 
+-- graphical representations of (some of) these structure using 
 -- the @diagrams@ library (<http://projects.haskell.org/diagrams>).
 --
 --
@@ -45,6 +45,7 @@
 
 module Math.Combinat 
   ( module Math.Combinat.Numbers
+  , module Math.Combinat.Sign
   , module Math.Combinat.Sets
   , module Math.Combinat.Tuples
   , module Math.Combinat.Compositions
@@ -54,9 +55,11 @@ module Math.Combinat
   , module Math.Combinat.Trees
   , module Math.Combinat.LatticePaths
   , module Math.Combinat.ASCII
-  ) where
+  ) 
+  where
 
 import Math.Combinat.Numbers
+import Math.Combinat.Sign
 import Math.Combinat.Sets
 import Math.Combinat.Tuples
 import Math.Combinat.Compositions

@@ -22,7 +22,7 @@ module Math.Combinat.Permutations
   , disjointCyclesToPermutation
   , isEvenPermutation
   , isOddPermutation
-  , signOfPermutation
+  , signOfPermutation  --  , Sign(..)
   , isCyclicPermutation
     -- * Permutation groups
   , permute
@@ -55,6 +55,8 @@ module Math.Combinat.Permutations
   ) 
   where
 
+--------------------------------------------------------------------------------
+
 import Control.Monad
 import Control.Monad.ST
 
@@ -69,6 +71,7 @@ import Data.Array.ST
 import Data.Array.Unsafe
 
 import Math.Combinat.Helper
+import Math.Combinat.Sign
 import Math.Combinat.Numbers (factorial,binomial)
 
 import System.Random
@@ -212,11 +215,14 @@ isEvenPermutation (Permutation perm) = res where
 isOddPermutation :: Permutation -> Bool
 isOddPermutation = not . isEvenPermutation
 
--- | Plus 1 or minus 1.
-signOfPermutation :: Num a => Permutation -> a
+signOfPermutation :: Permutation -> Sign
 signOfPermutation perm = case isEvenPermutation perm of
-  True  ->   1
-  False -> (-1)
+  True  -> Plus
+  False -> Minus
+
+-- | Plus 1 or minus 1.
+signValueOfPermutation :: Num a => Permutation -> a
+signValueOfPermutation = signValue . signOfPermutation
   
 isCyclicPermutation :: Permutation -> Bool
 isCyclicPermutation perm = 

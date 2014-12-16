@@ -15,8 +15,8 @@ import Math.Combinat.Helper ( sum' )
 --------------------------------------------------------------------------------
 
 -- | @(-1)^k@
-paritySign :: Integral a => a -> Integer
-paritySign k = if odd k then (-1) else 1
+paritySignValue :: Integral a => a -> Integer
+paritySignValue k = if odd k then (-1) else 1
 
 --------------------------------------------------------------------------------
 
@@ -129,7 +129,7 @@ stirling2nd n k
   | k < 1        = 0
   | k > n        = 0
   | otherwise = sum xs `div` factorial k where
-      xs = [ paritySign (k-i) * binomial k i * (fromIntegral i)^n | i<-[0..k] ]
+      xs = [ paritySignValue (k-i) * binomial k i * (fromIntegral i)^n | i<-[0..k] ]
 
 --------------------------------------------------------------------------------
 -- * Bernoulli numbers
@@ -144,7 +144,7 @@ bernoulli n
   | n == 1    = -1/2
   | otherwise = sum [ f k | k<-[1..n] ] 
   where
-    f k = toRational (paritySign (n+k) * factorial k * stirling2nd n k) 
+    f k = toRational (paritySignValue (n+k) * factorial k * stirling2nd n k) 
         / toRational (k+1)
 
 --------------------------------------------------------------------------------
