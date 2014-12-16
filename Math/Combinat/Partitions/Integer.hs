@@ -149,6 +149,25 @@ _elements :: [Int] -> [(Int,Int)]
 _elements shape = [ (i,j) | (i,l) <- zip [1..] shape, j<-[1..l] ] 
 
 ---------------------------------------------------------------------------------
+-- * Exponential form
+
+-- | We convert a partition to exponential form.
+-- @(i,e)@ mean @(i^e)@; for example @[(1,4),(2,3)]@ corresponds to @(1^4)(2^3) = [2,2,2,1,1,1,1]@. Another example:
+--
+-- > toExponentialForm (Partition [5,5,3,2,2,2,2,1,1]) == [(1,2),(2,4),(3,1),(5,2)]
+--
+toExponentialForm :: Partition -> [(Int,Int)]
+toExponentialForm = _toExponentialForm . fromPartition
+
+_toExponentialForm :: [Int] -> [(Int,Int)]
+_toExponentialForm = reverse . map (\xs -> (head xs,length xs)) . group
+
+fromExponentialFrom :: [(Int,Int)] -> Partition
+fromExponentialFrom = Partition . sortBy reverseCompare . go where
+  go ((j,e):rest) = replicate e j ++ go rest
+  go []           = []   
+
+---------------------------------------------------------------------------------
 -- * Automorphisms 
 
 -- | Computes the number of \"automorphisms\" of a given integer partition.
