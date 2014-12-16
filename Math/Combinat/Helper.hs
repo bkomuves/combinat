@@ -187,5 +187,18 @@ mapAccumM f s (x:xs) = do
   return (s2, y:ys)
 
 --------------------------------------------------------------------------------
-    
+-- * long zipwith    
+
+longZipWith :: a -> b -> (a -> b -> c) -> [a] -> [b] -> [c]
+longZipWith a0 b0 f = go where
+  go (x:xs) (y:ys)  =   f x  y : go xs ys
+  go []     ys      = [ f a0 y | y<-ys ]
+  go xs     []      = [ f x b0 | x<-xs ]
+
+{-
+longZipWithZero :: (Num a, Num b) => (a -> b -> c) -> [a] -> [b] -> [c]
+longZipWithZero = longZipWith 0 0 
+-}
+
+--------------------------------------------------------------------------------
   

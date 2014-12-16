@@ -14,6 +14,8 @@ module Math.Combinat.Numbers.Series where
 --------------------------------------------------------------------------------
 
 import Data.List
+import Math.Combinat.Helper
+import Math.Combinat.Numbers
 
 #ifdef QUICKCHECK
 import System.Random
@@ -21,13 +23,41 @@ import Test.QuickCheck
 #endif
 
 --------------------------------------------------------------------------------
+-- * Basic operations on power series
 
 -- | The series [1,0,0,0,0,...], which is the neutral element for the convolution.
 {-# SPECIALIZE unitSeries :: [Integer] #-}
 unitSeries :: Num a => [a]
 unitSeries = 1 : repeat 0
 
--- | Convolution of series. The result is always an infinite list. Warning: This is slow!
+zeroSeries :: Num a => [a]
+zeroSeries = repeat 0
+
+--------------------------------------------------------------------------------
+
+addSeries :: Num a => [a] -> [a] -> [a]
+addSeries xs ys = longZipWith 0 0 (+) xs ys
+
+subSeries :: Num a => [a] -> [a] -> [a]
+subSeries xs ys = longZipWith 0 0 (-) xs ys
+
+negateSeries :: Num a => [a] -> [a]
+negateSeries = map negate
+
+scaleSeries :: Num a => a -> [a] -> [a]
+scaleSeries s = map (*s)
+
+mulSeries :: Num a => [a] -> [a] -> [a]
+mulSeries = convolve
+
+productOfSeries :: Num a => [[a]] -> [a]
+productOfSeries = convolveMany
+
+--------------------------------------------------------------------------------
+-- * Convolution (product)
+
+-- | Convolution of series (that is, multiplication of power series). 
+-- The result is always an infinite list. Warning: This is slow!
 convolve :: Num a => [a] -> [a] -> [a]
 convolve xs1 ys1 = res where
   res = [ foldl' (+) 0 (zipWith (*) xs (reverse (take n ys)))
@@ -36,10 +66,73 @@ convolve xs1 ys1 = res where
   xs = xs1 ++ repeat 0
   ys = ys1 ++ repeat 0
 
--- | Convolution of many series. Still slow!
+-- | Convolution (= product) of many series. Still slow!
 convolveMany :: Num a => [[a]] -> [a]
 convolveMany []  = 1 : repeat 0
 convolveMany xss = foldl1 convolve xss
+
+--------------------------------------------------------------------------------
+-- * Reciprocals of general power series
+
+-- | Given a power series, we iteratively compute its multiplicative inverse
+reciprocalSeries :: (Eq a, Fractional a) => [a] -> [a]
+reciprocalSeries series = case series of
+  [] -> error "reciprocalSeries: empty input series (const 0 function does not have an inverse)"
+  (a:as) -> case a of
+    0 -> error "reciprocalSeries: input series has constant term 0"
+    _ -> map (/a) $ integralReciprocalSeries $ map (/a) series
+
+-- | Given a power series starting with @1@, we can compute its multiplicative inverse
+-- without divisions.
+--
+{-# SPECIALIZE integralReciprocalSeries :: [Int]     -> [Int]     #-}
+{-# SPECIALIZE integralReciprocalSeries :: [Integer] -> [Integer] #-}
+integralReciprocalSeries :: (Eq a, Num a) => [a] -> [a]
+integralReciprocalSeries series = case series of 
+  [] -> error "integralReciprocalSeries: empty input series (const 0 function does not have an inverse)"
+  (a:as) -> case a of
+    1 -> 1 : worker [1]
+    _ -> error "integralReciprocalSeries: input series must start with 1"
+  where
+    worker bs = let b' = - sum (zipWith (*) (tail series) bs) 
+                in  b' : worker (b':bs)
+
+--------------------------------------------------------------------------------
+-- * Power series expansions of elementary functions
+
+-- | Power series expansion of @exp(x)@
+expSeries :: Fractional a => [a]
+expSeries = go 0 1 where
+  go i e = e : go (i+1) (e / (i+1))
+
+-- | Power series expansion of @cos(x)@
+cosSeries :: Fractional a => [a]
+cosSeries = go 0 1 where
+  go i e = e : 0 : go (i+2) (-e / ((i+1)*(i+2)))
+
+-- | Power series expansion of @sin(x)@
+sinSeries :: Fractional a => [a]
+sinSeries = go 1 1 where
+  go i e = 0 : e : go (i+2) (-e / ((i+1)*(i+2)))
+
+-- | Power series expansion of @cosh(x)@
+coshSeries :: Fractional a => [a]
+coshSeries = go 0 1 where
+  go i e = e : 0 : go (i+2) (e / ((i+1)*(i+2)))
+
+-- | Power series expansion of @sinh(x)@
+sinhSeries :: Fractional a => [a]
+sinhSeries = go 1 1 where
+  go i e = 0 : e : go (i+2) (e / ((i+1)*(i+2)))
+
+-- | Power series expansion of @log(1+x)@
+log1Series :: Fractional a => [a]
+log1Series = 0 : go 1 1 where
+  go i e = (e/i) : go (i+1) (-e)
+
+-- | Power series expansion of @(1-Sqrt[1-4x])/(2x)@ (the coefficients are the Catalan numbers)
+dyckSeries :: Num a => [a]
+dyckSeries = [ fromInteger (catalan i) | i<-[0..] ]
 
 --------------------------------------------------------------------------------
 -- * \"Coin\" series
@@ -273,8 +366,12 @@ convolveWithSignedPSeries aks series1 = ys where
 
 #ifdef QUICKCHECK
 
+-- * Tests
+
+{-
 swap :: (a,b) -> (b,a)
 swap (x,y) = (y,x)
+-}
 
 -- compare the first 1000 elements of the infinite lists
 (=!=) :: (Eq a, Num a) => [a] -> [a] -> Bool
