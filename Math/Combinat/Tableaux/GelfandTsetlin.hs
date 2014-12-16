@@ -29,6 +29,9 @@ import Data.Maybe
 import Data.Monoid
 import Data.Ord
 
+import Data.Map (Map)
+import qualified Data.Map as Map
+
 import Math.Combinat.Partitions.Integer
 import Math.Combinat.Tableaux
 import Math.Combinat.Helper
@@ -38,6 +41,11 @@ import Math.Combinat.ASCII
 -- * Kostka numbers
 
 -- | Kostka numbers (via counting Gelfand-Tsetlin patterns). See for example <http://en.wikipedia.org/wiki/Kostka_number>
+--
+-- @K(lambda,mu)==0@ unless @lambda@ dominates @mu@:
+--
+-- > [ mu | mu <- partitions (weight lam) , kostkaNumber lam mu > 0 ] == dominatedPartitions lam
+--
 kostkaNumber :: Partition -> Partition -> Int
 kostkaNumber = countKostkaGelfandTsetlinPatterns
 
@@ -216,5 +224,33 @@ boundedNonDecrSeqs' h0 = go (max 0 h0) where
   go _  _      []     = [[]]
 
 -}
+
+--------------------------------------------------------------------------------
+-- * The iterated Pieri rule 
+
+-- | Computes the Schur expansion of @h[n1]*h[n2]*h[n3]*...*h[nk]@ via iterating the Pieri rule.
+-- Note: the coefficients are actually the Kostka numbers; the following is true:
+--
+-- > Map.toList (iteratedPieriRule (fromPartition mu))  ==  [ (lam, kostkaNumber lam mu) | lam <- dominatingPartitions mu ]
+-- 
+-- This should be faster than individually computing all these Kostka numbers.
+--
+iteratedPieriRule :: Num coeff => [Int] -> Map Partition coeff
+iteratedPieriRule = iteratedPieriRule' (Partition [])
+
+-- | Iterating the Pieri rule, we can compute the Schur expansion of
+-- @h[lambda]*h[n1]*h[n2]*h[n3]*...*h[nk]@
+iteratedPieriRule' :: Num coeff => Partition -> [Int] -> Map Partition coeff
+iteratedPieriRule' plambda ns = iteratedPieriRule'' (plambda,1) ns
+
+{-# SPECIALIZE iteratedPieriRule'' :: (Partition,Int    ) -> [Int] -> Map Partition Int     #-}
+{-# SPECIALIZE iteratedPieriRule'' :: (Partition,Integer) -> [Int] -> Map Partition Integer #-}
+iteratedPieriRule'' :: Num coeff => (Partition,coeff) -> [Int] -> Map Partition coeff
+iteratedPieriRule'' (plambda,coeff0) ns = worker (Map.singleton plambda coeff0) ns where
+  worker old []     = old
+  worker old (n:ns) = worker new ns where
+    stuff = [ (coeff, pieriRule lam n) | (lam,coeff) <- Map.toList old ] 
+    new   = foldl' f Map.empty stuff 
+    f t0 (c,ps) = foldl' (\t p -> Map.insertWith (+) p c t) t0 ps  
 
 --------------------------------------------------------------------------------
