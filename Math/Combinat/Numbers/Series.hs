@@ -1,5 +1,5 @@
 
--- | Some basic power series expansions.
+-- | Some basic univariate power series expansions.
 -- This module is not re-exported by "Math.Combinat".
 --
 -- Note: the \"@convolveWithXXX@\" functions are much faster than the equivalent
@@ -16,6 +16,7 @@ module Math.Combinat.Numbers.Series where
 import Data.List
 import Math.Combinat.Helper
 import Math.Combinat.Numbers
+import Math.Combinat.Partitions.Integer
 
 #ifdef QUICKCHECK
 import System.Random
@@ -23,17 +24,31 @@ import Test.QuickCheck
 #endif
 
 --------------------------------------------------------------------------------
--- * Basic operations on power series
+-- * Trivial series
 
 -- | The series [1,0,0,0,0,...], which is the neutral element for the convolution.
 {-# SPECIALIZE unitSeries :: [Integer] #-}
 unitSeries :: Num a => [a]
 unitSeries = 1 : repeat 0
 
+-- | Constant zero series
 zeroSeries :: Num a => [a]
 zeroSeries = repeat 0
 
+-- | Power series representing a constant function
+constSeries :: Num a => a -> [a]
+constSeries x = x : repeat 0
+
+-- | The power series representation of the identity function @x@
+idSeries :: Num a => [a]
+idSeries = 0 : 1 : repeat 0
+
+-- | The power series representation of @x^n@
+powerTerm :: Num a => Int -> [a]
+powerTerm n = replicate n 0 ++ (1 : repeat 0)
+
 --------------------------------------------------------------------------------
+-- * Basic operations on power series
 
 addSeries :: Num a => [a] -> [a] -> [a]
 addSeries xs ys = longZipWith 0 0 (+) xs ys
@@ -97,6 +112,90 @@ integralReciprocalSeries series = case series of
     worker bs = let b' = - sum (zipWith (*) (tail series) bs) 
                 in  b' : worker (b':bs)
 
+--------------------------------------------------------------------------------
+-- * Composition of formal power series
+
+-- | @g \`composeSeries\` f@ is the power series expansion of @g(f(x))@.
+-- This is a synonym for @flip substitute@.
+--
+-- We require that the constant term of @f@ is zero.
+composeSeries :: (Eq a, Num a) => [a] -> [a] -> [a]
+composeSeries g f = substitute f g
+
+-- | @substitute f g@ is the power series corresponding to @g(f(x))@. 
+-- Equivalently, this is the composition of univariate functions (in the \"wrong\" order).
+--
+-- Note: for this to be meaningful in general (not depending on convergence properties),
+-- we need that the constant term of @f@ is zero.
+substitute :: (Eq a, Num a) => [a] -> [a] -> [a]
+substitute as_ bs_ = 
+  case head as of
+    0 -> [ f n | n<-[0..] ]
+    _ -> error "PowerSeries/substitute: we expect the the constant term of the inner series to be zero"
+  where
+    as = as_ ++ repeat 0
+    bs = bs_ ++ repeat 0
+    a i = as !! i
+    b j = bs !! j
+    f n = sum
+            [ b m * product [ (a i)^j | (i,j)<-es ] * fromInteger (multinomial (map snd es))
+            | p <- partitions n 
+            , let es = toExponentialForm p
+            , let m  = width p
+            ]
+
+--------------------------------------------------------------------------------
+-- * Lagrange inversions
+
+-- | Coefficients of the Lagrange inversion
+lagrangeCoeff :: Partition -> Integer
+lagrangeCoeff p = div numer denom where
+  numer = (-1)^m * product (map fromIntegral [n+1..n+m])
+  denom = fromIntegral (n+1) * product (map (factorial . snd) es)
+  m = width p
+  n = weight p
+  es = toExponentialForm p
+
+-- | We expect the input series to match @(0:1:_)@. The following is true for the result (at least with exact arithmetic):
+--
+-- > substitute f (integralLagrangeInversion f) == (0 : 1 : repeat 0)
+-- > substitute (integralLagrangeInversion f) f == (0 : 1 : repeat 0)
+--
+integralLagrangeInversion :: (Eq a, Num a) => [a] -> [a]
+integralLagrangeInversion series_ = 
+  case series of
+    (0:1:rest) -> 0 : 1 : [ f n | n<-[1..] ]
+    _ -> error "integralLagrangeInversion: the series should start with (0 + x + a2*x^2 + ...)"
+  where
+    series = series_ ++ repeat 0
+    as  = tail series 
+    a i = as !! i
+    f n = sum [ fromInteger (lagrangeCoeff p) * product [ (a i)^j | (i,j) <- toExponentialForm p ]
+              | p <- partitions n
+              ] 
+
+-- | We expect the input series to match @(0:a1:_)@. with a1 nonzero The following is true for the result (at least with exact arithmetic):
+--
+-- > substitute f (lagrangeInversion f) == (0 : 1 : repeat 0)
+-- > substitute (lagrangeInversion f) f == (0 : 1 : repeat 0)
+--
+lagrangeInversion :: (Eq a, Fractional a) => [a] -> [a]
+lagrangeInversion series_ = 
+  case series of
+    (0:a1:rest) -> if a1 ==0 
+      then err 
+      else 0 : (1/a1) : [ f n / a1^(n+1) | n<-[1..] ]
+    _ -> err
+  where
+    err    = error "lagrangeInversion: the series should start with (0 + a1*x + a2*x^2 + ...) where a1 is non-zero"
+    series = series_ ++ repeat 0
+    a1  = series !! 1
+    as  = map (/a1) (tail series)
+    a i = as !! i
+    f n = sum [ fromInteger (lagrangeCoeff p) * product [ (a i)^j | (i,j) <- toExponentialForm p ]
+              | p <- partitions n
+              ] 
+  
 --------------------------------------------------------------------------------
 -- * Power series expansions of elementary functions
 
