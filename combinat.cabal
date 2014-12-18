@@ -51,6 +51,7 @@ Library
                        Math.Combinat.Compositions
                        Math.Combinat.Partitions
                        Math.Combinat.Partitions.Integer
+                       Math.Combinat.Partitions.Skew
                        Math.Combinat.Partitions.Set
                        Math.Combinat.Partitions.NonCrossing
                        Math.Combinat.Partitions.Plane
@@ -58,6 +59,7 @@ Library
                        Math.Combinat.Partitions.Vector
                        Math.Combinat.Permutations
                        Math.Combinat.Tableaux
+                       Math.Combinat.Tableaux.Skew
                        Math.Combinat.Tableaux.GelfandTsetlin
                        Math.Combinat.Tableaux.GelfandTsetlin.Cone
                        Math.Combinat.Trees
