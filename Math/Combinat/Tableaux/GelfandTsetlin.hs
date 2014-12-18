@@ -4,9 +4,9 @@
 -- Gelfand-Tsetlin patterns (or tableaux) are triangular arrays like
 --
 -- > [ 3 ]
--- > [ 2 , 2 ]
--- > [ 2 , 1 , 0 ]
--- > [ 2 , 1 , 1 , 0 ]
+-- > [ 3 , 2 ]
+-- > [ 3 , 1 , 0 ]
+-- > [ 2 , 0 , 0 , 0 ]
 --
 -- with both rows and columns non-increasing non-negative integers.
 -- Note: these are in bijection with the semi-standard Young tableaux.
@@ -75,9 +75,9 @@ kostkaGelfandTsetlinPatterns lambda (Partition mu) = kostkaGelfandTsetlinPattern
 -- | Generates all Kostka-Gelfand-Tsetlin tableau, that is, triangular arrays like
 --
 -- > [ 3 ]
--- > [ 2 , 2 ]
--- > [ 2 , 1 , 0 ]
--- > [ 2 , 1 , 1 , 0 ]
+-- > [ 3 , 2 ]
+-- > [ 3 , 1 , 0 ]
+-- > [ 2 , 0 , 0 , 0 ]
 --
 -- with both rows and column non-increasing such that
 -- the top diagonal read lambda (in this case @lambda=[3,2]@) and the diagonal sums
