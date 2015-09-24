@@ -312,3 +312,32 @@ iteratedPieriRule'' (plambda,coeff0) ns = worker (Map.singleton plambda coeff0) 
     f t0 (c,ps) = foldl' (\t p -> Map.insertWith (+) p c t) t0 ps  
 
 --------------------------------------------------------------------------------
+
+-- | Computes the Schur expansion of @e[n1]*e[n2]*e[n3]*...*e[nk]@ via iterating the Pieri rule.
+-- Note: the coefficients are actually the Kostka numbers; the following is true:
+--
+-- > Map.toList (iteratedDualPieriRule (fromPartition mu))  ==  
+-- >   [ (dualPartition lam, kostkaNumber lam mu) | lam <- dominatingPartitions mu ]
+-- 
+-- This should be faster than individually computing all these Kostka numbers.
+-- It is a tiny bit slower than 'iteratedPieriRule'.
+--
+iteratedDualPieriRule :: Num coeff => [Int] -> Map Partition coeff
+iteratedDualPieriRule = iteratedDualPieriRule' (Partition [])
+
+-- | Iterating the Pieri rule, we can compute the Schur expansion of
+-- @e[lambda]*e[n1]*e[n2]*e[n3]*...*e[nk]@
+iteratedDualPieriRule' :: Num coeff => Partition -> [Int] -> Map Partition coeff
+iteratedDualPieriRule' plambda ns = iteratedDualPieriRule'' (plambda,1) ns
+
+{-# SPECIALIZE iteratedDualPieriRule'' :: (Partition,Int    ) -> [Int] -> Map Partition Int     #-}
+{-# SPECIALIZE iteratedDualPieriRule'' :: (Partition,Integer) -> [Int] -> Map Partition Integer #-}
+iteratedDualPieriRule'' :: Num coeff => (Partition,coeff) -> [Int] -> Map Partition coeff
+iteratedDualPieriRule'' (plambda,coeff0) ns = worker (Map.singleton plambda coeff0) ns where
+  worker old []     = old
+  worker old (n:ns) = worker new ns where
+    stuff = [ (coeff, dualPieriRule lam n) | (lam,coeff) <- Map.toList old ] 
+    new   = foldl' f Map.empty stuff 
+    f t0 (c,ps) = foldl' (\t p -> Map.insertWith (+) p c t) t0 ps  
+
+--------------------------------------------------------------------------------
