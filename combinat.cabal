@@ -62,6 +62,7 @@ Library
                        Math.Combinat.Tableaux.Skew
                        Math.Combinat.Tableaux.GelfandTsetlin
                        Math.Combinat.Tableaux.GelfandTsetlin.Cone
+                       Math.Combinat.Tableaux.LittlewoodRichardson
                        Math.Combinat.Trees
                        Math.Combinat.Trees.Binary
                        Math.Combinat.Trees.Nary
