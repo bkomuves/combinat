@@ -8,7 +8,7 @@ Description:         A collection of functions to generate, count and manipulate
 License:             BSD3
 License-file:        LICENSE
 Author:              Balazs Komuves
-Copyright:           (c) 2008-2014 Balazs Komuves
+Copyright:           (c) 2008-2015 Balazs Komuves
 Maintainer:          bkomuves (plus) hackage (at) gmail (dot) com
 Homepage:            http://code.haskell.org/~bkomuves/
 Stability:           Experimental
