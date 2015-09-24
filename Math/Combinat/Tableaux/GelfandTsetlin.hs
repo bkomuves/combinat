@@ -20,6 +20,7 @@
 -- Actually @mu@ doesn't even need to the be non-increasing.
 --
 
+{-# LANGUAGE BangPatterns, ScopedTypeVariables #-}
 module Math.Combinat.Tableaux.GelfandTsetlin where
 
 --------------------------------------------------------------------------------
@@ -28,6 +29,9 @@ import Data.List
 import Data.Maybe
 import Data.Monoid
 import Data.Ord
+
+import Control.Monad
+import Control.Monad.Trans.State
 
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -55,6 +59,60 @@ kostkaNumberReferenceNaive plambda pmu@(Partition mu) = length stuff where
   stuff = [ 1 | t <- semiStandardYoungTableaux k plambda , cond t ]
   k = length mu
   cond t = [ (head xs, length xs) | xs <- group (sort $ concat t) ] == zip [1..] mu 
+
+--------------------------------------------------------------------------------
+
+-- | Lists all (positive) Kostka numbers @K(lambda,mu)@ with the given @lambda@:
+--
+-- > kostkaNumbersWithGivenLambda lambda == Map.fromList [ (mu , kostkaNumber lambda mu) | mu <- dominatedPartitions lambda ]
+--
+-- It's much faster than computing the individual Kostka numbers, but not as fast
+-- as it could be.
+--
+{-# SPECIALIZE kostkaNumbersWithGivenLambda :: Partition -> Map Partition Int     #-}
+{-# SPECIALIZE kostkaNumbersWithGivenLambda :: Partition -> Map Partition Integer #-}
+kostkaNumbersWithGivenLambda :: forall coeff. Num coeff => Partition -> Map Partition coeff
+kostkaNumbersWithGivenLambda plambda@(Partition lam) = evalState (worker lam) Map.empty where
+
+  worker :: [Int] -> State (Map Partition (Map Partition coeff)) (Map Partition coeff)
+  worker unlam = case unlam of
+    [] -> return $ Map.singleton (Partition []) 1
+    _  -> do
+      cache <- get
+      case Map.lookup (Partition unlam) cache of
+        Just sol -> return sol
+        Nothing  -> do
+          let s = foldl' (+) 0 unlam
+          subsols <- forM (prevLambdas0 unlam) $ \p -> do
+            sub <- worker p 
+            let t = s - foldl' (+) 0 p              
+                f (Partition xs , c) = case xs of
+                  (y:_) -> if t >= y then Just (Partition (t:xs) , c) else Nothing
+                  []    -> if t >  0 then Just (Partition [t]    , c) else Nothing
+            if t > 0
+              then return $ Map.fromList $ mapMaybe f $ Map.toList sub
+              else return $ Map.empty
+
+          let sol = Map.unionsWith (+) subsols
+          put $! (Map.insert (Partition unlam) sol cache)
+          return sol
+
+  -- needs decreasing sequence
+  prevLambdas0 :: [Int] -> [[Int]]
+  prevLambdas0 (l:ls) = go l ls where
+    go b [a]    = [ [x]   | x <- [a..b] ] ++ [ [x,y] | x <- [a..b] , y<-[1..a] ]
+    go b (a:as) = [ x:xs  | x <- [a..b] , xs <- go a as ]
+    go b []     = [] : [ [j] | j <- [1..b] ]
+  prevLambdas0 []  = []
+
+-- | Lists all (positive) Kostka numbers @K(lambda,mu)@ with the given @mu@:
+--
+-- > kostkaNumbersWithGivenMu mu == Map.fromList [ (lambda , kostkaNumber lambda mu) | lambda <- dominatingPartitions mu ]
+--
+-- This function uses the iterated Pieri rule, and is relatively fast.
+--
+kostkaNumbersWithGivenMu :: Partition -> Map Partition Int
+kostkaNumbersWithGivenMu (Partition mu) = iteratedPieriRule (reverse mu)
 
 --------------------------------------------------------------------------------
 -- * Gelfand-Tsetlin patterns
