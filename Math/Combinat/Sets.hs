@@ -1,6 +1,7 @@
 
 -- | Subsets. 
 
+{-# LANGUAGE BangPatterns, Rank2Types #-}
 module Math.Combinat.Sets 
   ( 
     -- * choices
@@ -23,6 +24,11 @@ module Math.Combinat.Sets
 
 import Data.List ( sort , mapAccumL )
 import System.Random
+
+import Control.Monad
+import Control.Monad.ST
+import Data.Array.ST
+import Data.Array.MArray
 
 -- import Data.Map (Map)
 -- import qualified Data.Map as Map
@@ -122,15 +128,35 @@ randomChoice :: RandomGen g => Int -> Int -> g -> ([Int],g)
 randomChoice k n g0 = 
   if k>n || k<0 
     then error "randomChoice: k out of range" 
-    else (makeChoiceFromIndices as, g1) 
+    else (makeChoiceFromIndicesKnuth n as, g1) 
   where
     -- choose numbers from [1..n], [1..n-1], [1..n-2] etc
     (g1,as) = mapAccumL (\g m -> swap (randomR (1,m) g)) g0 [n,n-1..n-k+1]   
+
+--------------------------------------------------------------------------------
    
 -- | From a list of $k$ numbers, where the first is in the interval @[1..n]@, 
 -- the second in @[1..n-1]@, the third in @[1..n-2]@, we create a size @k@ subset of @n@.
-makeChoiceFromIndices :: [Int] -> [Int]
-makeChoiceFromIndices = sort . go [] where
+--
+-- Knuth's method. The first argument is the number @n@.
+--
+makeChoiceFromIndicesKnuth :: Int -> [Int] -> [Int]
+makeChoiceFromIndicesKnuth n xs = 
+  runST $ do
+    arr <- newArray_ (1,n) :: forall s. ST s (STUArray s Int Int)
+    forM_ [1..n] $ \(!j) -> writeArray arr j j
+    forM_ (zip [n,n-1..] xs) $ \(!j,!i) -> do
+      a <- readArray arr j
+      b <- readArray arr i
+      writeArray arr j b
+      writeArray arr i a
+    sel <- forM (zip [n,n-1..] xs) $ \(!j,_) -> readArray arr j
+    return (sort sel)
+
+-- | From a list of $k$ numbers, where the first is in the interval @[1..n]@, 
+-- the second in @[1..n-1]@, the third in @[1..n-2]@, we create a size @k@ subset of @n@.
+makeChoiceFromIndicesNaive :: [Int] -> [Int]
+makeChoiceFromIndicesNaive = sort . go [] where
 
   go :: [Int] -> [Int] -> [Int]
   go acc (b:bs) = b' : go (insert b' acc) bs where b' = skip b acc
