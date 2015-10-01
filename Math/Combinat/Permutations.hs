@@ -274,9 +274,9 @@ multiply pi1@(Permutation perm1) (Permutation perm2) =
     then Permutation result
     else error "multiply: permutations of different sets"  
   where
-	  (_,n) = bounds perm1
-	  (_,m) = bounds perm2    
-	  result = permute pi1 perm2    
+    (_,n) = bounds perm1
+    (_,m) = bounds perm2    
+    result = permute pi1 perm2    
   
 infixr 7 `multiply`  
     

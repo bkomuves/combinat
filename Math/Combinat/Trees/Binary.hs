@@ -267,10 +267,10 @@ fasc4A_algorithm_P n = unfold next ( start , [] ) where
     new = 
       {- debug (reverse ls,l,r,rs) $ -} 
       case l of 
-	      RightParen -> Just ( ls , LeftParen:RightParen:rs )
-	      LeftParen  -> 
-	        {- debug ("---",reverse ls,l,r,rs) $ -}
-	        findj ( lls , [] ) ( reverse (RightParen:rs) , [] ) 
+        RightParen -> Just ( ls , LeftParen:RightParen:rs )
+        LeftParen  -> 
+          {- debug ("---",reverse ls,l,r,rs) $ -}
+          findj ( lls , [] ) ( reverse (RightParen:rs) , [] ) 
   next _ = error "fasc4A_algorithm_P: fatal error shouldn't happen"
 
   findj :: ([Paren],[Paren]) -> ([Paren],[Paren]) -> Maybe ([Paren],[Paren])
@@ -278,10 +278,10 @@ fasc4A_algorithm_P n = unfold next ( start , [] ) where
   findj ( lls@(l:ls) , rs) ( xs , ys ) = 
     {- debug ((reverse ls,l,rs),(reverse xs,ys)) $ -}
     case l of
-	    LeftParen  -> case xs of
-	      (a:_:as) -> findj ( ls, RightParen:rs ) ( as , LeftParen:a:ys )
-	      _ -> findj ( lls, [] ) ( reverse rs ++ xs , ys) 
-	    RightParen -> Just ( reverse ys ++ xs ++ reverse (LeftParen:rs) ++ ls , [] )
+      LeftParen  -> case xs of
+        (a:_:as) -> findj ( ls, RightParen:rs ) ( as , LeftParen:a:ys )
+        _ -> findj ( lls, [] ) ( reverse rs ++ xs , ys) 
+      RightParen -> Just ( reverse ys ++ xs ++ reverse (LeftParen:rs) ++ ls , [] )
   findj _ _ = error "fasc4A_algorithm_P: fatal error shouldn't happen"
     
 -- | Generates a uniformly random sequence of nested parentheses of length 2n.    
