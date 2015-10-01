@@ -2,10 +2,19 @@
 -- | Words in free groups (and free powers of cyclic groups).
 -- This module is not re-exported by "Math.Combinat"
 --
-{-# LANGUAGE PatternGuards #-}
+{-# LANGUAGE CPP, PatternGuards #-}
 module Math.Combinat.FreeGroups where
 
 --------------------------------------------------------------------------------
+
+-- new Base exports "Word" from Data.Word...
+#ifdef MIN_VERSION_base
+#if MIN_VERSION_base(4,7,1)
+import Prelude hiding ( Word )
+#endif
+#elif __GLASGOW_HASKELL__ >= 709
+import Prelude hiding ( Word )
+#endif
 
 import Data.Char     ( chr )
 import Data.List     ( mapAccumL )
