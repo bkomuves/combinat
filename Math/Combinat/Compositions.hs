@@ -70,13 +70,13 @@ compositions1
   => a       -- ^ length
   -> a       -- ^ sum
   -> [[Int]]
-compositions1 len' d' 
-  | len > d = []
+compositions1 len d 
+  | len > d   = []
   | otherwise = map plus1 $ compositions len (d-len)
   where
     plus1 = map (+1)
-    len = fromIntegral len'
-    d   = fromIntegral d'
+    -- len = fromIntegral len'
+    -- d   = fromIntegral d'
 
 countCompositions1 :: Integral a => a -> a -> Integer
 countCompositions1 len d = countCompositions len (d-len)

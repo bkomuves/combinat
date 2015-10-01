@@ -56,8 +56,8 @@ kostkaNumber = countKostkaGelfandTsetlinPatterns
 -- | Very naive (and slow) implementation of Kostka numbers, for reference.
 kostkaNumberReferenceNaive :: Partition -> Partition -> Int
 kostkaNumberReferenceNaive plambda pmu@(Partition mu) = length stuff where
-  stuff = [ 1 | t <- semiStandardYoungTableaux k plambda , cond t ]
-  k = length mu
+  stuff  = [ (1::Int) | t <- semiStandardYoungTableaux k plambda , cond t ]
+  k      = length mu
   cond t = [ (head xs, length xs) | xs <- group (sort $ concat t) ] == zip [1..] mu 
 
 --------------------------------------------------------------------------------

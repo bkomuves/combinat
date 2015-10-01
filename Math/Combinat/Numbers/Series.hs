@@ -233,7 +233,7 @@ log1Series = 0 : go 1 1 where
 
 -- | Power series expansion of @(1-Sqrt[1-4x])/(2x)@ (the coefficients are the Catalan numbers)
 dyckSeries :: Num a => [a]
-dyckSeries = [ fromInteger (catalan i) | i<-[0..] ]
+dyckSeries = [ fromInteger (catalan i) | i<-[(0::Int)..] ]
 
 --------------------------------------------------------------------------------
 -- * \"Coin\" series

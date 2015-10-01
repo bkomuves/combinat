@@ -64,6 +64,7 @@ asciiPath p = asciiFromLines $ transpose (go 0 p) where
 -- | A lattice path is called \"valid\", if it never goes below the @y=0@ line.
 isValidPath :: LatticePath -> Bool
 isValidPath = go 0 where
+  go :: Int -> LatticePath -> Bool
   go !y []     = y>=0
   go !y (t:ts) = let y' = case t of { UpStep -> y+1 ; DownStep -> y-1 }
                  in  if y'<0 then False 
@@ -72,6 +73,7 @@ isValidPath = go 0 where
 -- | A Dyck path is a lattice path whose last point lies on the @y=0@ line
 isDyckPath :: LatticePath -> Bool
 isDyckPath = go 0 where
+  go :: Int -> LatticePath -> Bool
   go !y []     = y==0
   go !y (t:ts) = let y' = case t of { UpStep -> y+1 ; DownStep -> y-1 }
                  in  if y'<0 then False 
@@ -80,6 +82,7 @@ isDyckPath = go 0 where
 -- | Maximal height of a lattice path
 pathHeight :: LatticePath -> Int
 pathHeight = go 0 0 where
+  go :: Int -> Int -> LatticePath -> Int
   go !h !y []     = h
   go !h !y (t:ts) = case t of
     UpStep   -> go (max h (y+1)) (y+1) ts
@@ -88,6 +91,7 @@ pathHeight = go 0 0 where
 -- | Endpoint of a lattice path, which starts from @(0,0)@.
 pathEndpoint :: LatticePath -> (Int,Int)
 pathEndpoint = go 0 0 where
+  go :: Int -> Int -> LatticePath -> (Int,Int)
   go !x !y []     = (x,y)
   go !x !y (t:ts) = case t of                         
     UpStep   -> go (x+1) (y+1) ts
@@ -97,6 +101,7 @@ pathEndpoint = go 0 0 where
 -- the endpoint)
 pathCoordinates :: LatticePath -> [(Int,Int)]
 pathCoordinates = go 0 0 where
+  go :: Int -> Int -> LatticePath -> [(Int,Int)]
   go _  _  []     = []
   go !x !y (t:ts) = let x' = x + 1
                         y' = case t of { UpStep -> y+1 ; DownStep -> y-1 }
@@ -113,6 +118,7 @@ pathNumberOfDownSteps = snd . pathNumberOfUpDownSteps
 -- | Counts both the up-steps and down-steps
 pathNumberOfUpDownSteps :: LatticePath -> (Int,Int)
 pathNumberOfUpDownSteps = go 0 0 where 
+  go :: Int -> Int -> LatticePath -> (Int,Int)
   go !u !d (p:ps) = case p of 
     UpStep   -> go (u+1)  d    ps  
     DownStep -> go  u    (d+1) ps    
@@ -124,6 +130,7 @@ pathNumberOfUpDownSteps = go 0 0 where
 -- | Number of peaks of a path (excluding the endpoint)
 pathNumberOfPeaks :: LatticePath -> Int
 pathNumberOfPeaks = go 0 where
+  go :: Int -> LatticePath -> Int
   go !k (x:xs@(y:_)) = go (if x==UpStep && y==DownStep then k+1 else k) xs
   go !k [x] = k
   go !k [ ] = k
@@ -139,6 +146,7 @@ pathNumberOfTouches'
   :: Int       -- ^ @h@ = the touch level
   -> LatticePath -> Int
 pathNumberOfTouches' h = go 0 0 0 where
+  go :: Int -> Int -> Int -> LatticePath -> Int
   go !cnt _  _  []     = cnt
   go !cnt !x !y (t:ts) = let y'   = case t of { UpStep -> y+1 ; DownStep -> y-1 }
                              cnt' = if y'==h then cnt+1 else cnt
