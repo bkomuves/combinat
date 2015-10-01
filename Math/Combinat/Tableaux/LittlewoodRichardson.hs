@@ -35,7 +35,7 @@ lrRule skew = _lrRule lam mu where
 {-# SPECIALIZE _lrRule :: Partition -> Partition -> Map Partition Integer #-}
 _lrRule :: Num coeff => Partition -> Partition -> Map Partition coeff
 _lrRule plam@(Partition lam) pmu@(Partition mu0) = 
-  if not (plam `dominates` pmu) 
+  if not (pmu `isSubPartitionOf` plam) 
     then Map.empty
     else foldl' f Map.empty [ nu | (nu,_) <- fillings n diagram ]
   where
