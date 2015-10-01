@@ -1,7 +1,7 @@
 
 -- | Skew tableaux are skew partitions filled with numbers.
 
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE BangPatterns, ScopedTypeVariables #-}
 
 module Math.Combinat.Tableaux.Skew where
 
@@ -14,16 +14,64 @@ import Math.Combinat.Partitions.Skew
 import Math.Combinat.Tableaux
 import Math.Combinat.ASCII
 
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
+
 --------------------------------------------------------------------------------
 
 -- | A skew tableau is represented by a list of offsets and entries
 newtype SkewTableau a = SkewTableau [(Int,[a])] deriving (Eq,Ord,Show)
+
+-- unSkewTableau :: SkewTableau a -> [(Int,[a])]
+-- unSkewTableau (SkewTableau a) = a
 
 instance Functor SkewTableau where
   fmap f (SkewTableau t) = SkewTableau [ (a, map f xs) | (a,xs) <- t ]
  
 skewShape :: SkewTableau a -> SkewPartition
 skewShape (SkewTableau list) = SkewPartition [ (o,length xs) | (o,xs) <- list ]
+
+--------------------------------------------------------------------------------
+
+dualSkewTableau :: forall a. SkewTableau a -> SkewTableau a
+dualSkewTableau (SkewTableau axs) = SkewTableau (go axs) where
+
+  go []  = []  
+  go axs = case sub 0 axs of
+    (0,[]) -> []
+    this   -> this : go (strip axs)
+
+  strip :: [(Int,[a])] -> [(Int,[a])]
+  strip []            = []
+  strip ((a,xs):rest) = if a>0 
+    then (a-1,xs) : strip rest
+    else case xs of
+      []     -> []
+      (z:zs) -> case zs of
+        []      -> []
+        _       -> (0,zs) : strip rest
+
+  sub :: Int -> [(Int,[a])] -> (Int,[a])
+  sub !b [] = (b,[])
+  sub !b ((a,this):rest) = if a>0 
+    then sub (b+1) rest  
+    else (b,ys) where      
+      ys = map head $ takeWhile (not . null) (this : map snd rest)
+
+{-
+test_dualSkewTableau :: [SkewTableau Int]
+test_dualSkewTableau = bad where 
+  ps = allPartitions 11
+  bad = [ st 
+        | p<-ps , q<-ps 
+        , (q `isSubPartitionOf` p) 
+        , let sp = mkSkewPartition (p,q) 
+        , let st = fillSkewPartitionWithRowWord sp [1..] 
+        , dualSkewTableau (dualSkewTableau st) /= st
+        ]
+-}
+
+--------------------------------------------------------------------------------
 
 -- | Semi-standard skew tableaux filled with numbers @[1..n]@
 semiStandardSkewTableaux :: Int -> SkewPartition -> [SkewTableau Int]
@@ -74,5 +122,44 @@ asciiSkewTableau' innerstr orient (SkewTableau axs) = tabulate (HRight,VTop) (HS
     FrenchNotation     -> reverse es
   inner = asciiFromString innerstr
   es = [ replicate a inner ++ map asciiShow xs | (a,xs) <- axs ]
+
+--------------------------------------------------------------------------------
+
+-- | The reversed rows, concatenated
+skewTableauRowWord :: SkewTableau a -> [a]
+skewTableauRowWord (SkewTableau axs) = concatMap (reverse . snd) axs
+
+-- | The reversed rows, concatenated
+skewTableauColumnWord :: SkewTableau a -> [a]
+skewTableauColumnWord = skewTableauRowWord . dualSkewTableau
+
+--------------------------------------------------------------------------------
+
+-- | If the skew tableau's row word is a lattice word, we can make a partition from its content
+skewTableauRowContent :: SkewTableau Int -> Maybe Partition
+skewTableauRowContent (SkewTableau axs) = go Map.empty rowword where
+
+  rowword = concatMap (reverse . snd) axs
+
+  finish table = Partition (f 1) where
+    f !i = case lkp i of
+      0 -> []
+      y -> y : f (i+1) 
+    lkp j = case Map.lookup j table of
+      Just k  -> k
+      Nothing -> 0
+
+  go :: Map Int Int -> [Int] -> Maybe Partition
+  go !table []     = Just (finish table)
+  go !table (i:is) =
+    if check i
+      then go table' is
+      else Nothing
+    where
+      table'  = Map.insertWith (+) i 1 table
+      check j = j==1 || cnt (j-1) >= cnt j
+      cnt j   = case Map.lookup j table' of
+        Just k  -> k
+        Nothing -> 0
 
 --------------------------------------------------------------------------------

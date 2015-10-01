@@ -24,12 +24,17 @@
 
 module Math.Combinat.Tableaux where
 
+--------------------------------------------------------------------------------
+
 import Data.List
 
 import Math.Combinat.Helper
 import Math.Combinat.Numbers (factorial,binomial)
 import Math.Combinat.Partitions
 import Math.Combinat.ASCII
+
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
 
 --------------------------------------------------------------------------------
 -- * Basic stuff
@@ -93,6 +98,25 @@ columnWord = rowWord . transpose
 
 columnWordToTableau :: Ord a => [a] -> Tableau a
 columnWordToTableau = transpose . rowWordToTableau
+
+-- | Checks whether a sequence of positive integers is a /lattice word/, 
+-- which means that in every initial part of the sequence any number @i@
+-- occurs at least as often as the number @i+1@
+--
+isLatticeWord :: [Int] -> Bool
+isLatticeWord = go Map.empty where
+  go :: Map Int Int -> [Int] -> Bool
+  go _      []     = True
+  go !table (i:is) =
+    if check i
+      then go table' is
+      else False
+    where
+      table'  = Map.insertWith (+) i 1 table
+      check j = j==1 || cnt (j-1) >= cnt j
+      cnt j   = case Map.lookup j table' of
+        Just k  -> k
+        Nothing -> 0
     
 --------------------------------------------------------------------------------
 -- * Standard Young tableaux

@@ -2,19 +2,35 @@
 -- | The Littlewood-Richardson rule
 
 module Math.Combinat.Tableaux.LittlewoodRichardson 
-  ( lrRule , _lrRule
+  ( lrRule , _lrRule 
+  , lrRuleNaive
   ) 
   where
 
 --------------------------------------------------------------------------------
 
 import Data.List
+import Data.Maybe
 
 import Math.Combinat.Partitions.Integer
 import Math.Combinat.Partitions.Skew
+import Math.Combinat.Tableaux
+import Math.Combinat.Tableaux.Skew
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
+
+--------------------------------------------------------------------------------
+
+-- | Naive, reference implementation of the Littlewood-Richardson rule, based on the definition
+-- "count the semistandard skew tableaux whose row content is a lattice word"
+--
+lrRuleNaive :: SkewPartition -> Map Partition Int
+lrRuleNaive skew = final where
+  n     = skewPartitionWeight skew
+  ssst  = semiStandardSkewTableaux n skew 
+  final = foldl' f Map.empty $ catMaybes [ skewTableauRowContent skew | skew <- ssst  ]
+  f old nu = Map.insertWith (+) nu 1 old
 
 --------------------------------------------------------------------------------
 
