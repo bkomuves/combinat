@@ -136,6 +136,18 @@ skewTableauRowWord (SkewTableau axs) = concatMap (reverse . snd) axs
 skewTableauColumnWord :: SkewTableau a -> [a]
 skewTableauColumnWord = skewTableauRowWord . dualSkewTableau
 
+-- | Fills a skew partition with content, in row word order 
+fillSkewPartitionWithRowWord :: SkewPartition -> [a] -> SkewTableau a
+fillSkewPartitionWithRowWord (SkewPartition abs) xs = SkewTableau $ go abs xs where
+  go ((b,a):rest) xs = let (ys,zs) = splitAt a xs in (b,reverse ys) : go rest zs
+  go []           xs = []
+
+-- | Fills a skew partition with content, in column word order 
+fillSkewPartitionWithColumnWord :: SkewPartition -> [a] -> SkewTableau a
+fillSkewPartitionWithColumnWord shape content 
+  = dualSkewTableau 
+  $ fillSkewPartitionWithRowWord (dualSkewPartition shape) content
+
 --------------------------------------------------------------------------------
 
 -- | If the skew tableau's row word is a lattice word, we can make a partition from its content
