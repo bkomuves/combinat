@@ -83,5 +83,5 @@ Library
   if flag(withQuickCheck)
     cpp-options:         -DQUICKCHECK
 
-  ghc-options:         -Wall -fno-warn-unused-matches
+  ghc-options:         -Wall -fwarn-tabs -fno-warn-unused-matches -fno-warn-name-shadowing -fno-warn-unused-imports
     
