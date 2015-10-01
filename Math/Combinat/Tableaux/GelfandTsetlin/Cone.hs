@@ -47,6 +47,7 @@
 -- to the dimension), which encode the combinatorics of Kostka numbers.
 --
 
+{-# LANGUAGE FlexibleInstances, TypeSynonymInstances #-}
 module Math.Combinat.Tableaux.GelfandTsetlin.Cone
   ( 
     -- * Types
@@ -132,6 +133,12 @@ asciiTableau :: Show a => Tableau a -> ASCII
 asciiTableau xxs = tabulate (HRight,VTop) (HSepSpaces 1, VSepEmpty) 
                  $ (map . map) asciiShow
                  $ xxs
+
+instance Show a => DrawASCII (TriangularArray a) where
+  ascii = asciiTriangularArray
+
+-- instance Show a => DrawASCII (Tableau a) where
+--   ascii = asciiTableau
 
 --------------------------------------------------------------------------------
 

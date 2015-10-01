@@ -28,6 +28,10 @@ data ASCII = ASCII
   , asciiLines :: [String]
   }
 
+-- | A type class to have a simple way to draw things 
+class DrawASCII a where
+  ascii :: a -> ASCII
+
 instance Show ASCII where
   show = asciiString
 

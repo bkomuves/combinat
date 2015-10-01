@@ -526,6 +526,9 @@ asciiFerrersDiagram' conv ch part = ASCII.asciiFromLines (map f ys) where
           EnglishNotationCCW -> reverse $ fromPartition $ dualPartition part
           FrenchNotation     -> reverse $ fromPartition $ part
 
+instance DrawASCII Partition where
+  ascii = asciiFerrersDiagram
+
 --------------------------------------------------------------------------------
 
 {-

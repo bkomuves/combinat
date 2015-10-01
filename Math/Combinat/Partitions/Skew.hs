@@ -74,6 +74,9 @@ asciiSkewFerrersDiagram' (outer,inner) orient (SkewPartition abs) = asciiFromLin
     EnglishNotationCCW -> reverse (transpose ls)
     FrenchNotation     -> reverse ls
   ls = [ replicate a inner ++ replicate b outer | (a,b) <- abs ]
-     
+
+instance DrawASCII SkewPartition where
+  ascii = asciiSkewFerrersDiagram     
+
 --------------------------------------------------------------------------------
 

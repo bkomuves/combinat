@@ -120,12 +120,10 @@ kostkaNumbersWithGivenMu (Partition mu) = iteratedPieriRule (reverse mu)
 -- | A Gelfand-Tstetlin tableau
 type GT = [[Int]]
 
-
 asciiGT :: GT -> ASCII
 asciiGT gt = tabulate (HRight,VTop) (HSepSpaces 1, VSepEmpty) 
            $ (map . map) asciiShow
            $ gt
-
 
 kostkaGelfandTsetlinPatterns :: Partition -> Partition -> [GT]
 kostkaGelfandTsetlinPatterns lambda (Partition mu) = kostkaGelfandTsetlinPatterns' lambda mu

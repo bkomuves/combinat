@@ -7,6 +7,7 @@
 -- <<svg/bintrees.svg>>
 --
 
+{-# LANGUAGE FlexibleInstances, TypeSynonymInstances #-}
 module Math.Combinat.Trees.Binary 
   ( -- * Types
     BinTree(..)
@@ -409,5 +410,8 @@ asciiBinaryTree_ = ASCII.asciiFromLines . fst . go where
   blockWidth ls = case ls of
     (l:_) -> length l
     []    -> 0
+
+instance DrawASCII (BinTree ()) where
+  ascii = asciiBinaryTree_ 
 
 --------------------------------------------------------------------------------      

@@ -7,7 +7,7 @@
 -- <<svg/dyck_path.svg>>
 --
 
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE BangPatterns, FlexibleInstances, TypeSynonymInstances #-}
 module Math.Combinat.LatticePaths where
 
 --------------------------------------------------------------------------------
@@ -57,6 +57,9 @@ asciiPath p = asciiFromLines $ transpose (go 0 p) where
   ch x   = case x of 
     UpStep   -> '/' 
     DownStep -> '\\' 
+
+instance DrawASCII LatticePath where 
+  ascii = asciiPath
 
 --------------------------------------------------------------------------------
 -- * elementary queries

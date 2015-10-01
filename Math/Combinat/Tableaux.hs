@@ -22,6 +22,7 @@
 -- > ]
 --
 
+{-# LANGUAGE FlexibleInstances, TypeSynonymInstances #-}
 module Math.Combinat.Tableaux where
 
 --------------------------------------------------------------------------------
@@ -45,6 +46,9 @@ asciiTableau :: Show a => Tableau a -> ASCII
 asciiTableau t = tabulate (HRight,VTop) (HSepSpaces 1, VSepEmpty) 
            $ (map . map) asciiShow
            $ t
+
+instance Show a => DrawASCII (Tableau a) where 
+  ascii = asciiTableau
 
 _shape :: Tableau a -> [Int]
 _shape t = map length t 

@@ -1,6 +1,7 @@
 
 -- | N-ary trees.
 
+{-# LANGUAGE FlexibleInstances, TypeSynonymInstances #-}
 module Math.Combinat.Trees.Nary 
   (      
     -- * Regular trees 
@@ -185,6 +186,9 @@ asciiTreeVertical_ tree = ASCII.asciiFromLines (go tree) where
                                   else if bf then "@-"
                                              else "+-"
                    in  (branch++l) : map (indent++) ls ++ gap
+
+instance DrawASCII (Tree ()) where
+  ascii = asciiTreeVertical_
 
 -- | Prints all labels. Example:
 -- 

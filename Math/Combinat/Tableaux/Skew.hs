@@ -123,6 +123,9 @@ asciiSkewTableau' innerstr orient (SkewTableau axs) = tabulate (HRight,VTop) (HS
   inner = asciiFromString innerstr
   es = [ replicate a inner ++ map asciiShow xs | (a,xs) <- axs ]
 
+instance Show a => DrawASCII (SkewTableau a) where
+  ascii = asciiSkewTableau
+
 --------------------------------------------------------------------------------
 
 -- | The reversed rows, concatenated
