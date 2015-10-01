@@ -123,8 +123,19 @@ nextLetter lower upper (nu,lpart) = stuff where
   ub = if upper>0 
     then min (length shape) (lpart !! (upper-1))  
     else      length shape
+
   nlist = filter (>0) $ map f [lb+1..ub] 
   f j   = if j==1 || shape!!(j-2) > shape!!(j-1) then j else 0
+
+{-
+  -- another nlist implementation, but doesn't seem to be faster
+  (h0:hs0) = drop lb (-666:shape)
+  nlist = go h0 hs0 [lb+1..ub] where
+    go !lasth (h:hs) (j:js) = if j==1 || lasth > h 
+      then j : go h hs js 
+      else     go h hs js
+    go _      _      []     = []
+-}
 
   -- increments the i-th element (starting from 1)
   incr :: Int -> [Int] -> [Int]
