@@ -115,12 +115,10 @@ instance Ix Tri where
   range     (a,b) = map deIndex' [ index' a .. index' b ] 
   rangeSize (a,b) = index' b - index' a + 1 
 
-{-# SPECIALIZE triangularArrayUnsafe :: Tableau Int -> TriangularArray Int #-}
 triangularArrayUnsafe :: Tableau a -> TriangularArray a
 triangularArrayUnsafe tableau = listArray (Tri (1,1),Tri (k,k)) (concat tableau) 
   where k = length tableau
 
-{-# SPECIALIZE fromTriangularArray :: TriangularArray Int -> Tableau Int #-}
 fromTriangularArray :: TriangularArray a -> Tableau a
 fromTriangularArray arr = (map.map) snd $ groupBy (equating f) $ assocs arr
   where f = fst . unTri . fst
@@ -149,7 +147,6 @@ toHole k = Hole k 0
 nextHole :: Hole -> Hole
 nextHole (Hole k l) = Hole k (l+1)
 
-{-# SPECIALIZE reverseTableau :: [[Int]] -> [[Int]] #-}
 reverseTableau :: [[a]] -> [[a]]
 reverseTableau = reverse . map reverse
 

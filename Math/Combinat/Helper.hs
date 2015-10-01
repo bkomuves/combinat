@@ -24,8 +24,6 @@ debug x y = trace ("-- " ++ show x ++ "\n") y
 --------------------------------------------------------------------------------
 -- * pairs
 
-{-# SPECIALIZE swap :: (a  ,a  ) -> (a  ,a  ) #-}
-{-# SPECIALIZE swap :: (Int,Int) -> (Int,Int) #-}
 swap :: (a,b) -> (b,a)
 swap (x,y) = (y,x)
 
