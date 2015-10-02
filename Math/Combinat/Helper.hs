@@ -73,6 +73,41 @@ nubOrd = worker Set.empty where
     | otherwise      = x : worker (Set.insert x s) xs
 
 --------------------------------------------------------------------------------
+-- * increasing \/ decreasing sequences
+
+{-# SPECIALIZE isWeaklyIncreasing :: [Int] -> Bool #-}
+isWeaklyIncreasing :: Ord a => [a] -> Bool
+isWeaklyIncreasing = go where
+  go xs = case xs of 
+    (a:rest@(b:_)) -> a <= b && go rest
+    [_]            -> True
+    []             -> True
+
+{-# SPECIALIZE isStrictlyIncreasing :: [Int] -> Bool #-}
+isStrictlyIncreasing :: Ord a => [a] -> Bool
+isStrictlyIncreasing = go where
+  go xs = case xs of 
+    (a:rest@(b:_)) -> a < b && go rest
+    [_]            -> True
+    []             -> True
+
+{-# SPECIALIZE isWeaklyDecreasing :: [Int] -> Bool #-}
+isWeaklyDecreasing :: Ord a => [a] -> Bool
+isWeaklyDecreasing = go where
+  go xs = case xs of 
+    (a:rest@(b:_)) -> a >= b && go rest
+    [_]            -> True
+    []             -> True
+
+{-# SPECIALIZE isStrictlyDecreasing :: [Int] -> Bool #-}
+isStrictlyDecreasing :: Ord a => [a] -> Bool
+isStrictlyDecreasing = go where
+  go xs = case xs of 
+    (a:rest@(b:_)) -> a > b && go rest
+    [_]            -> True
+    []             -> True
+
+--------------------------------------------------------------------------------
 -- * first \/ last 
 
 -- | The boolean argument will @True@ only for the last element

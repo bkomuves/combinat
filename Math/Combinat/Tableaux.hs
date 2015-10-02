@@ -1,5 +1,6 @@
 
 -- | Young tableaux and similar gadgets. 
+--
 --   See e.g. William Fulton: Young Tableaux, with Applications to 
 --   Representation theory and Geometry (CUP 1997).
 -- 
@@ -22,7 +23,7 @@
 -- > ]
 --
 
-{-# LANGUAGE FlexibleInstances, TypeSynonymInstances #-}
+{-# LANGUAGE CPP, BangPatterns, FlexibleInstances, TypeSynonymInstances #-}
 module Math.Combinat.Tableaux where
 
 --------------------------------------------------------------------------------
@@ -40,8 +41,10 @@ import qualified Data.Map.Strict as Map
 --------------------------------------------------------------------------------
 -- * Basic stuff
 
+-- | A tableau is simply represented as a list of lists.
 type Tableau a = [[a]]
 
+-- | ASCII diagram of a tableau
 asciiTableau :: Show a => Tableau a -> ASCII
 asciiTableau t = tabulate (HRight,VTop) (HSepSpaces 1, VSepEmpty) 
            $ (map . map) asciiShow
@@ -53,12 +56,16 @@ instance Show a => DrawASCII (Tableau a) where
 _shape :: Tableau a -> [Int]
 _shape t = map length t 
 
+-- | The shape of a tableau
 shape :: Tableau a -> Partition
 shape t = toPartition (_shape t)
 
+-- | The dual of the tableau is the mirror image to the main diagonal.
 dualTableau :: Tableau a -> Tableau a
 dualTableau = transpose
 
+-- | The content of a tableau is the list of its entries. The ordering is from the left to the right and
+-- then from the top to the bottom
 content :: Tableau a -> [a]
 content = concat
 
@@ -85,6 +92,8 @@ hookLengths part = (map . map) (\(i,j) -> i+j-1) (hooks part)
 --------------------------------------------------------------------------------
 -- * Row and column words
 
+-- | The /row word/ of a tableau is the list of its entry read from the right to the left and then
+-- from the top to the bottom.
 rowWord :: Tableau a -> [a]
 rowWord = concat . reverse
 
@@ -97,6 +106,7 @@ rowWordToTableau xs = reverse rows where
     then [x] : break xs
     else let (h:t) = break xs in (x:h):t
 
+-- | The /column word/ of a tableau is the list of its entry read from the bottom to the top and then from the left to the right
 columnWord :: Tableau a -> [a]
 columnWord = rowWord . transpose
 
@@ -121,9 +131,47 @@ isLatticeWord = go Map.empty where
       cnt j   = case Map.lookup j table' of
         Just k  -> k
         Nothing -> 0
-    
+
+--------------------------------------------------------------------------------
+-- * Semistandard Young tableaux
+
+-- | A tableau is /semistandard/ if its entries are weekly increasing horizontally
+-- and strictly increasing vertically
+isSemiStandardTableau :: Tableau Int -> Bool
+isSemiStandardTableau t = weak && strict where
+  weak   = and [ isWeaklyIncreasing   xs | xs <- t  ]
+  strict = and [ isStrictlyIncreasing ys | ys <- dt ]
+  dt     = dualTableau t
+   
+-- | Semistandard Young tableaux of given shape, \"naive\" algorithm    
+semiStandardYoungTableaux :: Int -> Partition -> [Tableau Int]
+semiStandardYoungTableaux n part = worker (repeat 0) shape where
+  shape = fromPartition part
+  worker _ [] = [[]] 
+  worker prevRow (s:ss) 
+    = [ (r:rs) | r <- row n s 1 prevRow, rs <- worker (map (+1) r) ss ]
+
+  -- weekly increasing lists of length @len@, pointwise at least @xs@, 
+  -- maximum value @n@, minimum value @prev@.
+  row :: Int -> Int -> Int -> [Int] -> [[Int]]
+  row _ 0   _    _      = [[]]
+  row n len prev (x:xs) = [ (a:as) | a <- [max x prev..n] , as <- row n (len-1) a xs ]
+
+-- | Stanley's hook formula (cf. Fulton page 55)
+countSemiStandardYoungTableaux :: Int -> Partition -> Integer
+countSemiStandardYoungTableaux n shape = k `div` h where
+  h = product $ map fromIntegral $ concat $ hookLengths shape 
+  k = product [ fromIntegral (n+j-i) | (i,j) <- elements shape ]
+
+   
 --------------------------------------------------------------------------------
 -- * Standard Young tableaux
+
+-- | A tableau is /standard/ if it is semistandard and its content is exactly @[1..n]@,
+-- where @n@ is the weight.
+isStandardTableau :: Tableau Int -> Bool
+isStandardTableau t = isSemiStandardTableau t && sort (concat t) == [1..n] where
+  n = sum [ length xs | xs <- t ]
 
 -- | Standard Young tableaux of a given shape.
 --   Adapted from John Stembridge, 
@@ -167,29 +215,7 @@ countStandardYoungTableaux part = {- debug (hookLengths part) $ -}
   factorial n `div` h where
     h = product $ map fromIntegral $ concat $ hookLengths part 
     n = weight part
+
+--------------------------------------------------------------------------------
         
---------------------------------------------------------------------------------
--- * Semistandard Young tableaux
-   
--- | Semistandard Young tableaux of given shape, \"naive\" algorithm    
-semiStandardYoungTableaux :: Int -> Partition -> [Tableau Int]
-semiStandardYoungTableaux n part = worker (repeat 0) shape where
-  shape = fromPartition part
-  worker _ [] = [[]] 
-  worker prevRow (s:ss) 
-    = [ (r:rs) | r <- row n s 1 prevRow, rs <- worker (map (+1) r) ss ]
-
-  -- weekly increasing lists of length @len@, pointwise at least @xs@, 
-  -- maximum value @n@, minimum value @prev@.
-  row :: Int -> Int -> Int -> [Int] -> [[Int]]
-  row _ 0   _    _      = [[]]
-  row n len prev (x:xs) = [ (a:as) | a <- [max x prev..n] , as <- row n (len-1) a xs ]
-
--- | Stanley's hook formula (cf. Fulton page 55)
-countSemiStandardYoungTableaux :: Int -> Partition -> Integer
-countSemiStandardYoungTableaux n shape = k `div` h where
-  h = product $ map fromIntegral $ concat $ hookLengths shape 
-  k = product [ fromIntegral (n+j-i) | (i,j) <- elements shape ]
-  
---------------------------------------------------------------------------------
     

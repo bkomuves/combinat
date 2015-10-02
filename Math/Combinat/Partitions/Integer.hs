@@ -375,12 +375,19 @@ partitionsWithDistinctParts d = map Partition (go d d) where
   go !h !n = [ a:as | a<-[1..min n h], as <- go (a-1) (n-a) ]
 
 --------------------------------------------------------------------------------
--- * Sub-partitions of a given partition
+-- * Sub- and super-partitions of a given partition
 
 -- | Returns @True@ of the first partition is a subpartition (that is, fit inside) of the second.
 -- This includes equality
 isSubPartitionOf :: Partition -> Partition -> Bool
 isSubPartitionOf (Partition ps) (Partition qs) = and $ zipWith (<=) ps (qs ++ repeat 0)
+
+-- | This is provided for convenience\/completeness only, as:
+--
+-- > isSuperPartitionOf q p == isSubPartitionOf p q
+--
+isSuperPartitionOf :: Partition -> Partition -> Bool
+isSuperPartitionOf (Partition qs) (Partition ps) = and $ zipWith (<=) ps (qs ++ repeat 0)
 
 
 -- | Sub-partitions of a given partition with the given weight:
@@ -421,6 +428,31 @@ _allSubPartitions big
       | h==0         = []
       | otherwise    = [] : [ this:rest | this <- [1..min h b] , rest <- go this bs ]
 
+----------------------------------------
+
+-- | Super-partitions of a given partition with the given weight:
+--
+-- > sort (superPartitions d p) == sort [ q | q <- partitions d, isSubPartitionOf p q ]
+--
+superPartitions :: Int -> Partition -> [Partition]
+superPartitions d (Partition ps) = map Partition (_superPartitions d ps)
+
+_superPartitions :: Int -> [Int] -> [[Int]]
+_superPartitions dd small
+  | dd < w0     = []
+  | null small  = _partitions dd
+  | otherwise   = go dd w1 dd (small ++ repeat 0)
+  where
+    w0 = sum' small
+    w1 = w0 - head small
+    -- d = remaining weight of the outer partition we are constructing
+    -- w = remaining weight of the inner partition (we need to reserve at least this amount)
+    -- h = max height (decreasing)
+    go !d !w !h (!a:as@(b:_)) 
+      | d < 0     = []
+      | d == 0    = if a == 0 then [[]] else []
+      | otherwise = [ this:rest | this <- [max 1 a .. min h (d-w)] , rest <- go (d-this) (w-b) this as ]
+    
 --------------------------------------------------------------------------------
 -- * The Pieri rule
 
@@ -452,7 +484,10 @@ pieriRule (Partition lambda) n = map Partition (_pieriRule lambda n) where
 dualPieriRule :: Partition -> Int -> [Partition] 
 dualPieriRule lam n = map dualPartition $ pieriRule (dualPartition lam) n
 
-{-
+
+{- 
+-- moved to "Math.Combinat.Tableaux.GelfandTsetlin"
+
 -- | Computes the Schur expansion of @h[n1]*h[n2]*h[n3]*...*h[nk]@ via iterating the Pieri rule
 iteratedPieriRule :: Num coeff => [Int] -> Map Partition coeff
 iteratedPieriRule = iteratedPieriRule' (Partition [])
@@ -531,7 +566,7 @@ instance DrawASCII Partition where
 
 --------------------------------------------------------------------------------
 
-{-
+#ifdef QUICKCHECK
 
 -- * Tests
 
@@ -567,6 +602,6 @@ prop_dominated_list  lam = (dominatedPartitions  lam == [ mu  | mu  <- partition
 prop_dominating_list :: Partition -> Bool
 prop_dominating_list mu  = (dominatingPartitions mu  == [ lam | lam <- partitions (weight mu ), lam `dominates` mu ])
 
--}
+#endif
 
 --------------------------------------------------------------------------------

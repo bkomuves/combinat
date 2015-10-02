@@ -23,6 +23,7 @@ module Math.Combinat.Permutations
   , isEvenPermutation
   , isOddPermutation
   , signOfPermutation  --  , Sign(..)
+  , module Math.Combinat.Sign
   , isCyclicPermutation
     -- * Permutation groups
   , permute
@@ -499,7 +500,7 @@ prop_mulPerm (SameSize perm1 perm2) =
 prop_mulSign (SameSize perm1 perm2) = 
     ( sgn perm1 * sgn perm2 == sgn (perm1 `multiply` perm2) ) 
   where 
-    sgn = signOfPermutation :: Permutation -> Int
+    sgn = signValue . signOfPermutation :: Permutation -> Int
 
 prop_invMul (SameSize perm1 perm2) =   
   ( inverse perm2 `multiply` inverse perm1 == inverse (perm1 `multiply` perm2) ) 

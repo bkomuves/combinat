@@ -13,18 +13,20 @@
 --
 --  (1) generate most of the standard structures;
 -- 
---  (2) while being efficient; 
+--  (2) manipulate these structures;
 --
---  (3) to be able to enumerate the structures 
+--  (3) the generation should be efficient; 
+--
+--  (4) to be able to enumerate the structures 
 --      with constant memory usage;
 --
---  (4) and to be able to randomly sample from them.
+--  (5) and to be able to randomly sample from them.
 --
---  (5) finally, be a repository of algorithms
+--  (6) finally, be a repository of algorithms
 --
 --
 -- The short-term goal is simply to generate 
--- many interesting structures.
+-- and manipulate many interesting structures.
 --
 --
 -- Naming conventions (subject to change): 

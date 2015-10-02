@@ -4,7 +4,7 @@
 -- Skew partitions are the difference of two integer partitions, denoted by @lambda/mu@.
 --
 
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE CPP, BangPatterns #-}
 module Math.Combinat.Partitions.Skew where
 
 --------------------------------------------------------------------------------
@@ -15,8 +15,9 @@ import Math.Combinat.Partitions.Integer
 import Math.Combinat.ASCII
 
 --------------------------------------------------------------------------------
+-- * Basics
 
--- | A skew partition @lambda/mu@ is represented by the list @[ (mu_i , lambda_i-mu_i) | i<-[1..n] ]@
+-- | A skew partition @lambda/mu@ is internally represented by the list @[ (mu_i , lambda_i-mu_i) | i<-[1..n] ]@
 newtype SkewPartition = SkewPartition [(Int,Int)] deriving (Eq,Ord,Show)
 
 -- | @mkSkewPartition (lambda,mu)@ creates the skew partition @lambda/mu@.
@@ -43,22 +44,57 @@ normalizeSkewPartition (SkewPartition abs) = SkewPartition abs' where
   k  = length (takeWhile (==0) bs)
   abs' = zip [ a-a0 | a <- drop k as ] (drop k bs)
    
--- | Returns the outer and inner partition of a skew partition, respectively
+-- | Returns the outer and inner partition of a skew partition, respectively:
+--
+-- > mkSkewPartition . fromSkewPartition == id
+--
 fromSkewPartition :: SkewPartition -> (Partition,Partition)
 fromSkewPartition (SkewPartition list) = (toPartition (zipWith (+) as bs) , toPartition (filter (>0) as)) where
   (as,bs) = unzip list
 
+-- | The @lambda@ part of @lambda/mu@
 outerPartition :: SkewPartition -> Partition  
 outerPartition = fst . fromSkewPartition 
 
+-- | The @mu@ part of @lambda/mu@
 innerPartition :: SkewPartition -> Partition  
 innerPartition = snd . fromSkewPartition 
 
+-- | The dual skew partition (that is, the mirror image to the main diagonal)
 dualSkewPartition :: SkewPartition -> SkewPartition
 dualSkewPartition = mkSkewPartition . f . fromSkewPartition where
   f (lam,mu) = (dualPartition lam, dualPartition mu)
 
 --------------------------------------------------------------------------------
+-- * Listing skew partitions
+
+-- | Lists all skew partitions with the given outer shape and given weight
+skewPartitionsWithOuterShape :: Partition -> Int -> [SkewPartition]
+skewPartitionsWithOuterShape outer skewWeight 
+  | innerWeight < 0 || innerWeight > outerWeight = []
+  | otherwise = [ mkSkewPartition (outer,inner) | inner <- subPartitions innerWeight outer ]
+  where
+    outerWeight = weight outer
+    innerWeight = outerWeight - skewWeight 
+
+-- | Lists all skew partitions with the given outer shape of any weight
+allSkewPartitionsWithOuterShape :: Partition -> [SkewPartition]
+allSkewPartitionsWithOuterShape outer 
+  = concat [ skewPartitionsWithOuterShape outer w | w<-[0..outerWeight] ]
+  where
+    outerWeight = weight outer
+
+-- | Lists all skew partitions with the given inner shape and given weight
+skewPartitionsWithInnerShape :: Partition -> Int -> [SkewPartition]
+skewPartitionsWithInnerShape inner skewWeight 
+  | innerWeight > outerWeight = []
+  | otherwise = [ mkSkewPartition (outer,inner) | outer <- superPartitions outerWeight inner ]
+  where
+    outerWeight = innerWeight + skewWeight 
+    innerWeight = weight inner 
+
+--------------------------------------------------------------------------------
+-- * ASCII
 
 asciiSkewFerrersDiagram :: SkewPartition -> ASCII
 asciiSkewFerrersDiagram = asciiSkewFerrersDiagram' ('@','.') EnglishNotation
@@ -80,3 +116,38 @@ instance DrawASCII SkewPartition where
 
 --------------------------------------------------------------------------------
 
+#ifdef QUICKCHECK
+
+prop_dual_dual :: SkewPartition -> Bool
+prop_dual_dual sp = (dualSkewPartition (dualSkewPartition sp) == sp)
+
+prop_dual_from :: SkewPartition -> Bool
+prop_dual_from sp = (p==p' && q==q') where
+  (p,q)   = fromSkewPartition sp
+  sp'     = dualSkewPartition sp
+  (p',q') = fromSkewPartition sp'
+
+prop_from_to :: SkewPartition -> Bool
+prop_from_to sp = (mkSkewPartition (fromSkewPartition sp) == sp)
+
+prop_to_from :: (Partition,Partition) -> Bool
+prop_to_from (p,q) = 
+  case mb of
+    Nothing -> True
+    Just sp -> fromSkewPartition sp == (p,q)
+  where
+    mb = safeSkewPartition (p,q)
+
+prop_from_to_from :: SkewPartition -> Bool
+prop_from_to_from sp = (pq == pq') where
+  pq  = fromSkewPartition sp
+  sp' = mkSkewPartition pq
+  pq' = fromSkewPartition sp'
+
+prop_weight :: SkewPartition -> Bool
+prop_weight sp = (skewPartitionWeight sp == weight p - weight q) where
+  (p,q) = fromSkewPartition sp
+
+#endif
+
+--------------------------------------------------------------------------------

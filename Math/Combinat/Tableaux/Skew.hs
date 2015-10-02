@@ -1,7 +1,7 @@
 
 -- | Skew tableaux are skew partitions filled with numbers.
 
-{-# LANGUAGE BangPatterns, ScopedTypeVariables #-}
+{-# LANGUAGE CPP, BangPatterns, ScopedTypeVariables #-}
 
 module Math.Combinat.Tableaux.Skew where
 
@@ -13,12 +13,13 @@ import Math.Combinat.Partitions.Integer
 import Math.Combinat.Partitions.Skew
 import Math.Combinat.Tableaux
 import Math.Combinat.ASCII
+import Math.Combinat.Helper
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
 --------------------------------------------------------------------------------
-
+-- * Basics
 -- | A skew tableau is represented by a list of offsets and entries
 newtype SkewTableau a = SkewTableau [(Int,[a])] deriving (Eq,Ord,Show)
 
@@ -27,12 +28,18 @@ newtype SkewTableau a = SkewTableau [(Int,[a])] deriving (Eq,Ord,Show)
 
 instance Functor SkewTableau where
   fmap f (SkewTableau t) = SkewTableau [ (a, map f xs) | (a,xs) <- t ]
- 
+
+-- | The shape of a skew tableau 
 skewShape :: SkewTableau a -> SkewPartition
 skewShape (SkewTableau list) = SkewPartition [ (o,length xs) | (o,xs) <- list ]
 
+-- | The weight of a tableau is the weight of its shape, or the number of entries
+skewTableauWeight :: SkewTableau a -> Int
+skewTableauWeight = skewPartitionWeight . skewShape
+
 --------------------------------------------------------------------------------
 
+-- | The dual of a skew tableau, that is, its mirror image to the main diagonal
 dualSkewTableau :: forall a. SkewTableau a -> SkewTableau a
 dualSkewTableau (SkewTableau axs) = SkewTableau (go axs) where
 
@@ -72,8 +79,25 @@ test_dualSkewTableau = bad where
 -}
 
 --------------------------------------------------------------------------------
+-- * Semistandard tableau
 
--- | Semi-standard skew tableaux filled with numbers @[1..n]@
+-- | A tableau is /semistandard/ if its entries are weekly increasing horizontally
+-- and strictly increasing vertically
+isSemiStandardSkewTableau :: SkewTableau Int -> Bool
+isSemiStandardSkewTableau st@(SkewTableau axs) = weak && strict where
+  weak   = and [ isWeaklyIncreasing   xs | (a,xs) <- axs ]
+  strict = and [ isStrictlyIncreasing ys | (b,ys) <- bys ]
+  SkewTableau bys = dualSkewTableau st
+
+-- | A tableau is /standard/ if it is semistandard and its content is exactly @[1..n]@,
+-- where @n@ is the weight.
+isStandardSkewTableau :: SkewTableau Int -> Bool
+isStandardSkewTableau st = isSemiStandardSkewTableau st && sort (skewTableauRowWord st) == [1..n] where
+  n = skewTableauWeight st
+  
+--------------------------------------------------------------------------------
+
+-- | All semi-standard skew tableaux filled with the numbers @[1..n]@
 semiStandardSkewTableaux :: Int -> SkewPartition -> [SkewTableau Int]
 semiStandardSkewTableaux n (SkewPartition abs) = map SkewTableau stuff where
 
@@ -105,14 +129,16 @@ diffSequence = go where
 -}
 
 --------------------------------------------------------------------------------
+-- * ASCII
 
+-- | ASCII drawing of a skew tableau (using the English notation)
 asciiSkewTableau :: Show a => SkewTableau a -> ASCII
 asciiSkewTableau = asciiSkewTableau' "." EnglishNotation
 
 asciiSkewTableau' 
   :: Show a
-  => String              -- ^ string representing the elements of the inner (unfilled) partition
-  -> PartitionConvention -- Orientation
+  => String               -- ^ string representing the elements of the inner (unfilled) partition
+  -> PartitionConvention  -- ^ orientation
   -> SkewTableau a 
   -> ASCII
 asciiSkewTableau' innerstr orient (SkewTableau axs) = tabulate (HRight,VTop) (HSepSpaces 1, VSepEmpty) stuff where
@@ -127,12 +153,13 @@ instance Show a => DrawASCII (SkewTableau a) where
   ascii = asciiSkewTableau
 
 --------------------------------------------------------------------------------
+-- * Row \/ column words
 
--- | The reversed rows, concatenated
+-- | The reversed (right-to-left) rows, concatenated
 skewTableauRowWord :: SkewTableau a -> [a]
 skewTableauRowWord (SkewTableau axs) = concatMap (reverse . snd) axs
 
--- | The reversed rows, concatenated
+-- | The reversed (bottom-to-top) columns, concatenated
 skewTableauColumnWord :: SkewTableau a -> [a]
 skewTableauColumnWord = skewTableauRowWord . dualSkewTableau
 
@@ -176,5 +203,38 @@ skewTableauRowContent (SkewTableau axs) = go Map.empty rowword where
       cnt j   = case Map.lookup j table' of
         Just k  -> k
         Nothing -> 0
+
+--------------------------------------------------------------------------------
+
+#ifdef QUICKCHECK
+
+prop_dual_dual :: SkewTableau Int -> Bool
+prop_dual_dual st = (dualSkewTableau (dualSkewTableau st) == st)
+
+prop_rowWord :: SkewTableau Int -> Bool
+prop_rowWord st = (fillSkewPartitionWithRowWord shape content == st) where
+  shape   = skewShape st
+  content = skewTableauRowWord st
+
+prop_columnWord :: SkewTableau Int -> Bool
+prop_columnWord st = (fillSkewPartitionWithColumnWord shape content == st) where
+  shape   = skewShape st
+  content = skewTableauColumnWord st
+
+prop_fill_shape :: SkewPartition -> Bool
+prop_fill_shape shape = (shape == shape') where
+  tableau = fillSkewPartitionWithColumnWord shape [1..]
+  shape'  = skewShape tableau
+
+prop_semistandard :: SkewPartition -> Bool
+prop_semistandard shape = and 
+  [ isSemiStandardSkewTableau st 
+  | n  <- [1..nn] 
+  , st <- semiStandardSkewTableaux n shape
+  ]
+  where
+    nn = skewPartitionWeight shape
+
+#endif
 
 --------------------------------------------------------------------------------
