@@ -4,8 +4,11 @@
 {-# LANGUAGE FlexibleInstances, TypeSynonymInstances #-}
 module Math.Combinat.Trees.Nary 
   (      
-    -- * Regular trees 
-    ternaryTrees
+    -- * Types
+    module Data.Tree
+  , Tree(..)
+    -- * Regular trees  
+  , ternaryTrees
   , regularNaryTrees
   , semiRegularTrees
   , countTernaryTrees
@@ -71,8 +74,23 @@ import Math.Combinat.Numbers               ( factorial, binomial )
 
 import Math.Combinat.Trees.Graphviz ( Dot , graphvizDotForest , graphvizDotTree )
 
+import Math.Combinat.Classes
 import Math.Combinat.ASCII as ASCII
 import Math.Combinat.Helper
+
+--------------------------------------------------------------------------------
+
+instance HasNumberOfNodes (Tree a) where
+  numberOfNodes = go where
+    go (Node label subforest) = if null subforest 
+      then 0 
+      else 1 + sum' (map go subforest)
+
+instance HasNumberOfLeaves (Tree a) where
+  numberOfLeaves = go where
+    go (Node label subforest) = if null subforest 
+      then 1
+      else sum' (map go subforest)
 
 --------------------------------------------------------------------------------
 

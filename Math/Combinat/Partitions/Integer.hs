@@ -27,9 +27,10 @@ import Data.List
 -- import Data.Map (Map)
 -- import qualified Data.Map as Map
 
-import Math.Combinat.Helper
+import Math.Combinat.Classes
 import Math.Combinat.ASCII as ASCII
 import Math.Combinat.Numbers (factorial,binomial,multinomial)
+import Math.Combinat.Helper
 
 --------------------------------------------------------------------------------
 -- * Type and basic stuff
@@ -37,11 +38,6 @@ import Math.Combinat.Numbers (factorial,binomial,multinomial)
 -- | A partition of an integer. The additional invariant enforced here is that partitions 
 -- are monotone decreasing sequences of /positive/ integers. The @Ord@ instance is lexicographical.
 newtype Partition = Partition [Int] deriving (Eq,Ord,Show,Read)
-
----------------------------------------------------------------------------------
-
-class HasNumberOfParts p where
-  numberOfParts :: p -> Int
 
 instance HasNumberOfParts Partition where
   numberOfParts (Partition p) = length p
@@ -70,30 +66,52 @@ isPartition []  = True
 isPartition [x] = x > 0
 isPartition (x:xs@(y:_)) = (x >= y) && isPartition xs
 
+isEmptyPartition :: Partition -> Bool
+isEmptyPartition (Partition p) = null p
+
+emptyPartition :: Partition
+emptyPartition = Partition []
+
+instance CanBeEmpty Partition where
+  empty   = emptyPartition
+  isEmpty = isEmptyPartition
+
 fromPartition :: Partition -> [Int]
 fromPartition (Partition part) = part
 
 -- | The first element of the sequence.
-height :: Partition -> Int
-height (Partition part) = case part of
+partitionHeight :: Partition -> Int
+partitionHeight (Partition part) = case part of
   (p:_) -> p
   [] -> 0
   
 -- | The length of the sequence (that is, the number of parts).
-width :: Partition -> Int
-width (Partition part) = length part
+partitionWidth :: Partition -> Int
+partitionWidth (Partition part) = length part
+
+instance HasHeight Partition where
+  height = partitionHeight
+ 
+instance HasWidth Partition where
+  width = partitionWidth
 
 heightWidth :: Partition -> (Int,Int)
 heightWidth part = (height part, width part)
 
 -- | The weight of the partition 
 --   (that is, the sum of the corresponding sequence).
-weight :: Partition -> Int
-weight (Partition part) = sum' part
+partitionWeight :: Partition -> Int
+partitionWeight (Partition part) = sum' part
+
+instance HasWeight Partition where 
+  weight = partitionWeight
 
 -- | The dual (or conjugate) partition.
 dualPartition :: Partition -> Partition
 dualPartition (Partition part) = Partition (_dualPartition part)
+
+instance HasDuality Partition where 
+  dual = dualPartition
 
 data Pair = Pair !Int !Int
 

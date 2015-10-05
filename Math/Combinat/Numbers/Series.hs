@@ -143,7 +143,7 @@ substitute as_ bs_ =
             [ b m * product [ (a i)^j | (i,j)<-es ] * fromInteger (multinomial (map snd es))
             | p <- partitions n 
             , let es = toExponentialForm p
-            , let m  = width p
+            , let m  = partitionWidth    p
             ]
 
 --------------------------------------------------------------------------------
@@ -154,8 +154,8 @@ lagrangeCoeff :: Partition -> Integer
 lagrangeCoeff p = div numer denom where
   numer = (-1)^m * product (map fromIntegral [n+1..n+m])
   denom = fromIntegral (n+1) * product (map (factorial . snd) es)
-  m = width p
-  n = weight p
+  m  = partitionWidth    p
+  n  = partitionWeight   p
   es = toExponentialForm p
 
 -- | We expect the input series to match @(0:1:_)@. The following is true for the result (at least with exact arithmetic):

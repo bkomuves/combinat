@@ -30,7 +30,7 @@ import Math.Combinat.Numbers
 import Math.Combinat.LatticePaths
 import Math.Combinat.Helper
 import Math.Combinat.Partitions.Set
-import Math.Combinat.Partitions ( HasNumberOfParts(..) )
+import Math.Combinat.Classes
 
 --------------------------------------------------------------------------------
 -- * The type of non-crossing partitions

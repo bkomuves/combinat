@@ -17,7 +17,7 @@ import System.Random
 import Math.Combinat.Sets
 import Math.Combinat.Numbers
 import Math.Combinat.Helper
-import Math.Combinat.Partitions ( HasNumberOfParts(..) )
+import Math.Combinat.Classes
 
 --------------------------------------------------------------------------------
 -- * The type of set partitions

@@ -23,17 +23,18 @@
 -- > ]
 --
 
-{-# LANGUAGE CPP, BangPatterns, FlexibleInstances, TypeSynonymInstances #-}
+{-# LANGUAGE CPP, BangPatterns, FlexibleInstances, TypeSynonymInstances, MultiParamTypeClasses #-}
 module Math.Combinat.Tableaux where
 
 --------------------------------------------------------------------------------
 
 import Data.List
 
-import Math.Combinat.Helper
+import Math.Combinat.Classes
 import Math.Combinat.Numbers (factorial,binomial)
 import Math.Combinat.Partitions
 import Math.Combinat.ASCII
+import Math.Combinat.Helper
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
@@ -50,24 +51,41 @@ asciiTableau t = tabulate (HRight,VTop) (HSepSpaces 1, VSepEmpty)
            $ (map . map) asciiShow
            $ t
 
+instance CanBeEmpty (Tableau a) where
+  empty   = []
+  isEmpty = null
+
 instance Show a => DrawASCII (Tableau a) where 
   ascii = asciiTableau
 
-_shape :: Tableau a -> [Int]
-_shape t = map length t 
+_tableauShape :: Tableau a -> [Int]
+_tableauShape t = map length t 
 
 -- | The shape of a tableau
-shape :: Tableau a -> Partition
-shape t = toPartition (_shape t)
+tableauShape :: Tableau a -> Partition
+tableauShape t = toPartition (_tableauShape t)
+
+instance HasShape (Tableau a) Partition where
+  shape = tableauShape
+
+-- | Number of entries
+tableauWeight :: Tableau a -> Int
+tableauWeight = sum' . map length
+
+instance HasWeight (Tableau a) where
+  weight = tableauWeight
 
 -- | The dual of the tableau is the mirror image to the main diagonal.
 dualTableau :: Tableau a -> Tableau a
 dualTableau = transpose
 
+instance HasDuality (Tableau a) where
+  dual = dualTableau
+
 -- | The content of a tableau is the list of its entries. The ordering is from the left to the right and
 -- then from the top to the bottom
-content :: Tableau a -> [a]
-content = concat
+tableauContent :: Tableau a -> [a]
+tableauContent = concat
 
 -- | An element @(i,j)@ of the resulting tableau (which has shape of the
 -- given partition) means that the vertical part of the hook has length @i@,
@@ -97,6 +115,7 @@ hookLengths part = (map . map) (\(i,j) -> i+j-1) (hooks part)
 rowWord :: Tableau a -> [a]
 rowWord = concat . reverse
 
+-- | /Semistandard/ tableaux can be reconstructed from their row words
 rowWordToTableau :: Ord a => [a] -> Tableau a
 rowWordToTableau xs = reverse rows where
   rows = break xs
@@ -110,6 +129,7 @@ rowWordToTableau xs = reverse rows where
 columnWord :: Tableau a -> [a]
 columnWord = rowWord . transpose
 
+-- | /Standard/ tableaux can be reconstructed from either their column or row words
 columnWordToTableau :: Ord a => [a] -> Tableau a
 columnWordToTableau = transpose . rowWordToTableau
 

@@ -16,7 +16,9 @@ module Math.Combinat.Trees.Binary
   , forgetNodeDecorations
   , Paren(..)
   , parenthesesToString
-  , stringToParentheses
+  , stringToParentheses  
+  , numberOfNodes
+  , numberOfLeaves
   -- * Conversion to rose trees (@Data.Tree@)
   , toRoseTree , toRoseTree'
   , module Data.Tree 
@@ -78,9 +80,9 @@ import Math.Combinat.Numbers (factorial,binomial)
 import Math.Combinat.Trees.Graphviz 
   ( Dot 
   , graphvizDotBinTree , graphvizDotBinTree' 
-  , graphvizDotForest , graphvizDotTree 
+  , graphvizDotForest  , graphvizDotTree 
   )
-
+import Math.Combinat.Classes
 import Math.Combinat.Helper
 import Math.Combinat.ASCII as ASCII
 
@@ -104,9 +106,32 @@ data BinTree' a b
   deriving (Eq,Ord,Show,Read)
 
 forgetNodeDecorations :: BinTree' a b -> BinTree a
-forgetNodeDecorations (Branch' left _ right) = 
-  Branch (forgetNodeDecorations left) (forgetNodeDecorations right)
-forgetNodeDecorations (Leaf' decor) = Leaf decor 
+forgetNodeDecorations = go where
+  go (Branch' left _ right) = Branch (go left) (go right)
+  go (Leaf'   decor       ) = Leaf decor 
+
+--------------------------------------------------------------------------------
+
+instance HasNumberOfNodes (BinTree a) where
+  numberOfNodes = go where
+    go (Leaf   _  ) = 0
+    go (Branch l r) = go l + go r + 1
+
+instance HasNumberOfLeaves (BinTree a) where
+  numberOfLeaves = go where
+    go (Leaf   _  ) = 1
+    go (Branch l r) = go l + go r 
+
+
+instance HasNumberOfNodes (BinTree' a b) where
+  numberOfNodes = go where
+    go (Leaf'   _    ) = 0
+    go (Branch' l _ r) = go l + go r + 1
+
+instance HasNumberOfLeaves (BinTree' a b) where
+  numberOfLeaves = go where
+    go (Leaf'   _    ) = 1
+    go (Branch' l _ r) = go l + go r 
 
 --------------------------------------------------------------------------------
 -- * conversion to 'Data.Tree'
@@ -324,7 +349,7 @@ fasc4A_algorithm_U n' bign0 = reverse $ worker (bign0,c0,n,n,[]) where
 --------------------------------------------------------------------------------
 -- * Generating binary trees
 
--- | Generates all binary trees with n nodes. 
+-- | Generates all binary trees with @n@ nodes. 
 --   At the moment just a synonym for 'binaryTreesNaive'.
 binaryTrees :: Int -> [BinTree ()]
 binaryTrees = binaryTreesNaive

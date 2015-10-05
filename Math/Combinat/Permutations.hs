@@ -20,6 +20,7 @@ module Math.Combinat.Permutations
   , disjointCyclesUnsafe
   , permutationToDisjointCycles
   , disjointCyclesToPermutation
+  , numberOfCycles
   , isEvenPermutation
   , isOddPermutation
   , signOfPermutation  --  , Sign(..)
@@ -71,6 +72,7 @@ import Data.Array
 import Data.Array.ST
 import Data.Array.Unsafe
 
+import Math.Combinat.Classes
 import Math.Combinat.Helper
 import Math.Combinat.Sign
 import Math.Combinat.Numbers (factorial,binomial)
@@ -133,6 +135,12 @@ fromDisjointCycles (DisjointCycles cycles) = cycles
 
 disjointCyclesUnsafe :: [[Int]] -> DisjointCycles 
 disjointCyclesUnsafe = DisjointCycles
+
+instance HasNumberOfCycles DisjointCycles where
+  numberOfCycles (DisjointCycles cycles) = length cycles
+
+instance HasNumberOfCycles Permutation where
+  numberOfCycles = numberOfCycles . permutationToDisjointCycles
   
 disjointCyclesToPermutation :: Int -> DisjointCycles -> Permutation
 disjointCyclesToPermutation n (DisjointCycles cycles) = Permutation perm where

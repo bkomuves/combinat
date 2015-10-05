@@ -11,6 +11,7 @@ module Math.Combinat.Partitions.Skew where
 
 import Data.List
 
+import Math.Combinat.Classes
 import Math.Combinat.Partitions.Integer
 import Math.Combinat.ASCII
 
@@ -35,6 +36,9 @@ safeSkewPartition ( lam@(Partition bs) , mu@(Partition as)) = if mu `isSubPartit
 
 skewPartitionWeight :: SkewPartition -> Int
 skewPartitionWeight (SkewPartition abs) = foldl' (+) 0 (map snd abs)
+
+instance HasWeight SkewPartition where
+  weight = skewPartitionWeight
 
 -- | This function \"cuts off\" the \"uninteresting parts\" of a skew partition
 normalizeSkewPartition :: SkewPartition -> SkewPartition
@@ -64,6 +68,9 @@ innerPartition = snd . fromSkewPartition
 dualSkewPartition :: SkewPartition -> SkewPartition
 dualSkewPartition = mkSkewPartition . f . fromSkewPartition where
   f (lam,mu) = (dualPartition lam, dualPartition mu)
+
+instance HasDuality SkewPartition where
+  dual = dualSkewPartition
 
 --------------------------------------------------------------------------------
 -- * Listing skew partitions

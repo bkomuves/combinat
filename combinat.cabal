@@ -42,6 +42,7 @@ Library
     Build-Depends:       QuickCheck
 
   Exposed-Modules:     Math.Combinat
+                       Math.Combinat.Classes
                        Math.Combinat.Numbers
                        Math.Combinat.Numbers.Series
                        Math.Combinat.Numbers.Primes

@@ -1,7 +1,7 @@
 
 -- | Skew tableaux are skew partitions filled with numbers.
 
-{-# LANGUAGE CPP, BangPatterns, ScopedTypeVariables #-}
+{-# LANGUAGE CPP, BangPatterns, ScopedTypeVariables, MultiParamTypeClasses #-}
 
 module Math.Combinat.Tableaux.Skew where
 
@@ -9,6 +9,7 @@ module Math.Combinat.Tableaux.Skew where
 
 import Data.List
 
+import Math.Combinat.Classes
 import Math.Combinat.Partitions.Integer
 import Math.Combinat.Partitions.Skew
 import Math.Combinat.Tableaux
@@ -30,12 +31,18 @@ instance Functor SkewTableau where
   fmap f (SkewTableau t) = SkewTableau [ (a, map f xs) | (a,xs) <- t ]
 
 -- | The shape of a skew tableau 
-skewShape :: SkewTableau a -> SkewPartition
-skewShape (SkewTableau list) = SkewPartition [ (o,length xs) | (o,xs) <- list ]
+skewTableauShape :: SkewTableau a -> SkewPartition
+skewTableauShape (SkewTableau list) = SkewPartition [ (o,length xs) | (o,xs) <- list ]
+
+instance HasShape (SkewTableau a) SkewPartition where
+  shape = skewTableauShape
 
 -- | The weight of a tableau is the weight of its shape, or the number of entries
 skewTableauWeight :: SkewTableau a -> Int
-skewTableauWeight = skewPartitionWeight . skewShape
+skewTableauWeight = skewPartitionWeight . skewTableauShape
+
+instance HasWeight (SkewTableau a) where
+  weight = skewTableauWeight
 
 --------------------------------------------------------------------------------
 
@@ -77,6 +84,9 @@ test_dualSkewTableau = bad where
         , dualSkewTableau (dualSkewTableau st) /= st
         ]
 -}
+
+instance HasDuality (SkewTableau a) where
+  dual = dualSkewTableau
 
 --------------------------------------------------------------------------------
 -- * Semistandard tableau

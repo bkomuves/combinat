@@ -24,6 +24,7 @@ module Math.Combinat.Partitions.Plane where
 import Data.List
 import Data.Array
 
+import Math.Combinat.Classes
 import Math.Combinat.Partitions
 import Math.Combinat.Tableaux as Tableaux
 import Math.Combinat.Helper
@@ -49,6 +50,10 @@ isValidPlanePart pps =
     y = length pps
     x = maximum (map length pps)
 
+instance CanBeEmpty PlanePart where
+  isEmpty = null . fromPlanePart
+  empty   = PlanePart []
+
 -- | Throws an exception if the input is not a plane partition
 toPlanePart :: [[Int]] -> PlanePart
 toPlanePart pps = if isValidPlanePart pps
@@ -57,7 +62,7 @@ toPlanePart pps = if isValidPlanePart pps
 
 -- | The XY projected shape of a plane partition, as an integer partition
 planePartShape :: PlanePart -> Partition
-planePartShape = Tableaux.shape . fromPlanePart
+planePartShape = Tableaux.tableauShape . fromPlanePart
 
 -- | The Z height of a plane partition
 planePartZHeight :: PlanePart -> Int
@@ -68,6 +73,9 @@ planePartZHeight (PlanePart xs) =
 
 planePartWeight :: PlanePart -> Int
 planePartWeight (PlanePart xs) = sum' (map sum' xs)
+
+instance HasWeight PlanePart where
+  weight = planePartWeight
 
 --------------------------------------------------------------------------------
 -- * constructing plane partitions

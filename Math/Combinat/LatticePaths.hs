@@ -15,6 +15,7 @@ module Math.Combinat.LatticePaths where
 import Data.List
 import System.Random
 
+import Math.Combinat.Classes
 import Math.Combinat.Numbers
 import Math.Combinat.Trees.Binary
 import Math.Combinat.ASCII as ASCII
@@ -90,6 +91,12 @@ pathHeight = go 0 0 where
   go !h !y (t:ts) = case t of
     UpStep   -> go (max h (y+1)) (y+1) ts
     DownStep -> go      h        (y-1) ts
+
+instance HasHeight LatticePath where
+  height = pathHeight
+
+instance HasWidth LatticePath where
+  width = length
 
 -- | Endpoint of a lattice path, which starts from @(0,0)@.
 pathEndpoint :: LatticePath -> (Int,Int)
