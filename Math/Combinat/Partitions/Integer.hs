@@ -83,7 +83,7 @@ fromPartition (Partition part) = part
 partitionHeight :: Partition -> Int
 partitionHeight (Partition part) = case part of
   (p:_) -> p
-  [] -> 0
+  []    -> 0
   
 -- | The length of the sequence (that is, the number of parts).
 partitionWidth :: Partition -> Int

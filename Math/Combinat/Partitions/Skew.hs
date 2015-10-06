@@ -34,6 +34,8 @@ safeSkewPartition ( lam@(Partition bs) , mu@(Partition as)) = if mu `isSubPartit
   then Just $ SkewPartition $ zipWith (\b a -> (a,b-a)) bs (as ++ repeat 0)
   else Nothing
 
+-- | The weight of a skew partition is the weight of the outer partition minus the
+-- the weight of the inner partition (that is, the number of boxes present).
 skewPartitionWeight :: SkewPartition -> Int
 skewPartitionWeight (SkewPartition abs) = foldl' (+) 0 (map snd abs)
 
@@ -75,7 +77,7 @@ instance HasDuality SkewPartition where
 --------------------------------------------------------------------------------
 -- * Listing skew partitions
 
--- | Lists all skew partitions with the given outer shape and given weight
+-- | Lists all skew partitions with the given outer shape and given (skew) weight
 skewPartitionsWithOuterShape :: Partition -> Int -> [SkewPartition]
 skewPartitionsWithOuterShape outer skewWeight 
   | innerWeight < 0 || innerWeight > outerWeight = []
@@ -84,14 +86,14 @@ skewPartitionsWithOuterShape outer skewWeight
     outerWeight = weight outer
     innerWeight = outerWeight - skewWeight 
 
--- | Lists all skew partitions with the given outer shape of any weight
+-- | Lists all skew partitions with the given outer shape and any (skew) weight
 allSkewPartitionsWithOuterShape :: Partition -> [SkewPartition]
 allSkewPartitionsWithOuterShape outer 
   = concat [ skewPartitionsWithOuterShape outer w | w<-[0..outerWeight] ]
   where
     outerWeight = weight outer
 
--- | Lists all skew partitions with the given inner shape and given weight
+-- | Lists all skew partitions with the given inner shape and given (skew) weight
 skewPartitionsWithInnerShape :: Partition -> Int -> [SkewPartition]
 skewPartitionsWithInnerShape inner skewWeight 
   | innerWeight > outerWeight = []
