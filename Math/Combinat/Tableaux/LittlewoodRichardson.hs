@@ -2,7 +2,8 @@
 -- | The Littlewood-Richardson rule
 
 module Math.Combinat.Tableaux.LittlewoodRichardson 
-  ( lrRule , _lrRule 
+  ( lrRule 
+  , lrMult
   , lrRuleNaive
   ) 
   where
@@ -22,8 +23,8 @@ import qualified Data.Map.Strict as Map
 
 --------------------------------------------------------------------------------
 
--- | Naive, reference implementation of the Littlewood-Richardson rule, based on the definition
--- "count the semistandard skew tableaux whose row content is a lattice word"
+-- | Naive (very slow) reference implementation of the Littlewood-Richardson rule, based 
+-- on the definition "count the semistandard skew tableaux whose row content is a lattice word"
 --
 lrRuleNaive :: SkewPartition -> Map Partition Int
 lrRuleNaive skew = final where
@@ -33,6 +34,7 @@ lrRuleNaive skew = final where
   f old nu = Map.insertWith (+) nu 1 old
 
 --------------------------------------------------------------------------------
+-- SKEW EXPANSION
 
 -- | @lrRule@ computes the expansion of a skew Schur function 
 -- @s[lambda/mu]@ via the Littlewood-Richardson rule.
@@ -40,13 +42,21 @@ lrRuleNaive skew = final where
 -- Adapted from John Stembridge's Maple code: 
 -- <http://www.math.lsa.umich.edu/~jrs/software/SFexamples/LR_rule>
 --
+-- > lrRule (mkSkewPartition (lambda,nu)) == Map.fromList list where
+-- >   muw  = weight lambda - weight nu
+-- >   list = [ (mu, coeff) 
+-- >          | mu <- subPartitions muw lambda
+-- >          , let coeff = lrCoeff lambda (mu,nu)
+-- >          , coeff /= 0
+-- >          ] 
+--
 lrRule :: SkewPartition -> Map Partition Int
 lrRule skew = _lrRule lam mu where
   (lam,mu) = fromSkewPartition skew
 
 -- | @_lrRule lambda mu@ computes the expansion of the skew
 -- Schur function @s[lambda/mu]@ via the Littlewood-Richardson rule.
----
+--
 {-# SPECIALIZE _lrRule :: Partition -> Partition -> Map Partition Int     #-}
 {-# SPECIALIZE _lrRule :: Partition -> Partition -> Map Partition Integer #-}
 _lrRule :: Num coeff => Partition -> Partition -> Map Partition coeff
@@ -168,5 +178,79 @@ end:
 -}
 
 --------------------------------------------------------------------------------
+-- MULTIPLICATION
+
+type Part = [Int]
+
+-- | Computes the expansion of the product of Schur polynomials @s[mu]*s[nu]@ using the
+-- Littlewood-Richardson rule. Note: this is symmetric in the two arguments.
+--
+-- Based on the wikipedia article <https://en.wikipedia.org/wiki/Littlewood–Richardson_rule>
+--
+-- > lrMult mu nu == Map.fromList list where
+-- >   lamw = weight nu + weight mu
+-- >   list = [ (lambda, coeff) 
+-- >          | lambda <- superPartitions lamw nu 
+-- >          , let coeff = lrCoeff lambda (mu,nu)
+-- >          , coeff /= 0
+-- >          ] 
+--
+lrMult :: Partition -> Partition -> Map Partition Int
+lrMult pmu@(Partition mu) pnu@(Partition nu) = result where
+  result = foldl' add Map.empty (addMu mu nu) where
+  add !old lambda = Map.insertWith (+) (Partition lambda) 1 old
+
+-- | This basically lists all the outer shapes (with multiplicities) which can be result from the LR rule
+addMu :: Part -> Part -> [Part]
+addMu mu part = go ubs0 mu dmu part where
+
+  go _   []     _      part = [part]
+  go ubs (m:ms) (d:ds) part = concat [ go (drop d ubs') ms ds part' | (ubs',part') <- addRowOf ubs part ]
+
+  ubs0 = take (headOrZero mu) [headOrZero part + 1..]
+  dmu  = diffSeq mu
 
 
+-- | Adds a full row of @(length pcols)@ boxes containing to a partition, with
+-- pcols being the upper bounds of the columns, respectively. We also return the
+-- newly added columns
+addRowOf :: [Int] -> Part -> [([Int],Part)]
+addRowOf pcols part = go 0 pcols part [] where
+  go !lb []        p ncols = [(reverse ncols , p)]
+  go !lb (!ub:ubs) p ncols = concat [ go col ubs (addBox ij p) (col:ncols) | ij@(row,col) <- newBoxes (lb+1) ub p ]
+
+-- | Returns the (row,column) pairs of the new boxes which 
+-- can be added to the given partition with the given column bounds
+-- and the 1-Rieri rule 
+newBoxes :: Int -> Int -> Part -> [(Int,Int)]
+newBoxes lb ub part = reverse $ go [1..] part (headOrZero part + 1) where
+  go (!i:_ ) []      !lp
+    | lb <= 1 && 1 <= ub && lp > 0  =  [(i,1)]
+    | otherwise                     =  []
+  go (!i:is) (!j:js) !lp 
+    | j1 <  lb            =  []
+    | j1 <= ub && lp > j  =  (i,j1) : go is js j       
+    | otherwise           =           go is js j
+    where 
+      j1 = j+1
+
+-- | Adds a box to a partition
+addBox :: (Int,Int) -> Part -> Part
+addBox (k,_) part = go 1 part where
+  go !i (p:ps) = if i==k then (p+1):ps else p : go (i+1) ps
+  go !i []     = if i==k then [1] else error "addBox: shouldn't happen"
+
+-- | Safe head defaulting to zero           
+headOrZero :: [Int] -> Int
+headOrZero xs = case xs of 
+  (!x:_) -> x
+  []     -> 0
+
+-- | Computes the sequence of differences from a partition (including the last difference to zero)
+diffSeq :: Part -> [Int]
+diffSeq = go where
+  go (p:ps@(q:_)) = (p-q) : go ps
+  go [p]          = [p]
+  go []           = []
+
+--------------------------------------------------------------------------------  
