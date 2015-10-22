@@ -88,10 +88,14 @@ identity = TDiag 0 Lf Lf
 positive :: T -> TDiag
 positive t = TDiag w t (rightVine w) where w = treeWidth t
 
--- | Swaps the top and bottom of a tree diagram. This is the inverse in the group F 
+-- | Swaps the top and bottom of a tree diagram. This is the inverse in the group F.
 -- (Note: we don't do reduction here, as this operation keeps the reducedness)
 inverse :: TDiag -> TDiag
 inverse (TDiag w top bot) = TDiag w bot top
+
+-- | Decides whether two (possibly unreduced) tree diagrams represents the same group element in F.
+equivalent :: TDiag -> TDiag -> Bool
+equivalent diag1 diag2 = (identity == reduce (compose diag1 (inverse diag2)))
 
 --------------------------------------------------------------------------------
 -- * Reduction of tree diagrams
