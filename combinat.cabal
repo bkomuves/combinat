@@ -51,6 +51,7 @@ Library
                        Math.Combinat.Tuples 
                        Math.Combinat.Compositions
                        Math.Combinat.Groups.Thompson.F
+                       Math.Combinat.Groups.Free
                        Math.Combinat.Partitions
                        Math.Combinat.Partitions.Integer
                        Math.Combinat.Partitions.Skew
@@ -70,7 +71,6 @@ Library
                        Math.Combinat.Trees.Nary
                        Math.Combinat.Trees.Graphviz
                        Math.Combinat.LatticePaths
-                       Math.Combinat.FreeGroups
                        Math.Combinat.ASCII
                        Math.Combinat.Helper
 

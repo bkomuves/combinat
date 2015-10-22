@@ -3,7 +3,7 @@
 -- This module is not re-exported by "Math.Combinat"
 --
 {-# LANGUAGE CPP, PatternGuards #-}
-module Math.Combinat.FreeGroups where
+module Math.Combinat.Groups.Free where
 
 --------------------------------------------------------------------------------
 
