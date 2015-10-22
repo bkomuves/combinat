@@ -11,12 +11,13 @@ module Math.Combinat.ASCII where
 
 --------------------------------------------------------------------------------
 
-import Data.List
+import Data.Char ( isSpace )
+import Data.List ( transpose , intercalate )
 
 import Math.Combinat.Helper
 
 --------------------------------------------------------------------------------
--- * The basic type
+-- * The basic ASCII type
 
 -- | The type of a (rectangular) ASCII figure. 
 -- Internally it is a list of lines of the same length plus the size.
@@ -76,44 +77,6 @@ data VAlign
   deriving (Eq,Show)
 
 data Alignment = Align HAlign VAlign
-                                        
---------------------------------------------------------------------------------
--- * Extension
-
--- | Extends an ASCII figure with spaces horizontally to the given width 
-hExtendTo :: HAlign -> Int -> ASCII -> ASCII
-hExtendTo halign n0 rect@(ASCII (x,y) ls) = hExtendWith halign (max n0 x - x) rect
-  
--- | Extends an ASCII figure with spaces vertically to the given height
-vExtendTo :: VAlign -> Int -> ASCII -> ASCII
-vExtendTo valign n0 rect@(ASCII (x,y) ls) = vExtendWith valign (max n0 y - y) rect
-
--- | Extend horizontally with the given number of spaces
-hExtendWith :: HAlign -> Int -> ASCII -> ASCII
-hExtendWith alignment d (ASCII (x,y) ls) = ASCII (x+d,y) (map f ls) where
-  f l = case alignment of
-    HLeft   -> l ++ replicate d ' '   
-    HRight  -> replicate d ' ' ++ l
-    HCenter -> replicate a ' ' ++ l ++ replicate (d-a) ' ' 
-  a = div d 2
-
--- | Extend vertically with the given number of empty lines
-vExtendWith :: VAlign -> Int -> ASCII -> ASCII
-vExtendWith valign d (ASCII (x,y) ls) = ASCII (x,y+d) (f ls) where
-  f ls = case valign of
-    VTop     -> ls ++ replicate d emptyline   
-    VBottom  -> replicate d emptyline ++ ls
-    VCenter  -> replicate a emptyline ++ ls ++ replicate (d-a) emptyline
-  a = div d 2
-  emptyline = replicate x ' '
-
--- | Horizontal indentation
-hIndent :: Int -> ASCII -> ASCII
-hIndent d = hExtendWith HRight d
-
--- | Vertical indentation
-vIndent :: Int -> ASCII -> ASCII
-vIndent d = vExtendWith VBottom d
 
 --------------------------------------------------------------------------------
 -- * Separators
@@ -155,6 +118,57 @@ vSepString vsep = case vsep of
   VSepEmpty    -> []
   VSepSpaces k -> replicate k ' '
   VSepString s -> s
+                                        
+--------------------------------------------------------------------------------
+-- * Concatenation
+
+-- | Horizontal append, centrally aligned, no separation.
+(|||) :: ASCII -> ASCII -> ASCII
+(|||) p q = hCatWith VCenter HSepEmpty [p,q]
+
+-- | Vertical append, centrally aligned, no separation.
+(===) :: ASCII -> ASCII -> ASCII
+(===) p q = vCatWith HCenter VSepEmpty [p,q]
+
+-- | Horizontal concatenation, top-aligned, no separation
+hCatTop :: [ASCII] -> ASCII
+hCatTop = hCatWith VTop HSepEmpty
+
+-- | Horizontal concatenation, bottom-aligned, no separation
+hCatBot :: [ASCII] -> ASCII
+hCatBot = hCatWith VBottom HSepEmpty
+
+-- | Vertical concatenation, left-aligned, no separation
+vCatLeft :: [ASCII] -> ASCII
+vCatLeft = vCatWith HLeft VSepEmpty
+
+-- | Vertical concatenation, right-aligned, no separation
+vCatRight :: [ASCII] -> ASCII
+vCatRight = vCatWith HRight VSepEmpty
+
+-- | General horizontal concatenation
+hCatWith :: VAlign -> HSep -> [ASCII] -> ASCII
+hCatWith valign hsep rects = ASCII (x',maxy) final where
+  n    = length rects
+  maxy = maximum [ y | ASCII (_,y) _ <- rects ]
+  xsz  =         [ x | ASCII (x,_) _ <- rects ]
+  sep   = hSepString hsep
+  sepx  = length sep
+  rects1 = map (vExtendTo valign maxy) rects
+  x' = sum' xsz + (n-1)*sepx
+  final = map (intercalate sep) $ transpose (map asciiLines rects1)
+
+-- | General vertical concatenation
+vCatWith :: HAlign -> VSep -> [ASCII] -> ASCII
+vCatWith halign vsep rects = ASCII (maxx,y') final where
+  n    = length rects
+  maxx = maximum [ x | ASCII (x,_) _ <- rects ]
+  ysz  =         [ y | ASCII (_,y) _ <- rects ]
+  sepy    = vSepSize vsep
+  fullsep = transpose (replicate maxx $ vSepString vsep) :: [String]
+  rects1  = map (hExtendTo halign maxx) rects
+  y'    = sum' ysz + (n-1)*sepy
+  final = intercalate fullsep $ map asciiLines rects1
 
 --------------------------------------------------------------------------------
 -- * Padding
@@ -175,35 +189,145 @@ pad :: ASCII -> ASCII
 pad = vPad 1 . hPad 2 
 
 --------------------------------------------------------------------------------
--- * Concatenation
+-- * Extension
 
--- | Horizontal concatenation
-hCatWith :: VAlign -> HSep -> [ASCII] -> ASCII
-hCatWith valign hsep rects = ASCII (x',maxy) final where
-  n    = length rects
-  maxy = maximum [ y | ASCII (_,y) _ <- rects ]
-  xsz  =         [ x | ASCII (x,_) _ <- rects ]
-  sep   = hSepString hsep
-  sepx  = length sep
-  rects1 = map (vExtendTo valign maxy) rects
-  x' = sum' xsz + (n-1)*sepx
-  final = map (intercalate sep) $ transpose (map asciiLines rects1)
+-- | Extends an ASCII figure with spaces horizontally to the given width.
+-- Note: the alignment is the alignment of the original picture in the new bigger picture!
+hExtendTo :: HAlign -> Int -> ASCII -> ASCII
+hExtendTo halign n0 rect@(ASCII (x,y) ls) = hExtendWith halign (max n0 x - x) rect
+  
+-- | Extends an ASCII figure with spaces vertically to the given height.
+-- Note: the alignment is the alignment of the original picture in the new bigger picture!
+vExtendTo :: VAlign -> Int -> ASCII -> ASCII
+vExtendTo valign n0 rect@(ASCII (x,y) ls) = vExtendWith valign (max n0 y - y) rect
 
--- | Vertical concatenation
-vCatWith :: HAlign -> VSep -> [ASCII] -> ASCII
-vCatWith halign vsep rects = ASCII (maxx,y') final where
-  n    = length rects
-  maxx = maximum [ x | ASCII (x,_) _ <- rects ]
-  ysz  =         [ y | ASCII (_,y) _ <- rects ]
-  sepy    = vSepSize vsep
-  fullsep = transpose (replicate maxx $ vSepString vsep) :: [String]
-  rects1  = map (hExtendTo halign maxx) rects
-  y'    = sum' ysz + (n-1)*sepy
-  final = intercalate fullsep $ map asciiLines rects1
+-- | Extend horizontally with the given number of spaces.
+hExtendWith :: HAlign -> Int -> ASCII -> ASCII
+hExtendWith alignment d (ASCII (x,y) ls) = ASCII (x+d,y) (map f ls) where
+  f l = case alignment of
+    HLeft   -> l ++ replicate d ' '   
+    HRight  -> replicate d ' ' ++ l
+    HCenter -> replicate a ' ' ++ l ++ replicate (d-a) ' ' 
+  a = div d 2
+
+-- | Extend vertically with the given number of empty lines.
+vExtendWith :: VAlign -> Int -> ASCII -> ASCII
+vExtendWith valign d (ASCII (x,y) ls) = ASCII (x,y+d) (f ls) where
+  f ls = case valign of
+    VTop     -> ls ++ replicate d emptyline   
+    VBottom  -> replicate d emptyline ++ ls
+    VCenter  -> replicate a emptyline ++ ls ++ replicate (d-a) emptyline
+  a = div d 2
+  emptyline = replicate x ' '
+
+-- | Horizontal indentation
+hIndent :: Int -> ASCII -> ASCII
+hIndent d = hExtendWith HRight d
+
+-- | Vertical indentation
+vIndent :: Int -> ASCII -> ASCII
+vIndent d = vExtendWith VBottom d
+
+--------------------------------------------------------------------------------
+-- * Cutting
+
+-- | Cuts the given number of columns from the picture. 
+-- The alignment is the alignment of the /picture/, not the cuts.
+--
+-- This should be the (left) inverse of 'hExtendWith'.
+hCut :: HAlign -> Int -> ASCII -> ASCII
+hCut halign k (ASCII (x,y) ls) = ASCII (x',y) (map f ls) where
+  x' = max 0 (x-k)
+  f  = case halign of
+    HLeft   -> reverse . drop  k    . reverse
+    HCenter -> reverse . drop (k-a) . reverse . drop a
+    HRight  -> drop k 
+  a = div k 2
+
+-- | Cuts the given number of rows from the picture. 
+-- The alignment is the alignment of the /picture/, not the cuts.
+--
+-- This should be the (left) inverse of 'vExtendWith'.
+vCut :: VAlign -> Int -> ASCII -> ASCII
+vCut valign k (ASCII (x,y) ls) = ASCII (x,y') (g ls) where
+  y' = max 0 (y-k)
+  g  = case valign of
+    VTop    -> reverse . drop  k    . reverse
+    VCenter -> reverse . drop (k-a) . reverse . drop a
+    VBottom -> drop k 
+  a = div k 2
+
+--------------------------------------------------------------------------------
+-- * Pasting
+
+-- | Pastes the first ASCII graphics onto the second, keeping the second one's dimension
+-- (that is, overlapping parts of the first one are ignored). 
+-- The offset is relative to the top-left corner of the second picture.
+-- Spaces at treated as transparent.
+--
+-- Example:
+--
+-- > tabulate (HCenter,VCenter) (HSepSpaces 2, VSepSpaces 1)
+-- >  [ [ caption (show (x,y)) $
+-- >      pasteOnto (x,y) (filledBox '@' (4,3)) (asciiBox (7,5))
+-- >    | x <- [-4..7] ] 
+-- >  | y <- [-3..5] ]
+--
+pasteOnto :: (Int,Int) -> ASCII -> ASCII -> ASCII
+pasteOnto = pasteOnto' isSpace 
+
+-- | Pastes the first ASCII graphics onto the second, keeping the second one's dimension.
+-- The first argument specifies the transparency condition (on the first picture).
+-- The offset is relative to the top-left corner of the second picture.
+-- 
+pasteOnto' 
+  :: (Char -> Bool)      -- ^ transparency condition
+  -> (Int,Int)           -- ^ offset relative to the top-left corner of the second picture
+  -> ASCII               -- ^ picture to paste
+  -> ASCII               -- ^ picture to paste onto
+  -> ASCII
+pasteOnto' transparent (xpos,ypos) small big = new where
+  new = ASCII (xbig,ybig) lines'
+  (xbig,ybig) = asciiSize  big
+  bigLines    = asciiLines big
+  small'      = (if (ypos>=0) then vExtendWith VBottom ypos else vCut VBottom (-ypos))
+              $ (if (xpos>=0) then hExtendWith HRight  xpos else hCut HRight  (-xpos))
+              $ small
+  smallLines  = asciiLines small'
+  lines'  = zipWith f bigLines (smallLines ++ repeat "")
+  f bl sl = zipWith g bl (sl ++ repeat ' ')
+  g b  s  = if transparent s then b else s
+
+-- | A version of 'pasteOnto' where we can specify the corner of the second picture
+-- to which the offset is relative:
+--
+-- > pasteOntoRel (HLeft,VTop) == pasteOnto
+--
+pasteOntoRel :: (HAlign,VAlign) -> (Int,Int) -> ASCII -> ASCII -> ASCII
+pasteOntoRel = pasteOntoRel' isSpace
+
+pasteOntoRel' :: (Char -> Bool) -> (HAlign,VAlign) -> (Int,Int) -> ASCII -> ASCII -> ASCII
+pasteOntoRel' transparent (halign,valign) (xpos,ypos) small big = new where
+  new = pasteOnto' transparent (xpos',ypos') small big 
+  (xsize,ysize) = asciiSize big
+  xpos' = case halign of
+    HLeft   -> xpos
+    HCenter -> xpos + div xsize 2
+    HRight  -> xpos +     xsize
+  ypos' = case valign of
+    VTop    -> ypos
+    VCenter -> ypos + div ysize 2
+    VBottom -> ypos +     ysize
 
 --------------------------------------------------------------------------------
 -- * Tabulate
 
+-- | Tabulates the given matrix of pictures. Example:
+--
+-- > tabulate (HCenter, VCenter) (HSepSpaces 2, VSepSpaces 1)
+-- >   [ [ asciiFromLines [ "x=" ++ show x , "y=" ++ show y ] | x<-[7..13] ] 
+-- >   | y<-[98..102] ]
+--
 tabulate :: (HAlign,VAlign) -> (HSep,VSep) -> [[ASCII]] -> ASCII
 tabulate (halign,valign) (hsep,vsep) rects0 = final where
   n = length rects0
@@ -226,7 +350,7 @@ data MatrixOrder
 --
 autoTabulate 
   :: MatrixOrder      -- ^ whether to use row-major or column-major ordering of the elements
-  -> Either Int Int   -- ^ @(Right x)@ creates x columns, while @(Left y)$ creates y rows
+  -> Either Int Int   -- ^ @(Right x)@ creates x columns, while @(Left y)@ creates y rows
   -> [ASCII]          -- ^ list of ASCII rectangles
   -> ASCII
 autoTabulate mtxorder ei list = final where
@@ -276,21 +400,35 @@ caption' emptyline halign str rect = vCatWith halign sep [rect,capt] where
   capt = asciiFromString str
 
 --------------------------------------------------------------------------------
--- * Testing \/ miscellanea
+-- * Ready-made boxes
 
--- | An ASCII box of the given size
+-- | An ASCII border box of the given size 
 asciiBox :: (Int,Int) -> ASCII
 asciiBox (x,y) = ASCII (max x 2, max y 2) (h : replicate (y-2) m ++ [h]) where
   h = "+" ++ replicate (x-2) '-' ++ "+"
   m = "|" ++ replicate (x-2) ' ' ++ "|"
 
--- | An \"rounded\" ASCII box of the given size
+-- | An \"rounded\" ASCII border box of the given size
 roundedAsciiBox :: (Int,Int) -> ASCII
 roundedAsciiBox (x,y) = ASCII (max x 2, max y 2) (a : replicate (y-2) m ++ [b]) where
   a = "/"  ++ replicate (x-2) '-' ++ "\\"
   m = "|"  ++ replicate (x-2) ' ' ++ "|"
   b = "\\" ++ replicate (x-2) '-' ++ "/"
 
+-- | A box simply filled with the given character
+filledBox :: Char -> (Int,Int) -> ASCII
+filledBox c (x0,y0) = asciiFromLines $ replicate y (replicate x c) where
+  x = max 0 x0
+  y = max 0 y0
+
+-- | A box of spaces
+transparentBox :: (Int,Int) -> ASCII
+transparentBox = filledBox ' '
+
+--------------------------------------------------------------------------------
+-- * Testing \/ miscellanea
+
+-- | An integer
 asciiNumber :: Int -> ASCII
 asciiNumber = asciiShow
 
