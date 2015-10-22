@@ -11,7 +11,8 @@
 module Math.Combinat.Trees.Binary 
   ( -- * Types
     BinTree(..)
-  , leaf
+  , leaf 
+  , graft
   , BinTree'(..)
   , forgetNodeDecorations
   , Paren(..)
@@ -19,9 +20,13 @@ module Math.Combinat.Trees.Binary
   , stringToParentheses  
   , numberOfNodes
   , numberOfLeaves
-  -- * Conversion to rose trees (@Data.Tree@)
+    -- * Conversion to rose trees (@Data.Tree@)
   , toRoseTree , toRoseTree'
   , module Data.Tree 
+    -- * Enumerate leaves
+  , enumerateLeaves_ 
+  , enumerateLeaves 
+  , enumerateLeaves'
     -- * Nested parentheses
   , nestedParentheses 
   , randomNestedParentheses
@@ -98,6 +103,14 @@ data BinTree a
 leaf :: BinTree ()
 leaf = Leaf ()
 
+-- | The monadic join operation of binary trees
+graft :: BinTree (BinTree a) -> BinTree a
+graft = go where
+  go (Branch l r) = Branch (go l) (go r)
+  go (Leaf   t  ) = t 
+
+--------------------------------------------------------------------------------
+
 -- | A binary tree with leaves and internal nodes decorated 
 -- with types @a@ and @b@, respectively.
 data BinTree' a b
@@ -134,6 +147,31 @@ instance HasNumberOfLeaves (BinTree' a b) where
     go (Branch' l _ r) = go l + go r 
 
 --------------------------------------------------------------------------------
+-- * Enumerate leaves
+
+-- | Enumerates the leaves a tree, starting from 0, ignoring old labels
+enumerateLeaves_ :: BinTree a -> BinTree Int
+enumerateLeaves_ = snd . go 0 where
+  go !k t = case t of
+    Leaf   _   -> (k+1 , Leaf k)
+    Branch l r -> (k'', Branch l' r')  where
+                    (k' ,l') = go k  l
+                    (k'',r') = go k' r
+
+-- | Enumerates the leaves a tree, starting from zero, and also returns the number of leaves
+enumerateLeaves' :: BinTree a -> (Int, BinTree (a,Int))
+enumerateLeaves' = go 0 where
+  go !k t = case t of
+    Leaf   y   -> (k+1 , Leaf (y,k))
+    Branch l r -> (k'', Branch l' r')  where
+                    (k' ,l') = go k  l
+                    (k'',r') = go k' r
+
+-- | Enumerates the leaves a tree, starting from zero
+enumerateLeaves :: BinTree a -> BinTree (a,Int)
+enumerateLeaves = snd . enumerateLeaves'
+
+--------------------------------------------------------------------------------
 -- * conversion to 'Data.Tree'
 
 -- | Convert a binary tree to a rose tree (from "Data.Tree")
@@ -164,6 +202,18 @@ instance Traversable BinTree where
   traverse f = go where 
     go (Leaf x) = Leaf <$> f x
     go (Branch left right) = Branch <$> go left <*> go right
+
+instance Applicative BinTree where
+  pure    = Leaf
+  u <*> t = go u where
+    go (Branch l r) = Branch (go l) (go r)
+    go (Leaf   f  ) = fmap f t
+
+instance Monad BinTree where
+  return    = Leaf
+  (>>=) t f = go t where
+    go (Branch l r) = Branch (go l) (go r)
+    go (Leaf   y  ) = f y 
 
 --------------------------------------------------------------------------------
 -- * Nested parentheses
