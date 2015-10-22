@@ -50,6 +50,7 @@ Library
                        Math.Combinat.Sets
                        Math.Combinat.Tuples 
                        Math.Combinat.Compositions
+                       Math.Combinat.Groups.Thompson.F
                        Math.Combinat.Partitions
                        Math.Combinat.Partitions.Integer
                        Math.Combinat.Partitions.Skew
