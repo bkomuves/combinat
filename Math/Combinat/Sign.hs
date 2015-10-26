@@ -20,11 +20,17 @@ instance Monoid Sign where
   mappend = mulSign
   mconcat = productOfSigns
 
+isPlus, isMinus :: Sign -> Bool
+isPlus  s = case s of { Plus  -> True ; _ -> False }
+isMinus s = case s of { Minus -> True ; _ -> False }
+
+-- | @+1@ or @-1@
 signValue :: Num a => Sign -> a
 signValue s = case s of 
   Plus  ->  1 
   Minus -> -1 
 
+-- | 'Plus' if even, 'Minus' if odd
 paritySign :: Integral a => a -> Sign
 paritySign x = if even x then Plus else Minus 
 
