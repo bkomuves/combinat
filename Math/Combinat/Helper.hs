@@ -1,6 +1,7 @@
 
 -- | Miscellaneous helper functions
 
+{-# LANGUAGE BangPatterns, PolyKinds #-}
 module Math.Combinat.Helper where
 
 --------------------------------------------------------------------------------
@@ -9,6 +10,7 @@ import Control.Monad
 
 import Data.List
 import Data.Ord
+import Data.Proxy
 
 import Data.Set (Set) ; import qualified Data.Set as Set
 import Data.Map (Map) ; import qualified Data.Map as Map
@@ -20,6 +22,21 @@ import Debug.Trace
 
 debug :: Show a => a -> b -> b
 debug x y = trace ("-- " ++ show x ++ "\n") y
+
+--------------------------------------------------------------------------------
+-- * proxy
+
+proxyUndef :: Proxy a -> a
+proxyUndef _ = error "proxyUndef"
+
+proxyOf :: a -> Proxy a
+proxyOf _ = Proxy
+
+proxyOf1 :: f a -> Proxy a
+proxyOf1 _ = Proxy
+
+proxyOf2 :: g (f a) -> Proxy a
+proxyOf2 _ = Proxy
 
 --------------------------------------------------------------------------------
 -- * pairs
@@ -185,8 +202,8 @@ boolToInt True  = 1
     
 -- iterated function application
 nest :: Int -> (a -> a) -> a -> a
-nest 0 _ x = x
-nest n f x = nest (n-1) f (f x)
+nest !0 _ x = x
+nest !n f x = nest (n-1) f (f x)
 
 unfold1 :: (a -> Maybe a) -> a -> [a]
 unfold1 f x = case f x of 
