@@ -31,13 +31,22 @@ module Math.Combinat.Permutations
   , signValueOfPermutation  
   , module Math.Combinat.Sign   --  , Sign(..)
   , isCyclicPermutation
+    -- * Some concrete permutations
+  , transposition
+  , adjacentTransposition
+  , swapPerm
+  , reversePerm
+  , cycleLeftPerm
+  , cycleRightPerm
     -- * Permutation groups
   , multiply
   , inverse
   , identity
     -- * Action of the permutation group
-  , permute , permuteLeft , permuteRight
-  , permuteList , permuteListLeft , permuteListRight
+  , permute 
+  , permuteList
+  , permuteLeft , permuteRight
+  , permuteListLeft , permuteListRight
     -- * List of permutations
   , permutations
   , _permutations
@@ -298,6 +307,42 @@ isCyclicPermutation perm =
   where 
     n = permutationSize perm
     DisjointCycles cycles = permutationToDisjointCycles perm
+
+--------------------------------------------------------------------------------
+-- * Some concrete permutations
+
+-- | The permutation @[n,n-1,n-2..2,1]@
+reversePerm :: Int -> Permutation
+reversePerm n = Permutation $ listArray (1,n) [n,n-1..1]
+
+-- | A transposition (swapping two elements). Synonym for 'swapPerm'.
+transposition :: Int -> (Int,Int) -> Permutation
+transposition = swapPerm
+
+-- | @adjacentTransposition n k@ swaps the elements @k@ and @(k+1)@.
+adjacentTransposition :: Int -> Int -> Permutation
+adjacentTransposition n k 
+  | k>0 && k<n  = swapPerm n (k,k+1)
+  | otherwise   = error "adjacentTransposition: index out of range"
+
+-- | @swapPerm n (i,j)@ is the permutation of size @n@ which swaps @i@\'th and @j@'th elements.
+swapPerm :: Int -> (Int,Int) -> Permutation
+swapPerm n (i,j) = 
+  if i>=1 && j>=1 && i<=n && j<=n 
+    then Permutation $ listArray (1,n) [ f k | k<-[1..n] ]
+    else error "swapPerm: index out of range"
+  where
+    f k | k == i    = j
+        | k == j    = i
+        | otherwise = k
+
+-- | The permutation which moves @i@ to @(i+1)@, and @n@ to @1@ (using the /left/ action)
+cycleRightPerm :: Int -> Permutation
+cycleRightPerm n = Permutation $ listArray (1,n) $ n : [1..n-1]
+
+-- | The permutation which moves @i@ to @(i-1)@, and @1@ to @n@ (using the /left/ action)
+cycleLeftPerm :: Int -> Permutation
+cycleLeftPerm n = Permutation $ listArray (1,n) $ [2..n] ++ [1]
    
 --------------------------------------------------------------------------------
 -- * Permutation groups
@@ -338,15 +383,15 @@ permute = permuteLeft
 
 -- | Left action on lists. Synonym to 'permuteListLeft'
 --
-permuteList :: Permutation -> Array Int a -> Array Int a    
-permuteList = permuteLeft
+permuteList :: Permutation -> [a] -> [a]
+permuteList = permuteListLeft
     
 -- | Left action of a permutation on a set. If our permutation is 
 -- encoded with the sequence @[p1,p2,...,pn]@, then in the
 -- two-line notation we have
 --
--- > ( 1  2  3  ... n  )
 -- > ( p1 p2 p3 ... pn )
+-- > ( 1  2  3  ... n  )
 --
 -- We adopt the convention that permutations act /on the left/ 
 -- (as opposed to Knuth, where they act on the right).
@@ -379,12 +424,18 @@ permuteListLeft perm xs = elems $ permuteLeft perm $ arr where
 
 -- | The opposite (right) action of the permutation group.
 --
--- permuteRight pi2 (permuteRight pi1 set) == permuteRight (pi1 `multiply` pi2) set
+-- > permuteRight pi2 (permuteRight pi1 set) == permuteRight (pi1 `multiply` pi2) set
 --
 {-# SPECIALIZE permuteRight :: Permutation -> Array  Int b   -> Array  Int b   #-}
 {-# SPECIALIZE permuteRight :: Permutation -> UArray Int Int -> UArray Int Int #-}
 permuteRight :: IArray arr b => Permutation -> arr Int b -> arr Int b    
-permuteRight pi ar = permuteLeft (inverse pi) ar
+permuteRight pi@(Permutation perm) ar = -- permuteLeft (inverse pi) ar
+  if (a==1) && (b==n) 
+    then array (1,n) [ ( perm!i , ar!i ) | i <- [1..n] ] 
+    else error "permuteRight: array bounds do not match"
+  where
+    (_,n) = bounds perm  
+    (a,b) = bounds ar   
 
 -- | Right action on a list. The list should be of length @n@.
 --
