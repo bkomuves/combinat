@@ -8,8 +8,7 @@
 -- are represented internally. Also now they act on the /right/ by default!
 --
 
-{-# OPTIONS_GHC -fno-warn-name-shadowing #-}
-{-# LANGUAGE CPP, ScopedTypeVariables, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE CPP, ScopedTypeVariables, GeneralizedNewtypeDeriving, FlexibleContexts #-}
 module Math.Combinat.Permutations 
   ( -- * The Permutation type
     Permutation (..)
