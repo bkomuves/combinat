@@ -38,6 +38,9 @@ proxyOf1 _ = Proxy
 proxyOf2 :: g (f a) -> Proxy a
 proxyOf2 _ = Proxy
 
+asProxyTypeOf1 :: f a -> Proxy a -> f a 
+asProxyTypeOf1 y _ = y
+
 --------------------------------------------------------------------------------
 -- * pairs
 
