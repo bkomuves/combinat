@@ -1,9 +1,9 @@
 Name:                combinat
-Version:             0.2.7.3
+Version:             0.2.8.0
 Synopsis:            Generate and manipulate various combinatorial objects.
 Description:         A collection of functions to generate, count and manipulate
                      all kinds of combinatorial objects like partitions, 
-                     compositions, permutations, Young tableaux, binary trees, 
+                     compositions, trees, permutations, braids, Young tableaux, 
                      and so on.
 License:             BSD3
 License-file:        LICENSE
@@ -25,21 +25,14 @@ extra-source-files:  svg/*.svg
 Flag withQuickCheck
   Description: Compile with the QuickCheck tests. 
   default: False
-
-Flag base4
-  Description: Base v4
   
 Library
 
-  if flag(base4)
-    Build-Depends:       base >= 4 && < 5, array >= 0.4, containers, random, transformers
-    cpp-options:         -DBASE_VERSION=4
-  else 
-    Build-Depends:       base >= 3 && < 4, array >= 0.4, containers, random, transformers
-    cpp-options:         -DBASE_VERSION=3
+  Build-Depends:       base >= 4 && < 5, array >= 0.5, containers, random, transformers
 
   if flag(withQuickCheck)
     Build-Depends:       QuickCheck
+    cpp-options:         -DQUICKCHECK
 
   Exposed-Modules:     Math.Combinat
                        Math.Combinat.Classes
@@ -76,14 +69,12 @@ Library
 
   Default-Extensions:  CPP, BangPatterns
   Other-Extensions:    MultiParamTypeClasses, ScopedTypeVariables, 
-                       GeneralizedNewtypeDeriving, BangPatterns 
+                       GeneralizedNewtypeDeriving,
+                       DataKinds, KindSignatures
 
   Default-Language:    Haskell2010
 
   Hs-Source-Dirs:      .
 
-  if flag(withQuickCheck)
-    cpp-options:         -DQUICKCHECK
-
-  ghc-options:         -Wall -fwarn-tabs -fno-warn-unused-matches -fno-warn-name-shadowing -fno-warn-unused-imports
+  ghc-options:         -fwarn-tabs -fno-warn-unused-matches -fno-warn-name-shadowing -fno-warn-unused-imports
     

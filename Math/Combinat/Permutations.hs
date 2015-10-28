@@ -4,7 +4,7 @@
 -- See eg.:
 -- Donald E. Knuth: The Art of Computer Programming, vol 4, pre-fascicle 2B.
 --
--- WARNING: As of version 0.2.7.3, I changed the convention of how permutations
+-- WARNING: As of version 0.2.8.0, I changed the convention of how permutations
 -- are represented internally. Also now they act on the /right/ by default!
 --
 
@@ -125,7 +125,7 @@ import Test.QuickCheck
 -- > sigma(2) = p2 
 -- > ...
 --
--- (NOTE: this changed at version 0.2.7.3!)
+-- (NOTE: this changed at version 0.2.8.0!)
 --
 newtype Permutation = Permutation (UArray Int Int) deriving (Eq,Ord) -- ,Show,Read)
 
