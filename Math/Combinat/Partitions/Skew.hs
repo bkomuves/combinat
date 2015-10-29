@@ -3,6 +3,14 @@
 --
 -- Skew partitions are the difference of two integer partitions, denoted by @lambda/mu@.
 --
+-- For example
+--
+-- > mkSkewPartition (Partition [9,7,3,2,2,1] , Partition [5,3,2,1])
+--
+-- creates the skew partition @(9,7,3,2,2,1) / (5,3,2,1)@, which looks like
+--
+-- <<svg/skew3.svg>>
+--
 
 {-# LANGUAGE CPP, BangPatterns #-}
 module Math.Combinat.Partitions.Skew where
