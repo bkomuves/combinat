@@ -46,6 +46,7 @@ Library
                        Math.Combinat.Groups.Thompson.F
                        Math.Combinat.Groups.Free
                        Math.Combinat.Groups.Braid
+                       Math.Combinat.Groups.Braid.NF
                        Math.Combinat.Partitions
                        Math.Combinat.Partitions.Integer
                        Math.Combinat.Partitions.Skew

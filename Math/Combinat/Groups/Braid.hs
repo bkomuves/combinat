@@ -300,6 +300,14 @@ isPermutationBraid braid = isPositiveBraidWord braid && crosses where
   lkMatrix    = linkingMatrix   braid
   n           = numberOfStrands braid
 
+-- | Untyped version of 'isPermutationBraid' for positive words.
+_isPermutationBraid :: Int -> [Int] -> Bool
+_isPermutationBraid n gens = crosses where
+  crosses     = and [ check i j | i<-[1..n-1], j<-[i+1..n] ] 
+  check i j   = zeroOrOne (lkMatrix ! (i,j)) 
+  zeroOrOne a = (a==1 || a==0)
+  lkMatrix    = _linkingMatrix n $ map Sigma gens
+
 -- | For any permutation this functions returns a /permutation braid/ realizing
 -- that permutation. Note that this is not unique, so we make an arbitrary choice
 -- (except for the permutation @[n,n-1..1]@ reversing the order, in which case 
@@ -371,8 +379,11 @@ _permutationBraid' perm@(Permutation arr) = runST action where
 -- > linkingMatrix braid ! (i,j) == strandLinking braid i j 
 --
 linkingMatrix :: KnownNat n => Braid n -> UArray (Int,Int) Int
-linkingMatrix braid@(Braid gens) = runSTUArray action where
-  n  = numberOfStrands braid
+linkingMatrix braid@(Braid gens) = _linkingMatrix (numberOfStrands braid) gens where
+
+-- | Untyped version of 'linkingMatrix'
+_linkingMatrix :: Int -> [BrGen] -> UArray (Int,Int) Int
+_linkingMatrix n gens = runSTUArray action where
 
   action :: forall s. ST s (STUArray s (Int,Int) Int)
   action = do
@@ -400,6 +411,7 @@ linkingMatrix braid@(Braid gens) = runSTUArray action where
       doSwap k 
         
     return mat
+    
     
 -- | The linking number between two strands numbered @i@ and @j@ 
 -- (numbered such on the /left/ side).
@@ -545,6 +557,67 @@ randomPositiveBraidWord len gen = (braid, gen') where
   braid = Braid (map Sigma js)
   n     = numberOfStrands braid
   (gen',js) = mapAccumL (\(!g) _ -> swap (randomR (1,n-1) g)) gen [1..len]
+
+--------------------------------------------------------------------------------
+
+-- | Given a braid word, we perturb it randomly @m@ times using the braid relations,
+-- so that the resulting new braid word is equivalent to the original.
+--
+-- Useful for testing.
+--
+randomPerturbBraidWord :: forall n g. (RandomGen g, KnownNat n) => Int -> Braid n -> g -> (Braid n, g)
+randomPerturbBraidWord m braid@(Braid xs) g = (Braid word' , g') where
+
+  (word',g') = go m (length xs) xs g 
+
+  n = numberOfStrands braid
+
+  -- | A random pair cancelling each other
+  rndE :: g -> ([BrGen],g)
+  rndE g = (e1,g'') where
+    (i , g'  ) = randomR (1,n-1) g 
+    (b , g'' ) = random          g'
+    e0 = [SigmaInv i, Sigma i] 
+    e1 = if b then reverse e0 else e0
+
+  brg    s i = case s of { Plus -> Sigma    i ; Minus -> SigmaInv i }
+  brginv s i = case s of { Plus -> SigmaInv i ; Minus -> Sigma    i }
+
+  go :: Int -> Int -> [BrGen] -> g -> ([BrGen], g)
+  go !cnt !len !word !g 
+
+    | cnt <= 0   = (word, g)
+
+    | len <  2   = let w' = if b1 then (e++word) else (word++e)        -- if it is short, we just add a trivial pair somewhere
+                   in  continue g4 (len+2) w'
+
+    | abs (i-j) >= 2            = continue g4  len    (as ++ v:u:bs)         -- they commute, so we just commute them
+
+    | i == j && s/=t            = continue g4 (len-2) (as ++ bs    )         -- they are inverse of each other, so we kill them
+
+    | abs (i-j) == 1 && s == t  = let mid = if b1 
+                                        then [ brg s j , brg s i , brg s j , brginv s i ]   -- insert pair and
+                                        else [ brginv s j , brg s i , brg s j , brg s i ]   -- apply ternary relation 
+                                  in  continue g4 (len+2) (as ++ mid ++ bs)
+
+    | otherwise                 = let mid = if b1
+                                        then (u : e ++ [v])
+                                        else if b2
+                                          then [u,v] ++ e
+                                          else e ++ [u,v]
+                                  in continue g4 (len+2) (as++(u:e)++[v]++bs)          -- otherwise we just insert an trivial pair         
+
+    where
+
+      (pos         , g1 ) = randomR (0,len-2) g
+      (b1 :: Bool  , g2 ) = random g1
+      (b2 :: Bool  , g3 ) = random g2
+      (e           , g4 ) = rndE   g3
+      (as,u:v:bs) = splitAt pos word
+      (s,i) = brGenSignIdx u
+      (t,j) = brGenSignIdx v
+  
+      continue g' len' word' = go (cnt-1) len' word' g'
 
 --------------------------------------------------------------------------------
 

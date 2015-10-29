@@ -30,6 +30,7 @@ module Math.Combinat.Permutations
   , numberOfCycles
     -- * Queries
   , isIdentityPermutation
+  , isReversePermutation
   , isEvenPermutation
   , isOddPermutation
   , signOfPermutation  
@@ -41,9 +42,9 @@ module Math.Combinat.Permutations
   , transpositions
   , adjacentTransposition
   , adjacentTranspositions
-  , reversePermutation
   , cycleLeft
   , cycleRight
+  , reversePermutation
     -- * Permutation groups
   , identity
   , inverse
@@ -390,9 +391,13 @@ isCyclicPermutation perm =
 --------------------------------------------------------------------------------
 -- * Some concrete permutations
 
--- | The permutation @[n,n-1,n-2..2,1]@. Note that it is the inverse of itself.
+-- | The permutation @[n,n-1,n-2,...,2,1]@. Note that it is the inverse of itself.
 reversePermutation :: Int -> Permutation
 reversePermutation n = Permutation $ listArray (1,n) [n,n-1..1]
+
+-- | Checks whether the permutation is the reverse permutation @[n,n-1,n-2,...,2,1].
+isReversePermutation :: Permutation -> Bool
+isReversePermutation (Permutation arr) = elems arr == [n,n-1..1] where (1,n) = bounds arr
 
 -- | A transposition (swapping two elements). 
 --
