@@ -38,15 +38,18 @@ module Math.Combinat.Permutations
   , isCyclicPermutation
     -- * Some concrete permutations
   , transposition
+  , transpositions
   , adjacentTransposition
-  , swapPermutation
+  , adjacentTranspositions
   , reversePermutation
   , cycleLeft
   , cycleRight
     -- * Permutation groups
-  , multiply
-  , inverse
   , identity
+  , inverse
+  , multiply
+  , multiplyMany 
+  , multiplyMany'
     -- * Action of the permutation group
   , permute 
   , permuteList
@@ -391,26 +394,65 @@ isCyclicPermutation perm =
 reversePermutation :: Int -> Permutation
 reversePermutation n = Permutation $ listArray (1,n) [n,n-1..1]
 
--- | A transposition (swapping two elements). Synonym for 'swapPermutation'.
+-- | A transposition (swapping two elements). 
+--
+-- @transposition n (i,j)@ is the permutation of size @n@ which swaps @i@\'th and @j@'th elements.
+--
 transposition :: Int -> (Int,Int) -> Permutation
-transposition = swapPermutation
-
--- | @adjacentTransposition n k@ swaps the elements @k@ and @(k+1)@.
-adjacentTransposition :: Int -> Int -> Permutation
-adjacentTransposition n k 
-  | k>0 && k<n  = swapPermutation n (k,k+1)
-  | otherwise   = error "adjacentTransposition: index out of range"
-
--- | @swapPermutation n (i,j)@ is the permutation of size @n@ which swaps @i@\'th and @j@'th elements.
-swapPermutation :: Int -> (Int,Int) -> Permutation
-swapPermutation n (i,j) = 
+transposition n (i,j) = 
   if i>=1 && j>=1 && i<=n && j<=n 
     then Permutation $ listArray (1,n) [ f k | k<-[1..n] ]
-    else error "swapPerm: index out of range"
+    else error "transposition: index out of range"
   where
     f k | k == i    = j
         | k == j    = i
         | otherwise = k
+
+-- | Product of transpositions.
+--
+-- > transpositions n list == multiplyMany [ transposition n pair | pair <- list ]
+--
+transpositions :: Int -> [(Int,Int)] -> Permutation
+transpositions n list = Permutation (runSTUArray action) where
+
+  action :: ST s (STUArray s Int Int)
+  action = do
+    arr <- newArray_ (1,n) 
+    forM_ [1..n] $ \i -> writeArray arr i i    
+    let doSwap (i,j) = do
+          u <- readArray arr i
+          v <- readArray arr j
+          writeArray arr i v
+          writeArray arr j u          
+    mapM_ doSwap list
+    return arr
+
+-- | @adjacentTransposition n k@ swaps the elements @k@ and @(k+1)@.
+adjacentTransposition :: Int -> Int -> Permutation
+adjacentTransposition n k 
+  | k>0 && k<n  = transposition n (k,k+1)
+  | otherwise   = error "adjacentTransposition: index out of range"
+
+-- | Product of adjacent transpositions.
+--
+-- > adjacentTranspositions n list == multiplyMany [ adjacentTransposition n idx | idx <- list ]
+--
+adjacentTranspositions :: Int -> [Int] -> Permutation
+adjacentTranspositions n list = Permutation (runSTUArray action) where
+
+  action :: ST s (STUArray s Int Int)
+  action = do
+    arr <- newArray_ (1,n) 
+    forM_ [1..n] $ \i -> writeArray arr i i    
+    let doSwap i
+          | i<0 || i>=n  = error "adjacentTranspositions: index out of range"
+          | otherwise    = do
+              u <- readArray arr  i
+              v <- readArray arr (i+1)
+              writeArray arr  i    v
+              writeArray arr (i+1) u          
+    mapM_ doSwap list
+    return arr
 
 -- | The permutation which cycles a list left by one step:
 -- 
@@ -456,7 +498,7 @@ multiply pi1@(Permutation perm1) pi2@(Permutation perm2) =
     result = permute pi2 perm1
   
 infixr 7 `multiply`  
-    
+
 -- | The inverse permutation.
 inverse :: Permutation -> Permutation    
 inverse (Permutation perm1) = Permutation result
@@ -467,6 +509,19 @@ inverse (Permutation perm1) = Permutation result
 -- | The identity (or trivial) permutation.
 identity :: Int -> Permutation 
 identity n = Permutation $ listArray (1,n) [1..n]
+
+-- | Multiply together a /non-empty/ list of permutations (the reason for requiring the list to
+-- be non-empty is that we don\'t know the size of the result). See also 'multiplyMany''.
+multiplyMany :: [Permutation] -> Permutation 
+multiplyMany [] = error "multiplyMany: empty list, we don't know size of the result"
+multiplyMany ps = foldl1' multiply ps    
+
+-- | Multiply together a (possibly empty) list of permutations, all of which has size @n@
+multiplyMany' :: Int -> [Permutation] -> Permutation 
+multiplyMany' n []       = identity n
+multiplyMany' n ps@(p:_) = if n == permutationSize p 
+  then foldl1' multiply ps    
+  else error "multiplyMany': incompatible permutation size(s)"
 
 --------------------------------------------------------------------------------
 -- * Action of the permutation group
