@@ -228,18 +228,18 @@ prop_dual_dual st = (dualSkewTableau (dualSkewTableau st) == st)
 
 prop_rowWord :: SkewTableau Int -> Bool
 prop_rowWord st = (fillSkewPartitionWithRowWord shape content == st) where
-  shape   = skewShape st
+  shape   = skewTableauShape st
   content = skewTableauRowWord st
 
 prop_columnWord :: SkewTableau Int -> Bool
 prop_columnWord st = (fillSkewPartitionWithColumnWord shape content == st) where
-  shape   = skewShape st
+  shape   = skewTableauShape st
   content = skewTableauColumnWord st
 
 prop_fill_shape :: SkewPartition -> Bool
 prop_fill_shape shape = (shape == shape') where
   tableau = fillSkewPartitionWithColumnWord shape [1..]
-  shape'  = skewShape tableau
+  shape'  = skewTableauShape tableau
 
 prop_semistandard :: SkewPartition -> Bool
 prop_semistandard shape = and 
