@@ -1,10 +1,10 @@
 Name:                combinat
 Version:             0.2.8.0
 Synopsis:            Generate and manipulate various combinatorial objects.
-Description:         A collection of functions to generate, count and manipulate
-                     all kinds of combinatorial objects like partitions, 
-                     compositions, trees, permutations, braids, Young tableaux, 
-                     and so on.
+Description:         A collection of functions to generate, count, manipulate
+                     and visualize all kinds of combinatorial objects like 
+                     partitions, compositions, trees, permutations, braids, 
+                     Young tableaux, and so on.
 License:             BSD3
 License-file:        LICENSE
 Author:              Balazs Komuves
@@ -13,7 +13,7 @@ Maintainer:          bkomuves (plus) hackage (at) gmail (dot) com
 Homepage:            http://code.haskell.org/~bkomuves/
 Stability:           Experimental
 Category:            Math
-Tested-With:         GHC == 7.8.3
+Tested-With:         GHC == 7.10.2
 Cabal-Version:       >= 1.18
 Build-Type:          Simple
 

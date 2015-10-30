@@ -1,7 +1,8 @@
 
--- | A collection of functions to generate and manipulate
--- combinatorial objects like partitions, compositions, 
--- permutations, Young tableaux, various trees, etc etc.
+-- | A collection of functions to generate, manipulate,
+-- visualize and count combinatorial objects like partitions, 
+-- compositions, permutations, braids, Young tableaux, 
+-- lattice paths, various tree structures, etc etc.
 --
 -- 
 -- See also the @combinat-diagrams@ library for generating
@@ -15,14 +16,16 @@
 -- 
 --  (2) manipulate these structures;
 --
---  (3) the generation should be efficient; 
+--  (3) visualize these structures;
 --
---  (4) to be able to enumerate the structures 
+--  (4) the generation should be efficient; 
+--
+--  (5) to be able to enumerate the structures 
 --      with constant memory usage;
 --
---  (5) and to be able to randomly sample from them.
---
---  (6) finally, be a repository of algorithms
+--  (6) to be able to randomly sample from them;
+--   
+--  (7) finally, to be a repository of algorithms.
 --
 --
 -- The short-term goal is simply to generate 
@@ -42,7 +45,7 @@
 --  * \"count\" prefix: counting functions.
 --
 --
--- This module re-exports the most common modules.
+-- This module re-exports the most commonly used modules.
 --
 
 module Math.Combinat 
