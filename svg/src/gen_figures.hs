@@ -11,6 +11,7 @@ import Math.Combinat.Partitions.Plane
 import Math.Combinat.Partitions.NonCrossing
 import Math.Combinat.Partitions.Skew
 import Math.Combinat.Tableaux
+import Math.Combinat.Tableaux.Skew
 import Math.Combinat.LatticePaths
 import Math.Combinat.Trees.Binary
 
@@ -19,6 +20,7 @@ import Math.Combinat.Diagrams.Partitions.Plane
 import Math.Combinat.Diagrams.Partitions.NonCrossing
 import Math.Combinat.Diagrams.Partitions.Skew
 import Math.Combinat.Diagrams.Tableaux
+import Math.Combinat.Diagrams.Tableaux.Skew
 import Math.Combinat.Diagrams.LatticePaths
 import Math.Combinat.Diagrams.Trees.Binary
 
@@ -72,5 +74,8 @@ main = do
   -- export "skew.svg"  (mkWidth 256) $ margin 0.05 $ drawSkewFerrersDiagram  skew
   -- export "skew2.svg" (mkWidth 256) $ margin 0.05 $ drawSkewFerrersDiagram' EnglishNotation green True (True,True) skew
   export "skew3.svg" (mkWidth 256) $ margin 0.05 $ drawSkewPartitionBoxes  EnglishNotation skew
+
+  let skewtableau  = (semiStandardSkewTableaux 7 skew) !! 123
+  export "skew_tableau.svg" (mkWidth 320) $ margin 0.05 $ drawSkewTableau' EnglishNotation blue True skewtableau
 
 --------------------------------------------------------------------------------

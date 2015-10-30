@@ -1,5 +1,10 @@
 
 -- | Skew tableaux are skew partitions filled with numbers.
+--
+-- For example:
+--
+-- <<svg/skew_tableau.svg>>
+--
 
 {-# LANGUAGE CPP, BangPatterns, ScopedTypeVariables, MultiParamTypeClasses #-}
 
