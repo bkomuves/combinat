@@ -68,6 +68,7 @@ Library
                        Math.Combinat.LatticePaths
                        Math.Combinat.ASCII
                        Math.Combinat.Helper
+                       Math.Combinat.TypeLevel
 
   Default-Extensions:  CPP, BangPatterns
   Other-Extensions:    MultiParamTypeClasses, ScopedTypeVariables, 

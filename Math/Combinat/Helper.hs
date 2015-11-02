@@ -29,24 +29,6 @@ debug :: Show a => a -> b -> b
 debug x y = trace ("-- " ++ show x ++ "\n") y
 
 --------------------------------------------------------------------------------
--- * proxy
-
-proxyUndef :: Proxy a -> a
-proxyUndef _ = error "proxyUndef"
-
-proxyOf :: a -> Proxy a
-proxyOf _ = Proxy
-
-proxyOf1 :: f a -> Proxy a
-proxyOf1 _ = Proxy
-
-proxyOf2 :: g (f a) -> Proxy a
-proxyOf2 _ = Proxy
-
-asProxyTypeOf1 :: f a -> Proxy a -> f a 
-asProxyTypeOf1 y _ = y
-
---------------------------------------------------------------------------------
 -- * pairs
 
 swap :: (a,b) -> (b,a)
