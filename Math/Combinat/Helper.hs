@@ -1,12 +1,14 @@
 
 -- | Miscellaneous helper functions
 
-{-# LANGUAGE BangPatterns, PolyKinds #-}
+{-# LANGUAGE BangPatterns, PolyKinds, GeneralizedNewtypeDeriving #-}
 module Math.Combinat.Helper where
 
 --------------------------------------------------------------------------------
 
 import Control.Monad
+import Control.Applicative ( Applicative(..) )    -- required before AMP (before GHC 7.10)
+import Data.Functor.Identity
 
 import Data.List
 import Data.Ord
@@ -16,6 +18,9 @@ import Data.Set (Set) ; import qualified Data.Set as Set
 import Data.Map (Map) ; import qualified Data.Map as Map
 
 import Debug.Trace
+
+import System.Random
+import Control.Monad.Trans.State
 
 --------------------------------------------------------------------------------
 -- * debugging
@@ -254,4 +259,40 @@ longZipWithZero = longZipWith 0 0
 -}
 
 --------------------------------------------------------------------------------
-  
+-- * random
+
+-- | A simple random monad to make life suck less
+type Rand g = RandT g Identity
+
+runRand :: Rand g a -> g -> (a,g)
+runRand action g = runIdentity (runRandT action g)
+
+flipRunRand :: Rand s a -> s -> (s,a)
+flipRunRand action g = runIdentity (flipRunRandT action g)
+
+
+-- | The Rand monad transformer
+newtype RandT g m a = RandT (StateT g m a) deriving (Functor,Applicative,Monad)
+
+runRandT :: RandT g m a -> g -> m (a,g)
+runRandT (RandT stuff) = runStateT stuff
+
+-- | This may be occasionally useful
+flipRunRandT :: Monad m => RandT s m a -> s -> m (s,a)
+flipRunRandT action ini = liftM swap $ runRandT action ini
+
+
+-- | Puts a standard-conforming random function into the monad
+rand :: (g -> (a,g)) -> Rand g a
+rand user = RandT (state user)
+
+randRoll :: (RandomGen g, Random a) => Rand g a
+randRoll = rand random
+
+randChoose :: (RandomGen g, Random a) => (a,a) -> Rand g a
+randChoose uv = rand (randomR uv)
+
+randProxy1 :: Rand g (f n) -> Proxy n -> Rand g (f n)
+randProxy1 action _ = action
+
+--------------------------------------------------------------------------------
