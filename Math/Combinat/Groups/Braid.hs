@@ -17,7 +17,8 @@
       CPP, BangPatterns, 
       ScopedTypeVariables, ExistentialQuantification,
       DataKinds, KindSignatures, Rank2Types,
-      TypeOperators, TypeFamilies #-}
+      TypeOperators, TypeFamilies,
+      StandaloneDeriving #-}
 
 module Math.Combinat.Groups.Braid where
 
@@ -44,24 +45,26 @@ import System.Random
 import Math.Combinat.ASCII
 import Math.Combinat.Sign
 import Math.Combinat.Helper
+import Math.Combinat.TypeLevel
 
 import Math.Combinat.Permutations ( Permutation(..) )
 import qualified Math.Combinat.Permutations as P
 
 #ifdef QUICKCHECK
 import Test.QuickCheck
+import Test.QuickCheck.Gen
 #endif
 
 --------------------------------------------------------------------------------
 -- * Artin generators
 
 -- | A standard Artin generator of a braid: @Sigma i@ represents twisting 
--- the neighbour strands @i@ and @(i+1)@, such that @#i@ goes /under/ @#(i+1)@
+-- the neighbour strands @i@ and @(i+1)@, such that strand @i@ goes /under/ strand @(i+1)@.
 --
 -- Note: The strands are numbered @1..n@.
 data BrGen
-  = Sigma    !Int
-  | SigmaInv !Int
+  = Sigma    !Int         -- ^ @i@ goes under @(i+1)@
+  | SigmaInv !Int         -- ^ @i@ goes above @(i+1)@
   deriving (Eq,Ord,Show)
  
 -- | The strand (more precisely, the first of the two strands) the generator twistes
@@ -117,6 +120,24 @@ someBraid n polyBraid =
 
 withSomeBraid :: SomeBraid -> (forall n. KnownNat n => Braid n -> a) -> a
 withSomeBraid sbraid f = case sbraid of SomeBraid braid -> f braid
+
+mkBraid :: (forall n. KnownNat n => Braid n -> a) -> Int -> [BrGen] -> a
+mkBraid f n w = y where
+  sb = someBraid n (Braid w)
+  y  = withSomeBraid sb f
+
+withBraid 
+  :: Int
+  -> (forall (n :: Nat). KnownNat n => Braid n)
+  -> (forall (n :: Nat). KnownNat n => Braid n -> a) 
+  -> a
+withBraid n polyBraid f = 
+  case snat of    
+    SomeNat pxy -> f (asProxyTypeOf1 polyBraid pxy)
+  where
+    snat = case someNatVal (fromIntegral n :: Integer) of
+      Just sn -> sn
+      Nothing -> error "withBraid: input is not a natural number"
 
 --------------------------------------------------------------------------------
 
@@ -201,7 +222,7 @@ _halfTwist n = gens where
 theGarsideBraid :: KnownNat n => Braid n
 theGarsideBraid = halfTwist 
 
--- | The inner automorphism defined by @X -> Delta^-1 X Delta@, 
+-- | The inner automorphism defined by @tau(X) = Delta^-1 X Delta@, 
 -- where @Delta@ is the positive half-twist.
 -- 
 -- This sends each generator @sigma_j@ to @sigma_(n-j)@.
@@ -211,6 +232,13 @@ tau braid@(Braid gens) = Braid (map f gens) where
   n = numberOfStrands braid
   f (Sigma    i) = Sigma    (n-i)
   f (SigmaInv i) = SigmaInv (n-i)
+
+
+-- | The involution @tau@ on permutations (permutation braids)
+--
+tauPerm :: Permutation -> Permutation
+tauPerm (Permutation arr) = Permutation $ listArray (1,n) [ (n+1) - arr!(n-i) | i<-[0..n-1] ] where
+  (1,n) = bounds arr
 
 --------------------------------------------------------------------------------
 -- * Group operations
@@ -538,25 +566,17 @@ verticalBraidASCII braid@(Braid gens) = final where
 
 -- | Random braid word of the given length
 randomBraidWord :: (RandomGen g, KnownNat n) => Int -> g -> (Braid n, g)
-randomBraidWord len gen = (braid, gen') where
-  braid = Braid (map sig bjs)
-  n     = numberOfStrands braid
-  (gen',bjs) = mapAccumL worker gen [1..len]
-
-  worker !g _ = (g'',(b,j)) where
-    (j, g' ) = randomR (1,n-1) g
-    (b, g'') = random          g'
-
-  sig :: (Bool,Int) -> BrGen
-  sig (True ,j) = Sigma    j
-  sig (False,j) = SigmaInv j
+randomBraidWord len g = (braid, g') where
+  braid  = Braid w
+  n      = numberOfStrands braid
+  (w,g') = _randomBraidWord n len g
 
 -- | Random /positive/ braid word of the given length
 randomPositiveBraidWord :: (RandomGen g, KnownNat n) => Int -> g -> (Braid n, g)
-randomPositiveBraidWord len gen = (braid, gen') where
-  braid = Braid (map Sigma js)
-  n     = numberOfStrands braid
-  (gen',js) = mapAccumL (\(!g) _ -> swap (randomR (1,n-1) g)) gen [1..len]
+randomPositiveBraidWord len g = (braid, g') where
+  braid  = Braid w
+  n      = numberOfStrands braid
+  (w,g') = _randomPositiveBraidWord n len g
 
 --------------------------------------------------------------------------------
 
@@ -621,12 +641,160 @@ randomPerturbBraidWord m braid@(Braid xs) g = (Braid word' , g') where
 
 --------------------------------------------------------------------------------
 
+-- | This version of 'randomBraidWord' may be convenient to avoid the type level stuff
+withRandomBraidWord 
+  :: RandomGen g 
+  => (forall n. KnownNat n => Braid n -> a) 
+  -> Int                -- ^ number of strands
+  -> Int                -- ^ length of the random word
+  -> g -> (a, g)
+withRandomBraidWord f n len = runRand $ do
+  withSelectedM f (rand $ randomBraidWord len) n
+
+-- | This version of 'randomPositiveBraidWord' may be convenient to avoid the type level stuff
+withRandomPositiveBraidWord 
+  :: RandomGen g 
+  => (forall n. KnownNat n => Braid n -> a) 
+  -> Int                -- ^ number of strands
+  -> Int                -- ^ length of the random word
+  -> g -> (a, g)
+withRandomPositiveBraidWord f n len = runRand $ do
+  withSelectedM f (rand $ randomPositiveBraidWord len) n
+
+-- | Untyped version of 'randomBraidWord'
+_randomBraidWord 
+  :: (RandomGen g) 
+  => Int                -- ^ number of strands
+  -> Int                -- ^ length of the random word
+  -> g -> ([BrGen], g)
+_randomBraidWord n len = runRand $ replicateM len $ do
+  k <- randChoose (1,n-1)
+  s <- randRoll
+  return $ case s of
+    Plus  -> Sigma k
+    Minus -> SigmaInv k
+
+-- | Untyped version of 'randomPositiveBraidWord'
+_randomPositiveBraidWord 
+  :: (RandomGen g) 
+  => Int             -- ^ number of strands
+  -> Int             -- ^ length of the random word
+  -> g -> ([BrGen], g)
+_randomPositiveBraidWord n len = runRand $ replicateM len $ do
+  liftM Sigma $ randChoose (1,n-1)
+
+--------------------------------------------------------------------------------
+
 #ifdef QUICKCHECK
 
--- | A permutation braid made convenient to use (type-level hackery)
-data PermBraid = forall n. KnownNat n => PermBraid Permutation (Braid n)
+-- * QuickCheck tests
 
-mkPermBraid :: Permutation -> PermBraid
+maxBraidWordLen :: Int
+maxBraidWordLen = 1000
+
+maxStrands :: Int
+maxStrands = 25      -- normal forms break down for large ones
+
+shrinkBraid :: KnownNat n => Braid n -> [Braid n]
+shrinkBraid (Braid gens) = map Braid list where
+  len  = length gens
+  list = [ take i gens ++ drop (i+1) gens | i<-[0..len-1] ]
+
+-- someRndBraid :: Int -> (forall (n :: Nat). KnownNat n => g -> (Braid n, g)) -> g -> (SomeBraid, g)
+-- someRndBraid n f = \g -> let (x,g') = f g in (someBraid n x, g')
+
+-- | Generates a random element.
+choose_ :: Random a => Gen a
+choose_ = MkGen (\r _ -> let (x,_) = random r in x)
+
+-- | Generates two random elements 
+choosePair_ :: Random a => Gen (a,a)
+choosePair_ = do
+  x <- choose_
+  y <- choose_
+  return (x,y)
+
+-- | equality as /braid words/
+(=:=) :: Braid n -> Braid n -> Bool
+(=:=) (Braid gens1) (Braid gens2) = (gens1 == gens2)
+
+data UnreducedBraid   = forall n. KnownNat n => Unreduced (Braid n)              
+data ReducedBraid     = forall n. KnownNat n => Reduced   (Braid n)              
+data PositiveBraid    = forall n. KnownNat n => PositiveB (Braid n)              
+data PerturbedBraid   = forall n. KnownNat n => Perturbed (Braid n)   (Braid n)  
+data PermutationBraid = forall n. KnownNat n => PermBraid Permutation (Braid n)  
+data TwoBraids        = forall n. KnownNat n => TwoBraids (Braid n)   (Braid n)  
+
+deriving instance Show UnreducedBraid
+deriving instance Show ReducedBraid
+deriving instance Show PositiveBraid
+deriving instance Show PerturbedBraid
+deriving instance Show PermutationBraid
+deriving instance Show TwoBraids
+
+instance KnownNat n => Random (Braid n) where
+  randomR _ = random
+  random g0 = (b, g2) where
+    n = numberOfStrands b
+    (l,g1) = randomR (0,maxBraidWordLen) g0
+    (b,g2) = randomBraidWord l g1
+
+instance Random UnreducedBraid where
+  randomR _ = random
+  random = runRand $ do
+    n <- randChoose (2,maxStrands)
+    l <- randChoose (0,maxBraidWordLen)
+    withSelectedM Unreduced (rand $ randomBraidWord l) n
+
+instance Random PositiveBraid where
+  randomR _ = random
+  random  = runRand $ do
+    n <- randChoose (2,maxStrands)
+    l <- randChoose (0,maxBraidWordLen)
+    withSelectedM PositiveB (rand $ randomPositiveBraidWord l) n
+
+instance Random PerturbedBraid where
+  randomR _ = random
+  random  = runRand $ do
+    Unreduced b <- rand random
+    k <- randChoose (20,1000)
+    c <- rand $ randomPerturbBraidWord k b 
+    return (Perturbed b c)
+
+instance KnownNat n => Arbitrary (Braid n) where
+  arbitrary = choose_
+  shrink    = shrinkBraid
+
+instance Arbitrary UnreducedBraid where
+  arbitrary = choose_
+  shrink (Unreduced b) = map Unreduced (shrinkBraid b)
+
+instance Arbitrary PositiveBraid where
+  arbitrary = choose_
+  shrink (PositiveB b) = map PositiveB (shrinkBraid b)
+
+instance Arbitrary ReducedBraid where
+  arbitrary = do
+    Unreduced braid <- arbitrary
+    return $ Reduced $ freeReduceBraidWord braid
+
+instance Arbitrary PerturbedBraid where
+  arbitrary = choose_
+  shrink _  = []
+
+instance Arbitrary TwoBraids where
+  shrink _  = []
+  arbitrary = do
+    n <- choose (2::Int, maxStrands)
+    let snat = case someNatVal (fromIntegral n :: Integer) of
+          Just sn -> sn
+          Nothing -> error "TwoBraids/arbitrary: shouldn't happen"
+    case snat of 
+      SomeNat pxy -> do
+        (braid1,braid2) <- choosePair_
+        return $ TwoBraids (asProxyTypeOf1 braid1 pxy) (asProxyTypeOf1 braid2 pxy)
+
+mkPermBraid :: Permutation -> PermutationBraid
 mkPermBraid perm = 
   case snat of    
     SomeNat pxy -> PermBraid perm (asProxyTypeOf1 (permutationBraid perm) pxy)
@@ -634,17 +802,63 @@ mkPermBraid perm =
     n = P.permutationSize perm
     Just snat = someNatVal (fromIntegral n :: Integer)
 
-prop_permBraid_perm :: PermBraid -> Bool
+instance Arbitrary PermutationBraid where
+  arbitrary = do
+    perm <- arbitrary
+    return $ mkPermBraid perm
+  shrink (PermBraid x b) = [ PermBraid (braidPermutation s) s | s <- shrinkBraid b ]
+
+----------------------------------------
+
+checkAll :: IO ()
+checkAll = do
+  let f :: Testable a => a -> IO ()
+      f = quickCheck
+
+  f prop_link_reduce 
+  f prop_link_perturb
+
+  f prop_tau_square
+  f prop_permTau_1
+
+  f prop_permBraid_perm
+  f prop_permBraid_valid
+  f prop_braidPerm_comp
+
+  f prop_positive
+  f prop_linking
+
+prop_link_reduce :: UnreducedBraid -> Bool
+prop_link_reduce (Unreduced braid) = linkingMatrix braid == linkingMatrix braid' where
+  braid' = freeReduceBraidWord braid
+
+prop_link_perturb :: PerturbedBraid -> Bool
+prop_link_perturb (Perturbed braid1 braid2) = linkingMatrix braid1 == linkingMatrix braid2 
+
+prop_tau_square :: ReducedBraid -> Bool
+prop_tau_square (Reduced braid) = braidWord (tau (tau braid)) == braidWord braid
+
+prop_permTau_1 :: PermutationBraid -> Bool
+prop_permTau_1 (PermBraid perm braid) = tauPerm perm == braidPermutation (tau braid)
+
+prop_permBraid_perm :: PermutationBraid -> Bool
 prop_permBraid_perm (PermBraid perm braid) = (braidPermutation braid == perm)
 
-prop_permBraid_valid :: PermBraid -> Bool
+prop_permBraid_valid :: PermutationBraid -> Bool
 prop_permBraid_valid (PermBraid perm braid) = isPermutationBraid braid
 
-prop_braidPerm_comp :: KnownNat n => Braid n -> Braid n -> Bool
-prop_braidPerm_comp b1 b2 = (p == q) where
+prop_braidPerm_comp :: TwoBraids -> Bool
+prop_braidPerm_comp (TwoBraids b1 b2) = (p == q) where
   p = braidPermutation (compose b1 b2) 
   q = braidPermutation b1 `P.multiply` braidPermutation b2
 
+prop_positive :: PositiveBraid -> Bool
+prop_positive (PositiveB braid) = all (>=0) $ elems $ linkingMatrix braid
+
+prop_linking :: UnreducedBraid -> Bool
+prop_linking (Unreduced braid) = (linkingMatrix braid == matrix) where
+  n = numberOfStrands braid
+  matrix = array ((1,1),(n,n)) [ ((i,j),strandLinking braid i j) | i<-[1..n], j<-[1..n] ]
 
 #endif
 
