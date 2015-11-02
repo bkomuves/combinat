@@ -7,11 +7,12 @@ module Math.Combinat.Sign where
 --------------------------------------------------------------------------------
 
 import Data.Monoid
+import System.Random
 
 --------------------------------------------------------------------------------
 
 data Sign
-  = Plus
+  = Plus                            -- hmm, this way @Plus < Minus@, not sure about that
   | Minus
   deriving (Eq,Ord,Show,Read)
 
@@ -19,6 +20,10 @@ instance Monoid Sign where
   mempty  = Plus
   mappend = mulSign
   mconcat = productOfSigns
+
+instance Random Sign where
+  random        g = let (b,g') = random g in (if b    then Plus else Minus, g')
+  randomR (u,v) g = let (y,g') = random g in (if u==v then u    else y    , g') 
 
 isPlus, isMinus :: Sign -> Bool
 isPlus  s = case s of { Plus  -> True ; _ -> False }
