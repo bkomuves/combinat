@@ -25,6 +25,7 @@ extra-source-files:  svg/*.svg
 Flag withQuickCheck
   Description: Compile with the QuickCheck tests. 
   default: False
+
   
 Library
 
@@ -81,3 +82,17 @@ Library
 
   ghc-options:         -fwarn-tabs -fno-warn-unused-matches -fno-warn-name-shadowing -fno-warn-unused-imports
     
+
+test-suite combinat-tests
+                      
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             TestSuite.hs
+
+  build-depends:       base >= 4 && < 5, array >= 0.5, containers, random, transformers,
+                       combinat,
+                       QuickCheck >= 2, test-framework, test-framework-quickcheck2
+
+  Default-Language:    Haskell2010
+  Default-Extensions:  CPP, BangPatterns
+

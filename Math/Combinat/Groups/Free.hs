@@ -493,7 +493,7 @@ countIdentityWordsZ3NoInv gens_ nn_
       
 {-
 
--- some basic testing. TODO: QuickCheck tests
+-- some basic testing. TODO: real tests
 
 import Math.Combinat.Helper
 import Math.Combinat.Groups.Free

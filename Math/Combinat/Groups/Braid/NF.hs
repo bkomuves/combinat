@@ -18,10 +18,17 @@
       DataKinds, KindSignatures, Rank2Types #-}
 
 module Math.Combinat.Groups.Braid.NF  
-  ( BraidNF (..)
+  ( -- * Normal form
+    BraidNF (..)
   , nfReprWord
   , braidNormalForm
   , braidNormalForm'
+  , braidNormalFormNaive'
+    -- * Starting and finishing sets
+  , permWordStartingSet
+  , permWordFinishingSet    
+  , permutationStartingSet
+  , permutationFinishingSet    
 #ifdef QUICKCHECK
   , checkAllNF
 #endif
@@ -100,7 +107,7 @@ braidNormalForm' braid@(Braid gens) = BraidNF (dexp+pexp) perms where
   factors = leftGreedyFactors n $ expandPosXWord n posxword
   (pexp,perms) = normalizePermFactors n $ map (_braidPermutation n) factors
 
--- | This uses the naive inverse replacement method
+-- | This one uses the naive inverse replacement method. Probably somewhat slower than 'braidNormalForm''.
 braidNormalFormNaive' :: KnownNat n => Braid n -> BraidNF n
 braidNormalFormNaive' braid@(Braid gens) = BraidNF (dexp+pexp) perms where
   n = numberOfStrands braid
