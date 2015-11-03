@@ -328,7 +328,7 @@ type Part = [Int]
 -- | Computes the expansion of the product of Schur polynomials @s[mu]*s[nu]@ using the
 -- Littlewood-Richardson rule. Note: this is symmetric in the two arguments.
 --
--- Based on the wikipedia article <https://en.wikipedia.org/wiki/Littlewood–Richardson_rule>
+-- Based on the wikipedia article <https://en.wikipedia.org/wiki/Littlewood-Richardson_rule>
 --
 -- > lrMult mu nu == Map.fromList list where
 -- >   lamw = weight nu + weight mu
