@@ -22,18 +22,10 @@ extra-doc-files:     svg/*.svg
 extra-source-files:  svg/*.svg
                      svg/src/gen_figures.hs                     
 
-Flag withQuickCheck
-  Description: Compile with the QuickCheck tests. 
-  default: False
-
-  
+ 
 Library
 
   Build-Depends:       base >= 4 && < 5, array >= 0.5, containers, random, transformers
-
-  if flag(withQuickCheck)
-    Build-Depends:       QuickCheck
-    cpp-options:         -DQUICKCHECK
 
   Exposed-Modules:     Math.Combinat
                        Math.Combinat.Classes

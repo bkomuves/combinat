@@ -29,9 +29,6 @@ module Math.Combinat.Groups.Braid.NF
   , permWordFinishingSet    
   , permutationStartingSet
   , permutationFinishingSet    
-#ifdef QUICKCHECK
-  , checkAllNF
-#endif
   )
   where
 
@@ -60,10 +57,6 @@ import Math.Combinat.Permutations ( Permutation(..) , isIdentityPermutation , is
 import qualified Math.Combinat.Permutations as P
 
 import Math.Combinat.Groups.Braid
-
-#ifdef QUICKCHECK
-import Test.QuickCheck
-#endif
 
 --------------------------------------------------------------------------------
 
@@ -539,61 +532,3 @@ _findTernaryBraidRelations = go 0 where
 
 --------------------------------------------------------------------------------
 
-#ifdef QUICKCHECK
-
--- * QuickCheck tests
-
-checkAllNF :: IO ()
-checkAllNF = do
-  let f :: Testable a => a -> IO ()
-      f = quickCheck
-
-  f prop_braidnf_naive
-  f prop_braidnf_reduce
-  f prop_braidnf_reprs
-  f prop_braidnf_perturb
-  f prop_braidnf_link
-  f prop_braidnf_pos
-
-  f prop_lemma_2_5
-  f prop_permTau_2
-
-prop_braidnf_naive :: UnreducedBraid -> Bool
-prop_braidnf_naive (Unreduced braid) = (braidNormalFormNaive' braid == braidNormalForm' braid)
-
-prop_braidnf_reduce :: UnreducedBraid -> Bool
-prop_braidnf_reduce (Unreduced braid) = (braidNormalForm' braid == braidNormalForm braid)
-
-prop_braidnf_reprs :: ReducedBraid -> Bool
-prop_braidnf_reprs (Reduced braid) = (nf == nf') where
-  nf  = braidNormalForm braid 
-  nf' = braidNormalForm braid'
-  braid' = nfReprWord nf
-
-prop_braidnf_perturb :: PerturbedBraid -> Bool
-prop_braidnf_perturb (Perturbed braid1 braid2) = (braidNormalForm braid1 == braidNormalForm braid2)
-
-prop_braidnf_link :: UnreducedBraid -> Bool
-prop_braidnf_link (Unreduced braid) = (linkingMatrix braid == linkingMatrix braid') where
-  nf  = braidNormalForm braid 
-  braid' = nfReprWord nf
-
-prop_braidnf_pos :: PositiveBraid -> Bool
-prop_braidnf_pos (PositiveB braid) = (_nfDeltaExp (braidNormalForm braid) >= 0)
- 
-prop_lemma_2_5 :: Permutation -> Bool
-prop_lemma_2_5 p = and [ check i | i<-[1..n-1] ] where
-  n = P.permutationSize p
-  w = _permutationBraid p
-  s = permWordStartingSet n w
-  check i = _isPermutationBraid n (i:w) == (not $ elem i s)
-
-prop_permTau_2 :: PermutationBraid -> Bool
-prop_permTau_2 (PermBraid perm braid) = (nf1 == nf2) where
-  nf1 = braidNormalForm $ permutationBraid (tauPerm perm)
-  nf2 = braidNormalForm $ tau braid
-
-
-#endif
-
---------------------------------------------------------------------------------
