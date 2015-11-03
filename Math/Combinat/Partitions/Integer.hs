@@ -23,6 +23,7 @@ module Math.Combinat.Partitions.Integer where
 --------------------------------------------------------------------------------
 
 import Data.List
+import Control.Monad ( liftM , replicateM )
 
 -- import Data.Map (Map)
 -- import qualified Data.Map as Map
@@ -211,15 +212,68 @@ _partitions d = go d d where
   go _  0  = [[]]
   go !h !n = [ a:as | a<-[1..min n h], as <- go a (n-a) ]
 
+-- | Number of partitions of @n@
 countPartitions :: Int -> Integer
-countPartitions d = countPartitions' (d,d) d
+countPartitions n = partitionCountList !! n
+
+-- | This uses 'countPartitions'', and thus is slow
+countPartitionsNaive :: Int -> Integer
+countPartitionsNaive d = countPartitions' (d,d) d
+
+--------------------------------------------------------------------------------
 
 -- | Infinite list of number of partitions of @0,1,2,...@
 --
--- > partitionCountList = map countPartitions [0..]
+-- This uses the infinite product formula the generating function of partitions, recursively
+-- expanding it; it is quite fast.
+--
+-- > partitionCountList == map countPartitions [0..]
 --
 partitionCountList :: [Integer]
-partitionCountList = map countPartitions [0..]
+partitionCountList = final where
+
+  final = go 1 (1:repeat 0) 
+
+  go !k (x:xs) = x : go (k+1) ys where
+    ys = zipWith (+) xs (take k final ++ ys)
+    -- explanation:
+    --   xs == drop k $ f (k-1)
+    --   ys == drop k $ f (k  )  
+
+{-
+
+Full explanation of 'partitionCountList':
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+let f k = productPSeries $ map (:[]) [1..k]
+
+f 0 = [1,0,0,0,0,0,0,0...]
+f 1 = [1,1,1,1,1,1,1,1...]
+f 2 = [1,1,2,2,3,3,4,4...]
+f 3 = [1,1,2,3,4,5,7,8...]
+
+observe: 
+
+* take (k+1) (f k) == take (k+1) partitionCountList
+* f (k+1) == zipWith (+) (f k) (replicate (k+1) 0 ++ f (k+1))
+
+now apply (drop (k+1)) to the second one : 
+
+* drop (k+1) (f (k+1)) == zipWith (+) (drop (k+1) $ f k) (f (k+1))
+* f (k+1) = take (k+1) final ++ drop (k+1) (f (k+1))
+
+-}
+
+--------------------------------------------------------------------------------
+
+-- | Naive infinite list of number of partitions of @0,1,2,...@
+--
+-- > partitionCountListNaive == map countPartitionsNaive [0..]
+--
+-- This is much slower than the power series expansion above.
+--
+partitionCountListNaive :: [Integer]
+partitionCountListNaive = map countPartitionsNaive [0..]
 
 -- | All integer partitions up to a given degree (that is, all integer partitions whose sum is less or equal to @d@)
 allPartitions :: Int -> [Partition]
@@ -282,8 +336,8 @@ countPartitions' (h,w) d = sum
 
 -- | Uniformly random partition of the given weight. 
 --
--- NOTE: This algorithm is effective for small @n@-s (say @n<50@),
--- and the first time it is executed may be slow (as it needs to build the table 'partitionCountList' first)
+-- NOTE: This algorithm is effective for small @n@-s (say @n@ up to a few hundred \/ one thousand it should work nicely),
+-- and the first time it is executed may be slower (as it needs to build the table 'partitionCountList' first)
 --
 -- Algorithm of Nijenhuis and Wilf (1975); see
 --
@@ -291,8 +345,19 @@ countPartitions' (h,w) d = sum
 --
 -- * Nijenhuis and Wilf: Combinatorial Algorithms for Computers and Calculators, chapter 10
 --
-randomSmallPartition :: forall g. RandomGen g => Int -> g -> (Partition, g)
-randomSmallPartition n = runRand $ worker n [] where
+randomPartition :: RandomGen g => Int -> g -> (Partition, g)
+randomPartition n g = (p, g') where
+  ([p], g') = randomPartitions 1 n g
+
+-- | Generates several uniformly random partitions of @n@ at the same time.
+-- Should be a little bit faster then generating them individually.
+--
+randomPartitions 
+  :: forall g. RandomGen g 
+  => Int   -- ^ number of partitions to generate
+  -> Int   -- ^ the weight of the partitions
+  -> g -> ([Partition], g)
+randomPartitions howmany n = runRand $ replicateM howmany (worker n []) where
 
   table = listArray (0,n) $ take (n+1) partitionCountList :: Array Int Integer
   cnt k = table ! k

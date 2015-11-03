@@ -34,7 +34,7 @@ data    PartitionIntPair    = PartitionIntPair    Partition Int    deriving (Eq,
 instance Arbitrary Partition where
   arbitrary = do
     n <- choose (0,50)
-    myMkGen (randomSmallPartition n)
+    myMkGen (randomPartition n)
 
 instance Arbitrary PartitionWeight where
   arbitrary = liftM PartitionWeight $ choose (0,50)
@@ -65,6 +65,7 @@ testgroup_IntegerPartitions = testGroup "Integer Partitions"
   , testProperty "dual^2 is identity"              prop_dual_dual
   , testProperty "dominated partitions"            prop_dominated_list
   , testProperty "dominating partitions"           prop_dominating_list
+  , testProperty "counting partitions"             prop_countParts
   ]
 
 --------------------------------------------------------------------------------
@@ -96,4 +97,8 @@ prop_dominated_list lam = (dominatedPartitions  lam == [ mu  | mu  <- partitions
 prop_dominating_list :: Partition -> Bool
 prop_dominating_list mu  = (dominatingPartitions mu  == [ lam | lam <- partitions (weight mu ), lam `dominates` mu ])
 
+prop_countParts :: Bool
+prop_countParts = (take 50 partitionCountList == take 50 partitionCountListNaive)
+
 --------------------------------------------------------------------------------
+
