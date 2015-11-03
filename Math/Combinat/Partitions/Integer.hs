@@ -17,7 +17,7 @@
 -- <<svg/ferrers.svg>>
 -- 
 
-{-# LANGUAGE CPP, BangPatterns #-}
+{-# LANGUAGE CPP, BangPatterns, ScopedTypeVariables #-}
 module Math.Combinat.Partitions.Integer where
 
 --------------------------------------------------------------------------------
@@ -31,6 +31,9 @@ import Math.Combinat.Classes
 import Math.Combinat.ASCII as ASCII
 import Math.Combinat.Numbers (factorial,binomial,multinomial)
 import Math.Combinat.Helper
+
+import Data.Array
+import System.Random
 
 --------------------------------------------------------------------------------
 -- * Type and basic stuff
@@ -211,6 +214,13 @@ _partitions d = go d d where
 countPartitions :: Int -> Integer
 countPartitions d = countPartitions' (d,d) d
 
+-- | Infinite list of number of partitions of @0,1,2,...@
+--
+-- > partitionCountList = map countPartitions [0..]
+--
+partitionCountList :: [Integer]
+partitionCountList = map countPartitions [0..]
+
 -- | All integer partitions up to a given degree (that is, all integer partitions whose sum is less or equal to @d@)
 allPartitions :: Int -> [Partition]
 allPartitions d = concat [ partitions i | i <- [0..d] ]
@@ -265,6 +275,53 @@ countPartitions' (0,_) d = if d==0 then 1 else 0
 countPartitions' (_,0) d = if d==0 then 1 else 0
 countPartitions' (h,w) d = sum
   [ countPartitions' (i,w-1) (d-i) | i <- [1..min d h] ] 
+
+
+---------------------------------------------------------------------------------
+-- * Random partitions
+
+-- | Uniformly random partition of the given weight. 
+--
+-- NOTE: This algorithm is effective for small @n@-s (say @n<50@),
+-- and the first time it is executed may be slow (as it needs to build the table 'partitionCountList' first)
+--
+-- Algorithm of Nijenhuis and Wilf (1975); see
+--
+-- * Knuth Vol 4A, pre-fascicle 3B, exercise 47;
+--
+-- * Nijenhuis and Wilf: Combinatorial Algorithms for Computers and Calculators, chapter 10
+--
+randomSmallPartition :: forall g. RandomGen g => Int -> g -> (Partition, g)
+randomSmallPartition n = runRand $ worker n [] where
+
+  table = listArray (0,n) $ take (n+1) partitionCountList :: Array Int Integer
+  cnt k = table ! k
+ 
+  finish :: [(Int,Int)] -> Partition
+  finish = mkPartition . concatMap f where f (j,d) = replicate j d
+
+  fi :: Int -> Integer 
+  fi = fromIntegral
+
+  find_jd :: Int -> Integer -> (Int,Int)
+  find_jd m capm = go 0 [ (j,d) | j<-[1..n], d<-[1..div m j] ] where
+    go :: Integer -> [(Int,Int)] -> (Int,Int)
+    go !s []   = (1,1)       -- ??
+    go !s [jd] = jd          -- ??
+    go !s (jd@(j,d):rest) = 
+      if s' > capm 
+        then jd 
+        else go s' rest
+      where
+        s' = s + fi d * cnt (m - j*d)
+
+  worker :: Int -> [(Int,Int)] -> Rand g Partition
+  worker  0 acc = return $ finish acc
+  worker !m acc = do
+    capm <- randChoose (0, (fi m) * cnt m - 1)
+    let jd@(!j,!d) = find_jd m capm
+    worker (m - j*d) (jd:acc)
+
 
 ---------------------------------------------------------------------------------
 -- * Dominance order 
