@@ -55,6 +55,10 @@ powerTerm n = replicate n 0 ++ (1 : repeat 0)
 addSeries :: Num a => [a] -> [a] -> [a]
 addSeries xs ys = longZipWith 0 0 (+) xs ys
 
+sumSeries :: Num a => [[a]] -> [a]
+sumSeries [] = [0]
+sumSeries xs = foldl1' addSeries xs
+
 subSeries :: Num a => [a] -> [a] -> [a]
 subSeries xs ys = longZipWith 0 0 (-) xs ys
 

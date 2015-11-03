@@ -46,6 +46,7 @@ import Math.Combinat.ASCII
 import Math.Combinat.Sign
 import Math.Combinat.Helper
 import Math.Combinat.TypeLevel
+import Math.Combinat.Numbers.Series
 
 import Math.Combinat.Permutations ( Permutation(..) )
 import qualified Math.Combinat.Permutations as P
@@ -465,7 +466,40 @@ strandLinking braid@(Braid gens) i0 j0
         (sgn,k) = brGenSignIdx g
         s = signValue sgn
 
+--------------------------------------------------------------------------------
+-- * Growth 
 
+-- | Bronfman's recursive formula for the reciprocial of the growth function 
+-- of /positive/ braids. It was already known (by Deligne) that these generating functions 
+-- are reciprocials of polynomials; Bronfman [1] gave a recursive formula for them.
+--
+-- > let count n l = length $ nub $ [ braidNormalForm w | w <- allPositiveBraidWords n l ]
+-- > let convertPoly (1:cs) = zip (map negate cs) [1..]
+-- > pseries' (convertPoly $ bronfmanH n) == expandBronfmanH n == [ count n l | l <- [0..] ] 
+--
+-- * [1] Aaron Bronfman: Growth functions of a class of monoids. Preprint, 2001
+--
+bronfmanH :: Int -> [Int]
+bronfmanH n = bronfmanHsList !! n
+
+-- | An infinite list containing the Bronfman polynomials:
+--
+-- > bronfmanH n = bronfmanHsList !! n
+--
+bronfmanHsList :: [[Int]]
+bronfmanHsList = list where
+  list = map go [0..]
+  go 0 = [1]
+  go n = sumSeries [ sgn i $ replicate (choose2 i) 0 ++ list !! (n-i) | i<-[1..n] ]
+  sgn i = if odd i then id else map negate
+  choose2 k = div (k*(k-1)) 2
+
+-- | Expands the reciprocial of @H(n)@ into an infinite power series,
+-- giving the growth function of the positive braids on @n@ strands.
+expandBronfmanH :: Int -> [Int]
+expandBronfmanH n = pseries' (convertPoly $ bronfmanH n) where
+  convertPoly (1:cs) = zip (map negate cs) [1..]
+   
 --------------------------------------------------------------------------------
 -- * ASCII diagram
 
@@ -560,6 +594,34 @@ verticalBraidASCII braid@(Braid gens) = final where
   over   = [ "\\ /" , " \\ " , "/ \\" ]
 
 -}
+
+--------------------------------------------------------------------------------
+-- * List of all words
+
+-- | All positive braid words of the given length
+allPositiveBraidWords :: KnownNat n => Int -> [Braid n]
+allPositiveBraidWords l = braids where
+  n = numberOfStrands (head braids)
+  braids = map Braid $ _allPositiveBraidWords n l 
+
+-- | All braid words of the given length
+allBraidWords :: KnownNat n => Int -> [Braid n]
+allBraidWords l = braids where
+  n = numberOfStrands (head braids)
+  braids = map Braid $ _allBraidWords n l 
+
+-- | Untyped version of 'allPositiveBraidWords'
+_allPositiveBraidWords :: Int -> Int -> [[BrGen]]
+_allPositiveBraidWords n = go where
+  go 0 = [[]]
+  go k = [ Sigma i : rest | i<-[1..n-1] , rest <- go (k-1) ]
+
+-- | Untyped version of 'allBraidWords'
+_allBraidWords :: Int -> Int -> [[BrGen]]
+_allBraidWords n = go where
+  go 0 = [[]]
+  go k = [ gen : rest | gen <- gens , rest <- go (k-1) ]
+  gens = concat [ [ Sigma i , SigmaInv i ] | i<-[1..n-1] ]
 
 --------------------------------------------------------------------------------
 -- * Random braids  
