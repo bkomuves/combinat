@@ -1,5 +1,5 @@
 Name:                combinat
-Version:             0.2.8.0
+Version:             0.2.8.1
 Synopsis:            Generate and manipulate various combinatorial objects.
 Description:         A collection of functions to generate, count, manipulate
                      and visualize all kinds of combinatorial objects like 
