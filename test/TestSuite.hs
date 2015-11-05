@@ -14,6 +14,7 @@ import Tests.Braid              ( testgroup_Braid
 import Tests.Series             ( testgroup_PowerSeries       )
 import Tests.SkewTableaux       ( testgroup_SkewTableaux      )
 import Tests.Thompson           ( testgroup_ThompsonF         )
+import Tests.LatticePaths       ( testgroup_LatticePaths      )
 
 --------------------------------------------------------------------------------
 
@@ -29,6 +30,7 @@ tests =
       ]
   , testgroup_SkewTableaux
   , testgroup_ThompsonF
+  , testgroup_LatticePaths
   , testGroup "Braids" 
       [ testgroup_Braid 
       , testgroup_Braid_NF 
