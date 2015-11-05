@@ -31,18 +31,21 @@ newtype PartitionWeight     = PartitionWeight     Int              deriving (Eq,
 data    PartitionWeightPair = PartitionWeightPair Int Int          deriving (Eq,Show)
 data    PartitionIntPair    = PartitionIntPair    Partition Int    deriving (Eq,Show)
 
+maxPartitionSize :: Int
+maxPartitionSize = 44
+
 instance Arbitrary Partition where
   arbitrary = do
-    n <- choose (0,50)
+    n <- choose (0,maxPartitionSize)
     myMkGen (randomPartition n)
 
 instance Arbitrary PartitionWeight where
-  arbitrary = liftM PartitionWeight $ choose (0,50)
+  arbitrary = liftM PartitionWeight $ choose (0,maxPartitionSize)
 
 instance Arbitrary PartitionWeightPair where
   arbitrary = do
-    n <- choose (0,50)
-    k <- choose (0,50)
+    n <- choose (0,maxPartitionSize)
+    k <- choose (0,n+2)
     return (PartitionWeightPair n k)
 
 instance Arbitrary PartitionIntPair where
