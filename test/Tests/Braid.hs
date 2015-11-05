@@ -53,10 +53,10 @@ import qualified Math.Combinat.Permutations as P
 -- * Types and instances
 
 maxBraidWordLen :: Int
-maxBraidWordLen = 1000
+maxBraidWordLen = 600
 
 maxStrands :: Int
-maxStrands = 20     -- normal forms are very slow for large ones
+maxStrands = 18         -- normal forms are very slow for large ones
 
 shrinkBraid :: KnownNat n => Braid n -> [Braid n]
 shrinkBraid (Braid gens) = map Braid list where

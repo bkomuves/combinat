@@ -129,6 +129,7 @@ swap (x,y) = (y,x)
   m = 500
   xs = xs1 ++ repeat 0
   ys = ys1 ++ repeat 0
+
 infix 4 =!=
 
 newtype Nat = Nat { fromNat :: Int } deriving (Eq,Ord,Show,Num,Random)
