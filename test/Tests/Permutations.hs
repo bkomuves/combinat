@@ -121,6 +121,14 @@ testgroup_Permutations = testGroup "Permutations"
   , testProperty "parity of cyclic permutaiton" prop_cyclSign
   , testProperty "random permutation is valid"  prop_permIsPerm
   , testProperty "definition of parity"         prop_isEven
+
+  , testProperty "bubbleSort works"    prop_bubbleSort
+  , testProperty "bubbleSort2 works"   prop_bubbleSort2
+  , testProperty "number of inversions = steps in bubble sort"         prop_bubble_inversions
+  , testProperty "number of inversions = actual number of inversions"  prop_number_inversions 
+  , testProperty "number of inversions is the same for the inverse permutation"  prop_ninversions_inverse
+  , testProperty "merge sort algorithm = naive inversion count"                  prop_merge_inversions
+
   ]
 
 --------------------------------------------------------------------------------
@@ -192,6 +200,20 @@ prop_permIsPerm perm = ( isPermutation (fromPermutation perm) )
 prop_isEven perm = ( isEvenPermutation perm == isEvenAlternative perm ) where
   isEvenAlternative p = 
     even $ sum $ map (\x->x-1) $ map length $ fromDisjointCycles $ permutationToDisjointCycles p
+
+prop_bubbleSort perm = multiplyMany' n (map (adjacentTransposition n) $ bubbleSort perm) == perm where
+  n = permutationSize perm
+
+prop_bubbleSort2 perm = multiplyMany' n (map (transposition n) $ bubbleSort2 perm) == perm where
+  n = permutationSize perm
+
+prop_bubble_inversions perm = length (bubbleSort perm) == numberOfInversions perm
+
+prop_number_inversions perm = length (inversions perm) == numberOfInversions perm
+
+prop_ninversions_inverse perm = numberOfInversions perm == numberOfInversions (inverse perm)
+
+prop_merge_inversions perm = (numberOfInversionsMerge perm == numberOfInversionsNaive perm)
 
 --------------------------------------------------------------------------------
 

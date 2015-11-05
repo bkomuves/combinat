@@ -8,7 +8,7 @@
 -- are represented internally. Also now they act on the /right/ by default!
 --
 
-{-# LANGUAGE CPP, ScopedTypeVariables, GeneralizedNewtypeDeriving, FlexibleContexts #-}
+{-# LANGUAGE CPP, BangPatterns, ScopedTypeVariables, GeneralizedNewtypeDeriving, FlexibleContexts #-}
 module Math.Combinat.Permutations 
   ( -- * The Permutation type
     Permutation (..)
@@ -45,6 +45,13 @@ module Math.Combinat.Permutations
   , cycleLeft
   , cycleRight
   , reversePermutation
+    -- * Inversions
+  , inversions
+  , numberOfInversions
+  , numberOfInversionsNaive
+  , numberOfInversionsMerge
+  , bubbleSort2
+  , bubbleSort
     -- * Permutation groups
   , identity
   , inverse
@@ -60,7 +67,8 @@ module Math.Combinat.Permutations
   , asciiPermutation
   , asciiDisjointCycles
   , twoLineNotation 
-  , twoLineNotation'
+  , inverseTwoLineNotation
+  , genericTwoLineNotation
     -- * List of permutations
   , permutations
   , _permutations
@@ -86,7 +94,8 @@ module Math.Combinat.Permutations
 import Control.Monad
 import Control.Monad.ST
 
-import Data.List hiding (permutations)
+import Data.List hiding ( permutations )
+import Data.Ord ( comparing )
 
 import Data.Array (Array)
 import Data.Array.ST
@@ -99,14 +108,15 @@ import Math.Combinat.ASCII
 import Math.Combinat.Classes
 import Math.Combinat.Helper
 import Math.Combinat.Sign
-import Math.Combinat.Numbers (factorial,binomial)
+import Math.Combinat.Numbers ( factorial , binomial )
 
 import System.Random
 
 --------------------------------------------------------------------------------
 -- * Types
 
--- | A permutation. Internally it is an (unboxed) array of the integers @[1..n]@. 
+-- | A permutation. Internally it is an (unboxed) array of the integers @[1..n]@, with 
+-- indexing range also being @(1,n)@. 
 --
 -- If this array of integers is @[p1,p2,...,pn]@, then in two-line 
 -- notations, that represents the permutation
@@ -177,7 +187,7 @@ isPermutation xs = (ar!0 == 0) && and [ ar!j == 1 | j<-[1..n] ] where
   -- the zero index is an unidiomatic hack
   ar = (accumArray (+) 0 (0,n) $ map f xs) :: UArray Int Int
   f :: Int -> (Int,Int)
-  f j = if j<1 || j>n then (0,1) else (j,1)
+  f !j = if j<1 || j>n then (0,1) else (j,1)
 
 -- | Checks whether the input is a permutation of the numbers @[1..n]@.
 maybePermutation :: [Int] -> Maybe Permutation
@@ -224,16 +234,28 @@ asciiPermutation = twoLineNotation
 asciiDisjointCycles :: DisjointCycles -> ASCII
 asciiDisjointCycles (DisjointCycles cycles) = final where
   final = hCatWith VTop (HSepSpaces 1) boxes 
-  boxes = [ twoLineNotation' (f cyc) | cyc <- cycles ]
+  boxes = [ genericTwoLineNotation (f cyc) | cyc <- cycles ]
   f cyc = pairs (cyc ++ [head cyc])
 
 -- | The standard two-line notation, moving the element indexed by the top row into
 -- the place indexed by the corresponding element in the bottom row.
 twoLineNotation :: Permutation -> ASCII
-twoLineNotation (Permutation arr) = twoLineNotation' $ zip [1..] (elems arr)
+twoLineNotation (Permutation arr) = genericTwoLineNotation $ zip [1..] (elems arr)
 
-twoLineNotation' :: [(Int,Int)] -> ASCII
-twoLineNotation' xys = asciiFromLines [ topLine, botLine ] where
+-- | The inverse two-line notation, where the it\'s the bottom line 
+-- which is in standard order. The columns of this are a permutation
+-- of the columns 'twoLineNotation'.
+--
+-- Remark: the top row of @inverseTwoLineNotation perm@ is the same 
+-- as the bottom row of @twoLineNotation (inverse perm)@.
+--
+inverseTwoLineNotation :: Permutation -> ASCII
+inverseTwoLineNotation (Permutation arr) =
+  genericTwoLineNotation $ sortBy (comparing snd) $ zip [1..] (elems arr) 
+
+-- | Two-line notation for any set of numbers
+genericTwoLineNotation :: [(Int,Int)] -> ASCII
+genericTwoLineNotation xys = asciiFromLines [ topLine, botLine ] where
   topLine = "( " ++ intercalate " " us ++ " )"
   botLine = "( " ++ intercalate " " vs ++ " )"
   pairs   = [ (show x, show y) | (x,y) <- xys ]
@@ -378,6 +400,119 @@ isCyclicPermutation perm =
   where 
     n = permutationSize perm
     DisjointCycles cycles = permutationToDisjointCycles perm
+
+--------------------------------------------------------------------------------
+-- * Inversions
+
+-- | An /inversion/ of a permutation @sigma@ is a pair @(i,j)@ such that
+-- @i<j@ and @sigma(i) > sigma(j)@.
+--
+-- This functions returns the inversion of a permutation.
+--
+inversions :: Permutation -> [(Int,Int)]
+inversions (Permutation arr) = list where
+  (_,n) = bounds arr
+  list = [ (i,j) | i<-[1..n-1], j<-[i+1..n], arr!i > arr!j ]
+
+-- | Returns the number of inversions:
+--
+-- > numberOfInversions perm = length (inversions perm)
+--
+-- Synonym for 'numberOfInversionsMerge'
+--
+numberOfInversions :: Permutation -> Int
+numberOfInversions = numberOfInversionsMerge
+
+-- | Returns the number of inversions, using the merge-sort algorithm.
+-- This should be @O(n*log(n))@
+--
+numberOfInversionsMerge :: Permutation -> Int
+numberOfInversionsMerge (Permutation arr) = fst (sortCnt n $ elems arr) where
+  (_,n) = bounds arr
+                                        
+  -- | First argument is length of the list.
+  -- Returns also the inversion count.
+  sortCnt :: Int -> [Int] -> (Int,[Int])
+  sortCnt 0 _     = (0,[] )
+  sortCnt 1 [x]   = (0,[x])
+  sortCnt 2 [x,y] = if x>y then (1,[y,x]) else (0,[x,y])
+  sortCnt n xs    = mergeCnt (sortCnt k us) (sortCnt l vs) where
+    k = div n 2
+    l = n - k 
+    (us,vs) = splitAt k xs
+
+  mergeCnt :: (Int,[Int]) -> (Int,[Int]) -> (Int,[Int])
+  mergeCnt (!c,us) (!d,vs) = (c+d+e,ws) where
+
+    (e,ws) = go 0 us vs 
+
+    go !k xs [] = ( k*length xs , xs )
+    go _  [] ys = ( 0 , ys)
+    go !k xxs@(x:xs) yys@(y:ys) = if x < y
+      then let (a,zs) = go  k     xs yys in (a+k, x:zs)
+      else let (a,zs) = go (k+1) xxs  ys in (a  , y:zs)
+
+-- | Returns the number of inversions, using the definition, thus it's @O(n^2)@.
+--
+numberOfInversionsNaive :: Permutation -> Int
+numberOfInversionsNaive (Permutation arr) = length list where
+  (_,n) = bounds arr
+  list = [ (0::Int) | i<-[1..n-1], j<-[i+1..n], arr!i > arr!j ]
+
+-- | Bubble sorts breaks a permutation into the product of adjacent transpositions:
+--
+-- > multiplyMany' n (map (transposition n) $ bubbleSort2 perm) == perm
+--
+-- Note that while this is not unique, the number of transpositions 
+-- equals the number of inversions.
+--
+bubbleSort2 :: Permutation -> [(Int,Int)]
+bubbleSort2 = map f . bubbleSort where f i = (i,i+1)
+
+-- | Another version of bubble sort. An entry @i@ in the return sequence means
+-- the transposition @(i,i+1)@:
+--
+-- > multiplyMany' n (map (adjacentTransposition n) $ bubbleSort perm) == perm
+--
+bubbleSort :: Permutation -> [Int]
+bubbleSort perm@(Permutation tgt) = runST action where
+  (_,n)           = bounds tgt
+
+  action :: forall s. ST s [Int]
+  action = do
+    fwd <- newArray_ (1,n) :: ST s (STUArray s Int Int)
+    inv <- newArray_ (1,n) :: ST s (STUArray s Int Int)
+    forM_ [1..n] $ \i -> writeArray fwd i i
+    forM_ [1..n] $ \i -> writeArray inv i i
+
+    list <- forM [1..n] $ \x -> do
+
+      let k = tgt ! x        -- we take the number which will be at the @x@-th position at the end
+      i <- readArray inv k   -- number @k@ is at the moment at position @i@
+      let j = x              -- but the final place is at @x@      
+
+      let swaps = move i j
+      forM_ swaps $ \y -> do
+
+        a <- readArray fwd  y
+        b <- readArray fwd (y+1)
+        writeArray fwd (y+1) a
+        writeArray fwd  y    b
+
+        u <- readArray inv a
+        v <- readArray inv b
+        writeArray inv b u
+        writeArray inv a v
+
+      return swaps
+  
+    return (concat list)
+
+  move :: Int -> Int -> [Int]
+  move !i !j
+    | j == i  = []
+    | j >  i  = [i..j-1]
+    | j <  i  = [i-1,i-2..j]
 
 --------------------------------------------------------------------------------
 -- * Some concrete permutations
@@ -701,6 +836,7 @@ countPermuteMultiset xs = factorial n `div` product [ factorial (length z) | z <
 --   The order is lexicographic.  
 fasc2B_algorithm_L :: (Eq a, Ord a) => [a] -> [[a]] 
 fasc2B_algorithm_L xs = unfold1 next (sort xs) where
+
   -- next :: [a] -> Maybe [a]
   next xs = case findj (reverse xs,[]) of 
     Nothing -> Nothing
@@ -716,7 +852,7 @@ fasc2B_algorithm_L xs = unfold1 next (sort xs) where
   findj ( [] , _ ) = Nothing
   
   -- inc :: a -> [a] -> ([a],[a]) -> [a]
-  inc u us ( (x:xs) , yys ) = if u >= x
+  inc !u us ( (x:xs) , yys ) = if u >= x
     then inc u us ( xs , x : yys ) 
     else reverse (x:us)  ++ reverse (u:yys) ++ xs
   inc _ _ ( [] , _ ) = error "permute: should not happen"
