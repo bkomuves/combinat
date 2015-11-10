@@ -35,7 +35,7 @@ doubleFactorial n
   | odd n     = product [1,3..fromIntegral n]
   | otherwise = product [2,4..fromIntegral n]
 
--- | A007318.
+-- | A007318. Note: This is zero for @n<0@ or @k<0@; see also 'signedBinomial' below.
 binomial :: Integral a => a -> a -> Integer
 binomial n k 
   | k > n = 0
@@ -45,6 +45,26 @@ binomial n k
   where 
     k' = fromIntegral k
     n' = fromIntegral n
+
+-- | The extension of the binomial function to negative inputs. This should satisfy the following properties:
+--
+-- > for n,k >=0 : signedBinomial n k == binomial n k
+-- > for any n,k : signedBinomial n k == signedBinomial n (n-k) 
+-- > for k >= 0  : signedBinomial (-n) k == (-1)^k * signedBinomial (n+k-1) k
+--
+-- Note: This is compatible with Mathematica's @Binomial@ function.
+--
+signedBinomial :: Int -> Int -> Integer
+signedBinomial n k
+  | n >= 0     = binomial n k
+  | k >= 0     = (if odd    k  then negate else id) (binomial (k-n-1)   k )
+  | otherwise  = (if odd (n+k) then negate else id) (binomial (-k-1) (-n-1))
+
+{-
+test_signed_0 = [ signedBinomial ( n) k == signedBinomial ( n) ( n-k)                    | n<-[-30..40] , k<-[-30..40] ]
+test_signed_1 = [ signedBinomial (-n) k == signedBinomial (-n) (-n-k)                    | n<-[-30..40] , k<-[-30..40] ]
+test_signed_2 = [ signedBinomial (-n) k == paritySignValue k * signedBinomial (n+k-1) k  | n<-[-30..40] , k<-[0..30] ]
+-}
 
 -- | A given row of the Pascal triangle; equivalent to a sequence of binomial 
 -- numbers, but much more efficient. You can also left-fold over it.
