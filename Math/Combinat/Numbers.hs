@@ -11,12 +11,7 @@ module Math.Combinat.Numbers where
 import Data.Array
 
 import Math.Combinat.Helper ( sum' )
-
---------------------------------------------------------------------------------
-
--- | @(-1)^k@
-paritySignValue :: Integral a => a -> Integer
-paritySignValue k = if odd k then (-1) else 1
+import Math.Combinat.Sign
 
 --------------------------------------------------------------------------------
 
@@ -57,13 +52,13 @@ binomial n k
 signedBinomial :: Int -> Int -> Integer
 signedBinomial n k
   | n >= 0     = binomial n k
-  | k >= 0     = (if odd    k  then negate else id) (binomial (k-n-1)   k )
-  | otherwise  = (if odd (n+k) then negate else id) (binomial (-k-1) (-n-1))
+  | k >= 0     = negateIfOdd    k  $ binomial (k-n-1)   k  
+  | otherwise  = negateIfOdd (n+k) $ binomial (-k-1) (-n-1)
 
 {-
-test_signed_0 = [ signedBinomial ( n) k == signedBinomial ( n) ( n-k)                    | n<-[-30..40] , k<-[-30..40] ]
-test_signed_1 = [ signedBinomial (-n) k == signedBinomial (-n) (-n-k)                    | n<-[-30..40] , k<-[-30..40] ]
-test_signed_2 = [ signedBinomial (-n) k == paritySignValue k * signedBinomial (n+k-1) k  | n<-[-30..40] , k<-[0..30] ]
+test_signed_0 = [ signedBinomial ( n) k == signedBinomial ( n) ( n-k)                | n<-[-30..40] , k<-[-30..40] ]
+test_signed_1 = [ signedBinomial (-n) k == signedBinomial (-n) (-n-k)                | n<-[-30..40] , k<-[-30..40] ]
+test_signed_2 = [ signedBinomial (-n) k == negateIfOdd k $ signedBinomial (n+k-1) k  | n<-[-30..40] , k<-[0..30] ]
 -}
 
 -- | A given row of the Pascal triangle; equivalent to a sequence of binomial 
@@ -149,7 +144,7 @@ stirling2nd n k
   | k < 1        = 0
   | k > n        = 0
   | otherwise = sum xs `div` factorial k where
-      xs = [ paritySignValue (k-i) * binomial k i * (fromIntegral i)^n | i<-[0..k] ]
+      xs = [ negateIfOdd (k-i) $ binomial k i * (fromIntegral i)^n | i<-[0..k] ]
 
 --------------------------------------------------------------------------------
 -- * Bernoulli numbers
@@ -164,7 +159,7 @@ bernoulli n
   | n == 1    = -1/2
   | otherwise = sum [ f k | k<-[1..n] ] 
   where
-    f k = toRational (paritySignValue (n+k) * factorial k * stirling2nd n k) 
+    f k = toRational (negateIfOdd (n+k) $ factorial k * stirling2nd n k) 
         / toRational (k+1)
 
 --------------------------------------------------------------------------------
