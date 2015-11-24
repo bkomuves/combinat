@@ -4,18 +4,19 @@
 {-# LANGUAGE BangPatterns, Rank2Types #-}
 module Math.Combinat.Sets 
   ( 
-    -- * choices
-    choose , choose_
+    -- * Choices
+    choose_ , choose , choose' , choose'' , chooseTagged
+    -- * Compositions
   , combine , compose
-    -- * tensor products
+    -- * Tensor products
   , tuplesFromList
   , listTensor
-    -- * sublists
+    -- * Sublists
   , kSublists
   , sublists
   , countKSublists
   , countSublists
-    -- * random choice
+    -- * Random choice
   , randomChoice
   ) 
   where
@@ -39,12 +40,6 @@ import Math.Combinat.Helper  ( swap )
 --------------------------------------------------------------------------------
 -- * choices
 
--- | All possible ways to choose @k@ elements from a list, without
--- repetitions. \"Antisymmetric power\" for lists. Synonym for 'kSublists'.
-choose :: Int -> [a] -> [[a]]
-choose 0 _  = [[]]
-choose k [] = []
-choose k (x:xs) = map (x:) (choose (k-1) xs) ++ choose k xs  
 
 -- | @choose_ k n@ returns all possible ways of choosing @k@ disjoint elements from @[1..n]@
 --
@@ -56,6 +51,47 @@ choose_ k n  = if n<0 || k<0
   else if k>n || k<0 
     then []
     else choose k [1..n]
+
+-- | All possible ways to choose @k@ elements from a list, without
+-- repetitions. \"Antisymmetric power\" for lists. Synonym for 'kSublists'.
+choose :: Int -> [a] -> [[a]]
+choose 0 _  = [[]]
+choose k [] = []
+choose k (x:xs) = map (x:) (choose (k-1) xs) ++ choose k xs  
+
+-- | A version of 'choose' which also returns the complementer sets.
+--
+-- > choose k = map fst . choose' k
+--
+choose' :: Int -> [a] -> [([a],[a])]
+choose' 0 xs = [([],xs)]
+choose' k [] = []
+choose' k (x:xs) = map f (choose' (k-1) xs) ++ map g (choose' k xs) where
+  f (as,bs) = (x:as ,   bs)
+  g (as,bs) = (  as , x:bs)
+
+-- | Another variation of 'choose''. This satisfies
+--
+-- > choose'' k == map (\(xs,ys) -> (map fst xs, map snd ys)) . choose' k
+--
+choose'' :: Int -> [(a,b)] -> [([a],[b])]
+choose'' 0 xys = [([] , map snd xys)]
+choose'' k []  = []
+choose'' k ((x,y):xs) = map f (choose'' (k-1) xs) ++ map g (choose'' k xs) where
+  f (as,bs) = (x:as ,   bs)
+  g (as,bs) = (  as , y:bs)
+
+-- | Another variation on 'choose' which tags the elements based on whether they are part of
+-- the selected subset ('Right') or not ('Left'):
+--
+-- > choose k = map rights . chooseTagged k
+--
+chooseTagged :: Int -> [a] -> [[Either a a]]
+chooseTagged 0 xs = [map Left xs]
+chooseTagged k [] = []
+chooseTagged k (x:xs) = map f (chooseTagged (k-1) xs) ++ map g (chooseTagged k xs) where
+  f eis = Right x : eis
+  g eis = Left  x : eis
 
 -- | All possible ways to choose @k@ elements from a list, /with repetitions/. 
 -- \"Symmetric power\" for lists. See also "Math.Combinat.Compositions".
@@ -94,7 +130,7 @@ listTensor (xs:xss) = [ y:ys | ys <- listTensor xss , y <- xs ]
 --------------------------------------------------------------------------------
 -- * sublists
 
--- | Sublists of a list having given number of elements.
+-- | Sublists of a list having given number of elements. Synonym for 'choose'.
 kSublists :: Int -> [a] -> [[a]]
 kSublists = choose
 
