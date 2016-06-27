@@ -18,6 +18,7 @@ import Math.Combinat.Sets
 import Math.Combinat.Numbers
 import Math.Combinat.Helper
 import Math.Combinat.Classes
+import Math.Combinat.Partitions.Integer
 
 --------------------------------------------------------------------------------
 -- * The type of set partitions
@@ -48,6 +49,15 @@ _isSetPartition zzs = sort (concat zzs) == [1..n] where
 
 instance HasNumberOfParts SetPartition where
   numberOfParts (SetPartition p) = length p
+
+--------------------------------------------------------------------------------
+-- * Forgetting the set structure
+
+-- | The \"shape\" of a set partition is the partition we get when we forget the
+-- set structure, keeping only the cardinalities.
+--
+setPartitionShape :: SetPartition -> Partition
+setPartitionShape (SetPartition pps) = mkPartition (map length pps)
 
 --------------------------------------------------------------------------------
 -- * Generating set partitions
