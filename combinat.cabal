@@ -80,6 +80,16 @@ test-suite combinat-tests
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             TestSuite.hs
+  
+  other-modules:       Tests.Braid
+                       Tests.Common
+                       Tests.LatticePaths
+                       Tests.Permutations
+                       Tests.Series
+                       Tests.SkewTableaux
+                       Tests.Thompson
+                       Tests.Partitions.Integer
+                       Tests.Partitions.Skew
 
   build-depends:       base >= 4 && < 5, array >= 0.5, containers, random, transformers,
                        combinat,
