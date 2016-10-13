@@ -1,5 +1,5 @@
 Name:                combinat
-Version:             0.2.8.1
+Version:             0.2.8.2
 Synopsis:            Generate and manipulate various combinatorial objects.
 Description:         A collection of functions to generate, count, manipulate
                      and visualize all kinds of combinatorial objects like 
@@ -8,12 +8,12 @@ Description:         A collection of functions to generate, count, manipulate
 License:             BSD3
 License-file:        LICENSE
 Author:              Balazs Komuves
-Copyright:           (c) 2008-2015 Balazs Komuves
+Copyright:           (c) 2008-2016 Balazs Komuves
 Maintainer:          bkomuves (plus) hackage (at) gmail (dot) com
 Homepage:            http://code.haskell.org/~bkomuves/
 Stability:           Experimental
 Category:            Math
-Tested-With:         GHC == 7.10.2
+Tested-With:         GHC == 7.10.3
 Cabal-Version:       >= 1.18
 Build-Type:          Simple
 
