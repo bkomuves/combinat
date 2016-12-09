@@ -184,8 +184,8 @@ toExponentialForm = _toExponentialForm . fromPartition
 _toExponentialForm :: [Int] -> [(Int,Int)]
 _toExponentialForm = reverse . map (\xs -> (head xs,length xs)) . group
 
-fromExponentialFrom :: [(Int,Int)] -> Partition
-fromExponentialFrom = Partition . sortBy reverseCompare . go where
+fromExponentialForm :: [(Int,Int)] -> Partition
+fromExponentialForm = Partition . sortBy reverseCompare . go where
   go ((j,e):rest) = replicate e j ++ go rest
   go []           = []   
 
