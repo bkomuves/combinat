@@ -9,6 +9,7 @@ import Test.Framework.Providers.QuickCheck2
 import Tests.Permutations       ( testgroup_Permutations      )
 import Tests.Partitions.Integer ( testgroup_IntegerPartitions )
 import Tests.Partitions.Skew    ( testgroup_SkewPartitions    )
+import Tests.Partitions.Ribbon  ( testgroup_Ribbon      )
 import Tests.Braid              ( testgroup_Braid 
                                 , testgroup_Braid_NF          )
 import Tests.Series             ( testgroup_PowerSeries       )
@@ -27,6 +28,7 @@ tests =
   , testGroup "Partitions" 
       [ testgroup_IntegerPartitions
       , testgroup_SkewPartitions
+      , testgroup_Ribbon
       ]
   , testgroup_SkewTableaux
   , testgroup_ThompsonF

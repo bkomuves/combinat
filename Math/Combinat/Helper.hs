@@ -52,6 +52,12 @@ pairsWith f = go where
 sum' :: Num a => [a] -> a
 sum' = foldl' (+) 0
 
+interleave :: [a] -> [a] -> [a]
+interleave (x:xs) (y:ys) = x : y : interleave xs ys
+interleave [x]    []     = x : []
+interleave []     []     = []
+interleave _      _      = error "interleave: shouldn't happen"
+
 --------------------------------------------------------------------------------
 -- * equality and ordering 
 

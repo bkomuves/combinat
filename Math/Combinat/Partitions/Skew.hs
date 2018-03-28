@@ -82,6 +82,13 @@ dualSkewPartition = mkSkewPartition . f . fromSkewPartition where
 instance HasDuality SkewPartition where
   dual = dualSkewPartition
 
+-- | See "partitionElements"
+skewPartitionElements :: SkewPartition -> [(Int, Int)]
+skewPartitionElements (SkewPartition abs) = concat
+  [ [ (i,j) | j <- [a+1 .. a+b] ]
+  | (i,(a,b)) <- zip [1..] abs
+  ]
+
 --------------------------------------------------------------------------------
 -- * Listing skew partitions
 
@@ -109,6 +116,17 @@ skewPartitionsWithInnerShape inner skewWeight
   where
     outerWeight = innerWeight + skewWeight 
     innerWeight = weight inner 
+
+--------------------------------------------------------------------------------
+-- connected components
+
+{-
+connectedComponents :: SkewPartition -> [((Int,Int),SkewPartition)]
+connectedComponents = error "connectedComponents: not implemented yet"
+
+isConnectedSkewPartition :: SkewPartition -> Bool
+isConnectedSkewPartition skewp = length (connectedComponents skewp) == 1
+-}
 
 --------------------------------------------------------------------------------
 -- * ASCII
