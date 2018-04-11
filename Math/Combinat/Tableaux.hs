@@ -31,8 +31,9 @@ module Math.Combinat.Tableaux where
 import Data.List
 
 import Math.Combinat.Classes
-import Math.Combinat.Numbers (factorial,binomial)
-import Math.Combinat.Partitions
+import Math.Combinat.Numbers ( factorial , binomial )
+import Math.Combinat.Partitions.Integer
+import Math.Combinat.Partitions.Integer.IntList ( _dualPartition )
 import Math.Combinat.ASCII
 import Math.Combinat.Helper
 

@@ -16,6 +16,7 @@ import Data.List
 
 import Math.Combinat.Classes
 import Math.Combinat.Partitions.Integer
+import Math.Combinat.Partitions.Integer.IntList ( _diffSequence )
 import Math.Combinat.Partitions.Skew
 import Math.Combinat.Tableaux
 import Math.Combinat.ASCII
@@ -118,7 +119,7 @@ semiStandardSkewTableaux n (SkewPartition abs) = map SkewTableau stuff where
 
   stuff = worker as bs ds (repeat 1) 
   (as,bs) = unzip abs
-  ds = diffSequence as
+  ds = _diffSequence as
   
   -- | @worker inner outerMinusInner innerdiffs lowerbound
   worker :: [Int] -> [Int] -> [Int] -> [Int] -> [[(Int,[Int])]]

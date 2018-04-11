@@ -43,7 +43,10 @@ Library
                        Math.Combinat.Groups.Braid.NF
                        Math.Combinat.Partitions
                        Math.Combinat.Partitions.Integer
+                       Math.Combinat.Partitions.Integer.Count
                        Math.Combinat.Partitions.Integer.Compact
+                       Math.Combinat.Partitions.Integer.Naive
+                       Math.Combinat.Partitions.Integer.IntList
                        Math.Combinat.Partitions.Skew
                        Math.Combinat.Partitions.Skew.Ribbon
                        Math.Combinat.Partitions.Set

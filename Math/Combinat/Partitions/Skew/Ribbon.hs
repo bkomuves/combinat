@@ -21,6 +21,7 @@ import qualified Data.Map as Map
 
 import Math.Combinat.Sets
 import Math.Combinat.Partitions.Integer
+import Math.Combinat.Partitions.Integer.IntList ( _diffSequence )
 import Math.Combinat.Partitions.Skew
 import Math.Combinat.Tableaux
 import Math.Combinat.Tableaux.LittlewoodRichardson
@@ -37,17 +38,17 @@ outerCorners = outerCornerBoxes
 -- | The coordinates of the inner corners, including the two on the two coordinate
 -- axes. For the partition @[5,4,1]@ the result should be @[(0,5),(1,4),(2,1),(3,0)]@
 extendedInnerCorners:: Partition -> [(Int,Int)]
-extendedInnerCorners (Partition ps) = (0, head ps') : catMaybes mbCorners where
+extendedInnerCorners (Partition_ ps) = (0, head ps') : catMaybes mbCorners where
   ps' = ps ++ [0]
-  mbCorners = zipWith3 f [1..] (tail ps') (diffSequence ps') 
+  mbCorners = zipWith3 f [1..] (tail ps') (_diffSequence ps') 
   f !y !x !k = if k > 0 then Just (y,x) else Nothing
 
 -- | Sequence of all the (extended) corners
 extendedCornerSequence :: Partition -> [(Int,Int)]
-extendedCornerSequence (Partition ps) = {- if null ps then [(0,0)] else -} interleave inner outer where
+extendedCornerSequence (Partition_ ps) = {- if null ps then [(0,0)] else -} interleave inner outer where
   inner = (0, head ps') : [ (y,x) | (y,x,k) <- zip3 [1..] (tail ps') diff , k>0 ]
   outer =                 [ (y,x) | (y,x,k) <- zip3 [1..] ps'        diff , k>0 ]
-  diff = diffSequence ps'
+  diff = _diffSequence ps'
   ps' = ps ++ [0]
 
 -- | The inner corner /boxes/ of the partition. Coordinates are counted from 1
@@ -59,12 +60,12 @@ extendedCornerSequence (Partition ps) = {- if null ps then [(0,0)] else -} inter
 -- > innerCornerBoxes lambda == (tail $ init $ extendedInnerCorners lambda)
 --
 innerCornerBoxes :: Partition -> [(Int,Int)]
-innerCornerBoxes (Partition ps) = 
+innerCornerBoxes (Partition_ ps) = 
   case ps of
     []  -> []
     _   -> catMaybes mbCorners 
   where
-    mbCorners = zipWith3 f [1..] (tail ps) (diffSequence ps) 
+    mbCorners = zipWith3 f [1..] (tail ps) (_diffSequence ps) 
     f !y !x !k = if k > 0 then Just (y,x) else Nothing
 
 -- | The outer corner /boxes/ of the partition. Coordinates are counted from 1
@@ -73,17 +74,17 @@ innerCornerBoxes (Partition ps) =
 --
 -- For the partition @[5,4,1]@ the result should be @[(1,5),(2,4),(3,1)]@
 outerCornerBoxes :: Partition -> [(Int,Int)]
-outerCornerBoxes (Partition ps) = catMaybes mbCorners where
-  mbCorners = zipWith3 f [1..] ps (diffSequence ps) 
+outerCornerBoxes (Partition_ ps) = catMaybes mbCorners where
+  mbCorners = zipWith3 f [1..] ps (_diffSequence ps) 
   f !y !x !k = if k > 0 then Just (y,x) else Nothing
 
 -- | The outer and inner corner boxes interleaved, so together they form 
 -- the turning points of the full border strip
 cornerBoxSequence :: Partition -> [(Int,Int)]
-cornerBoxSequence (Partition ps) = if null ps then [] else interleave outer inner where
+cornerBoxSequence (Partition_ ps) = if null ps then [] else interleave outer inner where
   inner = [ (y,x) | (y,x,k) <- zip3 [1..] tailps diff , k>0 ]
   outer = [ (y,x) | (y,x,k) <- zip3 [1..] ps     diff , k>0 ]
-  diff = diffSequence ps
+  diff = _diffSequence ps
   tailps = case ps of { [] -> [] ; _-> tail ps }
 
 --------------------------------------------------------------------------------
