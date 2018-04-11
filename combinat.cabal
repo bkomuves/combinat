@@ -13,7 +13,7 @@ Maintainer:          bkomuves (plus) hackage (at) gmail (dot) com
 Homepage:            http://code.haskell.org/~bkomuves/
 Stability:           Experimental
 Category:            Math
-Tested-With:         GHC == 7.10.3
+Tested-With:         GHC == 8.0.2
 Cabal-Version:       >= 1.18
 Build-Type:          Simple
 
@@ -43,6 +43,7 @@ Library
                        Math.Combinat.Groups.Braid.NF
                        Math.Combinat.Partitions
                        Math.Combinat.Partitions.Integer
+                       Math.Combinat.Partitions.Integer.Compact
                        Math.Combinat.Partitions.Skew
                        Math.Combinat.Partitions.Skew.Ribbon
                        Math.Combinat.Partitions.Set
@@ -74,6 +75,8 @@ Library
 
   Hs-Source-Dirs:      .
 
+  C-Sources:           cbits/c_compact_partition.c
+
   ghc-options:         -fwarn-tabs -fno-warn-unused-matches -fno-warn-name-shadowing -fno-warn-unused-imports
     
 --------------------------------------------------------------------------------
@@ -92,13 +95,15 @@ test-suite combinat-tests
                        Tests.SkewTableaux
                        Tests.Thompson
                        Tests.Partitions.Integer
+                       Tests.Partitions.Compact
                        Tests.Partitions.Skew
                        Tests.Partitions.Ribbon
 
   build-depends:       base >= 4 && < 5, array >= 0.5, containers >= 0.5, random, transformers,
                        combinat >= 0.3.0.0,
                        test-framework, 
-                       test-framework-quickcheck2, QuickCheck >= 2 
+                       test-framework-quickcheck2, QuickCheck >= 2,
+                       tasty, tasty-quickcheck, tasty-hunit
 
   Default-Language:    Haskell2010
   Default-Extensions:  CPP, BangPatterns
