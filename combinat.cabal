@@ -35,6 +35,7 @@ Library
                        Math.Combinat.Numbers.Primes
                        Math.Combinat.Sign
                        Math.Combinat.Sets
+                       Math.Combinat.Sets.VennDiagrams
                        Math.Combinat.Tuples 
                        Math.Combinat.Compositions
                        Math.Combinat.Groups.Thompson.F
