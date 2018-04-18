@@ -13,6 +13,7 @@ import Test.QuickCheck
 import Tests.Common
 
 import Math.Combinat.Partitions.Integer
+import Math.Combinat.Partitions.Integer.Count
 
 import Data.List
 import Control.Monad

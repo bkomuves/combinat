@@ -69,8 +69,11 @@ reverseOrdering LT = GT
 reverseOrdering GT = LT
 reverseOrdering EQ = EQ
 
+reverseComparing :: Ord b => (a -> b) -> a -> a -> Ordering
+reverseComparing f x y = compare (f y) (f x)
+
 reverseCompare :: Ord a => a -> a -> Ordering
-reverseCompare x y = reverseOrdering $ compare x y
+reverseCompare x y = compare y x   -- reverseOrdering $ compare x y
 
 reverseSort :: Ord a => [a] -> [a]
 reverseSort = sortBy reverseCompare

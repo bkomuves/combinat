@@ -91,6 +91,10 @@ partitionCountTable = table where
   limit !n = fromInteger $ ceilingSquareRoot (1 + div (nn+nn+1) 3) where
     nn = fromIntegral n :: Integer
 
+-- | An infinite list containing all @p(n)@, starting from @p(0)@.
+partitionCountList :: [Integer]
+partitionCountList = map countPartitions [0..]
+
 --------------------------------------------------------------------------------
 
 -- | Infinite list of number of partitions of @0,1,2,...@

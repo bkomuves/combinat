@@ -28,6 +28,7 @@ module Math.Combinat.Permutations
   , permutationToDisjointCycles
   , disjointCyclesToPermutation
   , numberOfCycles
+  , concatPermutations
     -- * Queries
   , isIdentityPermutation
   , isReversePermutation
@@ -63,6 +64,9 @@ module Math.Combinat.Permutations
   , permuteList
   , permuteLeft , permuteRight
   , permuteLeftList , permuteRightList
+    -- * Sorting
+  , sortingPermutationAsc 
+  , sortingPermutationDesc
     -- * ASCII drawing
   , asciiPermutation
   , asciiDisjointCycles
@@ -223,6 +227,17 @@ instance HasWidth Permutation where
 isIdentityPermutation :: Permutation -> Bool
 isIdentityPermutation (Permutation ar) = (elems ar == [1..n]) where
   (1,n) = bounds ar
+
+-- | Given a permutation of @n@ and a permutation of @m@, we return
+-- a permutation of @n+m@ resulting by putting them next to each other.
+-- This should satisfy
+--
+-- > permuteList p1 xs ++ permuteList p2 ys == permuteList (concatPermutations p1 p2) (xs++ys)
+--
+concatPermutations :: Permutation -> Permutation -> Permutation 
+concatPermutations perm1 perm2 = toPermutationUnsafe list where
+  n    = permutationSize perm1
+  list = fromPermutation perm1 ++ map (+n) (fromPermutation perm2)
 
 --------------------------------------------------------------------------------
 -- * ASCII
@@ -738,6 +753,32 @@ permuteLeftList :: forall a. Permutation -> [a] -> [a]
 permuteLeftList perm xs = elems $ permuteLeft perm $ arr where
   arr = listArray (1,n) xs :: Array Int a
   n   = permutationSize perm
+
+--------------------------------------------------------------------------------
+
+-- | Given a list of things, we return a permutation which sorts them into
+-- ascending order, that is:
+--
+-- > permuteList (sortingPermutationAsc xs) xs == sort xs
+--
+-- Note: if the things are not unique, then the sorting permutations is not
+-- unique either; we just return one of them.
+--
+sortingPermutationAsc :: Ord a => [a] -> Permutation
+sortingPermutationAsc xs = toPermutation (map fst sorted) where
+  sorted = sortBy (comparing snd) $ zip [1..] xs
+
+-- | Given a list of things, we return a permutation which sorts them into
+-- descending order, that is:
+--
+-- > permuteList (sortingPermutationDesc xs) xs == reverse (sort xs)
+--
+-- Note: if the things are not unique, then the sorting permutations is not
+-- unique either; we just return one of them.
+--
+sortingPermutationDesc :: Ord a => [a] -> Permutation
+sortingPermutationDesc xs = toPermutation (map fst sorted) where
+  sorted = sortBy (reverseComparing snd) $ zip [1..] xs
 
 --------------------------------------------------------------------------------
 -- * Permutations of distinct elements

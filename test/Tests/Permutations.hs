@@ -56,6 +56,8 @@ newtype CyclicPermutation = Cyclic { fromCyclic :: Permutation } deriving Show
 
 data SameSize = SameSize Permutation Permutation deriving Show
 
+data PermWithList = PWL Permutation [Int] deriving (Show)
+
 instance Random Permutation where
   random g = randomPermutation size g1 where
     (size,g1) = randomR (minPermSize,maxPermSize) g
@@ -81,6 +83,20 @@ instance Random SameSize where
     (prm2,g3) = randomPermutation size g2
   randomR _ = random
 
+randomRList :: (RandomGen g, Random a) => Int -> (a, a) -> g -> ([a],g)
+randomRList n ab g0 = go n g0 where
+  go 0   g = ([],g)
+  go !k !g = let (x ,g' ) = randomR ab g 
+                 (xs,g'') = go (k-1) g'
+             in  (x:xs,g'')
+
+instance Random PermWithList where
+  random g = (PWL prm xs, g3) where
+    (size,g1) = randomR (minPermSize,maxPermSize) g
+    (prm ,g2) = randomPermutation size g1 
+    (xs  ,g3) = randomRList size (-100,100) g2
+  randomR _ = random
+
 instance Arbitrary Nat where
   arbitrary = choose (Nat 0 , Nat 50)
      
@@ -88,6 +104,7 @@ instance Arbitrary Permutation       where arbitrary = choose undefined
 instance Arbitrary CyclicPermutation where arbitrary = choose undefined
 instance Arbitrary DisjointCycles    where arbitrary = choose undefined
 instance Arbitrary SameSize          where arbitrary = choose undefined
+instance Arbitrary PermWithList      where arbitrary = choose undefined
 
 --------------------------------------------------------------------------------
 -- * test group
@@ -129,6 +146,9 @@ testgroup_Permutations = testGroup "Permutations"
   , testProperty "number of inversions is the same for the inverse permutation"  prop_ninversions_inverse
   , testProperty "merge sort algorithm = naive inversion count"                  prop_merge_inversions
 
+  , testProperty "sortingPermutationAsc"    prop_sortingPermAsc
+  , testProperty "sortingPermutationDesc"   prop_sortingPermDesc
+  , testProperty "concatPermutations"       prop_concatPerm
   ]
 
 --------------------------------------------------------------------------------
@@ -214,6 +234,14 @@ prop_number_inversions perm = length (inversions perm) == numberOfInversions per
 prop_ninversions_inverse perm = numberOfInversions perm == numberOfInversions (inverse perm)
 
 prop_merge_inversions perm = (numberOfInversionsMerge perm == numberOfInversionsNaive perm)
+
+prop_sortingPermAsc :: [Int] -> Bool 
+prop_sortingPermAsc xs = permuteList (sortingPermutationAsc xs) xs == sort xs
+
+prop_sortingPermDesc :: [Int] ->  Bool
+prop_sortingPermDesc xs = permuteList (sortingPermutationDesc xs) xs == reverse (sort xs)
+
+prop_concatPerm (PWL p1 xs) (PWL p2 ys) = permuteList p1 xs ++ permuteList p2 ys == permuteList (concatPermutations p1 p2) (xs++ys)
 
 --------------------------------------------------------------------------------
 
