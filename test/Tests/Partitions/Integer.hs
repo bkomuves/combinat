@@ -70,6 +70,7 @@ testgroup_IntegerPartitions = testGroup "Integer Partitions"
   , testProperty "dominated partitions"            prop_dominated_list
   , testProperty "dominating partitions"           prop_dominating_list
   , testProperty "counting partitions"             prop_countParts
+  , testProperty "union/sum duality"               prop_union_sum_duality
   ]
 
 --------------------------------------------------------------------------------
@@ -103,6 +104,9 @@ prop_dominating_list mu  = (dominatingPartitions mu  == [ lam | lam <- partition
 
 prop_countParts :: Bool
 prop_countParts = (take 50 partitionCountList == take 50 partitionCountListNaive)
+
+prop_union_sum_duality :: Partition -> Partition -> Bool
+prop_union_sum_duality p q = dualPartition (sumOfPartitions p q) == unionOfPartitions (dualPartition p) (dualPartition q)
 
 --------------------------------------------------------------------------------
 

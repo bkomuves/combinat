@@ -29,6 +29,9 @@ module Math.Combinat.Partitions.Integer
   , toPartition 
   , toPartitionUnsafe 
   , isPartition 
+    -- * Union and sum
+  , unionOfPartitions
+  , sumOfPartitions
     -- * Generating partitions
   , partitions 
   , partitions'
@@ -111,6 +114,27 @@ isPartition :: [Int] -> Bool
 isPartition []  = True
 isPartition [x] = x > 0
 isPartition (x:xs@(y:_)) = (x >= y) && isPartition xs
+
+--------------------------------------------------------------------------------
+-- * Union and sum
+
+-- | This is simply the union of parts. For example 
+--
+-- > Partition [4,2,1] `unionOfPartitions` Partition [4,3,1] == Partition [4,4,3,2,1,1]
+--
+-- Note: This is the dual of pointwise sum, 'sumOfPartitions'
+--
+unionOfPartitions :: Partition -> Partition -> Partition 
+unionOfPartitions (Partition_ xs) (Partition_ ys) = mkPartition (xs ++ ys)
+
+-- | Pointwise sum of the parts. For example:
+--
+-- > Partition [3,2,1,1] `sumOfPartitions` Partition [4,3,1] == Partition [7,5,2,1]
+--
+-- Note: This is the dual of 'unionOfPartitions'
+--
+sumOfPartitions :: Partition -> Partition -> Partition 
+sumOfPartitions (Partition_ xs) (Partition_ ys) = Partition_ (longZipWith 0 0 (+) xs ys)
 
 --------------------------------------------------------------------------------
 -- * Generating partitions
