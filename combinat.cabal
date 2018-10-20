@@ -32,8 +32,9 @@ Library
                        Math.Combinat.Classes
                        Math.Combinat.Numbers
                        Math.Combinat.Numbers.Integers
-                       Math.Combinat.Numbers.Series
+                       Math.Combinat.Numbers.Sequences
                        Math.Combinat.Numbers.Primes
+                       Math.Combinat.Numbers.Series
                        Math.Combinat.Sign
                        Math.Combinat.Sets
                        Math.Combinat.Sets.VennDiagrams

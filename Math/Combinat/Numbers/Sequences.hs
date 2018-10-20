@@ -1,10 +1,10 @@
 
--- | A few important number sequences. 
+-- | Some important number sequences. 
 --  
 -- See the \"On-Line Encyclopedia of Integer Sequences\",
 -- <https://oeis.org> .
 
-module Math.Combinat.Numbers where
+module Math.Combinat.Numbers.Sequences where
 
 --------------------------------------------------------------------------------
 
@@ -14,6 +14,7 @@ import Math.Combinat.Helper ( sum' )
 import Math.Combinat.Sign
 
 --------------------------------------------------------------------------------
+-- * Factorial
 
 -- | A000142.
 factorial :: Integral a => a -> Integer
@@ -29,6 +30,9 @@ doubleFactorial n
   | n == 0    = 1
   | odd n     = product [1,3..fromIntegral n]
   | otherwise = product [2,4..fromIntegral n]
+
+--------------------------------------------------------------------------------
+-- * Binomial and multinomial
 
 -- | A007318. Note: This is zero for @n<0@ or @k<0@; see also 'signedBinomial' below.
 binomial :: Integral a => a -> a -> Integer
