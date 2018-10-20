@@ -8,7 +8,7 @@
 -- TODO: better names for these functions.
 --
 
-{-# LANGUAGE CPP, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE CPP, BangPatterns, GeneralizedNewtypeDeriving #-}
 module Math.Combinat.Numbers.Series where
 
 --------------------------------------------------------------------------------
@@ -63,8 +63,16 @@ negateSeries = map negate
 scaleSeries :: Num a => a -> [a] -> [a]
 scaleSeries s = map (*s)
 
+-- | A different implementation, taken from:
+--
+-- M. Douglas McIlroy: Power Series, Power Serious 
 mulSeries :: Num a => [a] -> [a] -> [a]
-mulSeries = convolve
+mulSeries xs ys = go (xs ++ repeat 0) (ys ++ repeat 0) where
+  go (f:fs) ggs@(g:gs) = f*g : (scaleSeries f gs) `addSeries` go fs ggs
+
+-- | Multiplication of power series. This implementation is a synonym for 'convolve'
+mulSeriesNaive :: Num a => [a] -> [a] -> [a]
+mulSeriesNaive = convolve
 
 productOfSeries :: Num a => [[a]] -> [a]
 productOfSeries = convolveMany
@@ -89,6 +97,14 @@ convolveMany xss = foldl1 convolve xss
 
 --------------------------------------------------------------------------------
 -- * Reciprocals of general power series
+
+-- | Division of series.
+--
+-- Taken from: M. Douglas McIlroy: Power Series, Power Serious 
+divSeries :: (Eq a, Fractional a) => [a] -> [a] -> [a]
+divSeries xs ys = go (xs ++ repeat 0) (ys ++ repeat 0) where
+  go (0:fs)     (0:gs) = go fs gs
+  go (f:fs) ggs@(g:gs) = let q = f/g in q : go (fs `subSeries` scaleSeries q gs) ggs
 
 -- | Given a power series, we iteratively compute its multiplicative inverse
 reciprocalSeries :: (Eq a, Fractional a) => [a] -> [a]
@@ -119,9 +135,13 @@ integralReciprocalSeries series = case series of
 -- | @g \`composeSeries\` f@ is the power series expansion of @g(f(x))@.
 -- This is a synonym for @flip substitute@.
 --
--- We require that the constant term of @f@ is zero.
+-- This implementation is taken from
+--
+-- M. Douglas McIlroy: Power Series, Power Serious 
 composeSeries :: (Eq a, Num a) => [a] -> [a] -> [a]
-composeSeries g f = substitute f g
+composeSeries xs ys = go (xs ++ repeat 0) (ys ++ repeat 0) where
+  go (f:fs) (0:gs) = f : mulSeries gs (go fs (0:gs))
+  go (f:fs) (_:gs) = error "PowerSeries/composeSeries: we expect the the constant term of the inner series to be zero"
 
 -- | @substitute f g@ is the power series corresponding to @g(f(x))@. 
 -- Equivalently, this is the composition of univariate functions (in the \"wrong\" order).
@@ -129,10 +149,18 @@ composeSeries g f = substitute f g
 -- Note: for this to be meaningful in general (not depending on convergence properties),
 -- we need that the constant term of @f@ is zero.
 substitute :: (Eq a, Num a) => [a] -> [a] -> [a]
-substitute as_ bs_ = 
+substitute f g = composeSeries g f
+
+-- | Naive implementation of 'composeSeries' (via 'substituteNaive')
+composeSeriesNaive :: (Eq a, Num a) => [a] -> [a] -> [a]
+composeSeriesNaive g f = substituteNaive f g
+
+-- | Naive implementation of 'substitute'
+substituteNaive :: (Eq a, Num a) => [a] -> [a] -> [a]
+substituteNaive as_ bs_ = 
   case head as of
     0 -> [ f n | n<-[0..] ]
-    _ -> error "PowerSeries/substitute: we expect the the constant term of the inner series to be zero"
+    _ -> error "PowerSeries/substituteNaive: we expect the the constant term of the inner series to be zero"
   where
     as = as_ ++ repeat 0
     bs = bs_ ++ repeat 0
@@ -148,6 +176,19 @@ substitute as_ bs_ =
 --------------------------------------------------------------------------------
 -- * Lagrange inversions
 
+-- | We expect the input series to match @(0:a1:_)@. with a1 nonzero The following is true for the result (at least with exact arithmetic):
+--
+-- > substitute f (lagrangeInversion f) == (0 : 1 : repeat 0)
+-- > substitute (lagrangeInversion f) f == (0 : 1 : repeat 0)
+--
+-- This implementation is taken from:
+--
+-- M. Douglas McIlroy: Power Series, Power Serious 
+lagrangeInversion :: (Eq a, Fractional a) => [a] -> [a]
+lagrangeInversion xs = go (xs ++ repeat 0) where
+  go (0:fs) = rs where rs = 0 : divSeries unitSeries (composeSeries fs rs)
+  go (_:fs) = error "lagrangeInversion: the series should start with (0 + a1*x + a2*x^2 + ...) where a1 is non-zero"
+
 -- | Coefficients of the Lagrange inversion
 lagrangeCoeff :: Partition -> Integer
 lagrangeCoeff p = div numer denom where
@@ -162,11 +203,11 @@ lagrangeCoeff p = div numer denom where
 -- > substitute f (integralLagrangeInversion f) == (0 : 1 : repeat 0)
 -- > substitute (integralLagrangeInversion f) f == (0 : 1 : repeat 0)
 --
-integralLagrangeInversion :: (Eq a, Num a) => [a] -> [a]
-integralLagrangeInversion series_ = 
+integralLagrangeInversionNaive :: (Eq a, Num a) => [a] -> [a]
+integralLagrangeInversionNaive series_ = 
   case series of
     (0:1:rest) -> 0 : 1 : [ f n | n<-[1..] ]
-    _ -> error "integralLagrangeInversion: the series should start with (0 + x + a2*x^2 + ...)"
+    _ -> error "integralLagrangeInversionNaive: the series should start with (0 + x + a2*x^2 + ...)"
   where
     series = series_ ++ repeat 0
     as  = tail series 
@@ -175,20 +216,16 @@ integralLagrangeInversion series_ =
               | p <- partitions n
               ] 
 
--- | We expect the input series to match @(0:a1:_)@. with a1 nonzero The following is true for the result (at least with exact arithmetic):
---
--- > substitute f (lagrangeInversion f) == (0 : 1 : repeat 0)
--- > substitute (lagrangeInversion f) f == (0 : 1 : repeat 0)
---
-lagrangeInversion :: (Eq a, Fractional a) => [a] -> [a]
-lagrangeInversion series_ = 
+-- | Naive implementation of 'lagrangeInversion'
+lagrangeInversionNaive :: (Eq a, Fractional a) => [a] -> [a]
+lagrangeInversionNaive series_ = 
   case series of
     (0:a1:rest) -> if a1 ==0 
       then err 
       else 0 : (1/a1) : [ f n / a1^(n+1) | n<-[1..] ]
     _ -> err
   where
-    err    = error "lagrangeInversion: the series should start with (0 + a1*x + a2*x^2 + ...) where a1 is non-zero"
+    err    = error "lagrangeInversionNaive: the series should start with (0 + a1*x + a2*x^2 + ...) where a1 is non-zero"
     series = series_ ++ repeat 0
     a1  = series !! 1
     as  = map (/a1) (tail series)
@@ -196,7 +233,21 @@ lagrangeInversion series_ =
     f n = sum [ fromInteger (lagrangeCoeff p) * product [ (a i)^j | (i,j) <- toExponentialForm p ]
               | p <- partitions n
               ] 
-  
+
+
+--------------------------------------------------------------------------------
+-- * Differentiation and integration
+
+differentiateSeries :: Num a => [a] -> [a]
+differentiateSeries (y:ys) = go (1::Int) ys where
+  go !n (x:xs) = fromIntegral n * x : go (n+1) xs
+  go _  []     = []
+
+integrateSeries :: Fractional a => [a] -> [a]
+integrateSeries ys = 0 : go (1::Int) ys where
+  go !n (x:xs) = x / (fromIntegral n) : go (n+1) xs
+  go _  []     = []
+
 --------------------------------------------------------------------------------
 -- * Power series expansions of elementary functions
 
@@ -214,6 +265,13 @@ cosSeries = go 0 1 where
 sinSeries :: Fractional a => [a]
 sinSeries = go 1 1 where
   go i e = 0 : e : go (i+2) (-e / ((i+1)*(i+2)))
+
+-- | Alternative implementation using differential equations.
+--
+-- Taken from: M. Douglas McIlroy: Power Series, Power Serious
+cosSeries2, sinSeries2 :: Fractional a => [a]
+cosSeries2 = unitSeries `subSeries` integrateSeries sinSeries2
+sinSeries2 =                        integrateSeries cosSeries2
 
 -- | Power series expansion of @cosh(x)@
 coshSeries :: Fractional a => [a]

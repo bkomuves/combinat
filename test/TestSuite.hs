@@ -25,6 +25,7 @@ main = defaultMain tests
 tests :: [Test]
 tests = 
   [ testgroup_Permutations
+  , testgroup_PowerSeries  
   , testGroup "Partitions" 
       [ testgroup_IntegerPartitions
       , testgroup_SkewPartitions
@@ -37,7 +38,6 @@ tests =
       [ testgroup_Braid 
       , testgroup_Braid_NF 
       ]
-  , testgroup_PowerSeries  
   ]
 
 --------------------------------------------------------------------------------
