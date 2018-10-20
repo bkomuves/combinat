@@ -1,5 +1,5 @@
 Name:                combinat
-Version:             0.3.0.0
+Version:             0.2.9.0
 Synopsis:            Generate and manipulate various combinatorial objects.
 Description:         A collection of functions to generate, count, manipulate
                      and visualize all kinds of combinatorial objects like 
@@ -106,7 +106,7 @@ test-suite combinat-tests
                        Tests.Partitions.Ribbon
 
   build-depends:       base >= 4 && < 5, array >= 0.5, containers >= 0.5, random, transformers,
-                       combinat >= 0.3.0.0,
+                       combinat,
                        test-framework, 
                        test-framework-quickcheck2, QuickCheck >= 2,
                        tasty, tasty-quickcheck, tasty-hunit
