@@ -13,7 +13,7 @@ import Control.Monad ( liftM , replicateM )
 -- import qualified Data.Map as Map
 
 import Math.Combinat.Numbers ( factorial , binomial , multinomial )
-import Math.Combinat.Numbers.Primes
+import Math.Combinat.Numbers.Integers -- Primes
 import Math.Combinat.Helper
 
 import Data.Array
