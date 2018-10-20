@@ -2,7 +2,7 @@
 -- | Tests for skew partitions.
 --
 
-{-# LANGUAGE CPP, BangPatterns #-}
+{-# LANGUAGE CPP, BangPatterns, ScopedTypeVariables, DataKinds, KindSignatures #-}
 module Tests.Partitions.Skew where
 
 --------------------------------------------------------------------------------
@@ -12,7 +12,7 @@ import Test.Framework.Providers.QuickCheck2
 import Test.QuickCheck
 
 import Tests.Common
-import Tests.Partitions.Integer ()     -- Arbitrary instances
+import Tests.Partitions.Integer ( Part(..) , fromPart20 , fromPart30 )     -- Arbitrary instances
 
 import Math.Combinat.Partitions.Integer
 import Math.Combinat.Partitions.Skew
@@ -20,6 +20,9 @@ import Math.Combinat.Partitions.Skew
 import Data.List
 
 import Math.Combinat.Classes
+
+import Data.Proxy
+import GHC.TypeLits
 
 --------------------------------------------------------------------------------
 -- * instances
@@ -34,6 +37,32 @@ instance Arbitrary SkewPartition where
     k <- choose (0,ln-1)
     let q = qs !! k
     return $ mkSkewPartition (p,q) 
+
+--------------------------------------------------------------------------------
+
+-- | Skew partitions of size at most n
+newtype Skew (n :: Nat) = Skew (SkewPartition) deriving (Eq,Show)
+
+-- | usage: fromSkew @20
+fromSkew :: Skew n -> SkewPartition
+fromSkew (Skew p) = p
+
+fromSkew20 :: Skew 20 -> SkewPartition
+fromSkew20 (Skew p) = p
+
+fromSkew30 :: Skew 30 -> SkewPartition
+fromSkew30 (Skew p) = p 
+
+instance forall nn. KnownNat nn => Arbitrary (Skew nn) where
+  arbitrary = do
+    Part p <- arbitrary :: Gen (Part nn)
+    let n = partitionWeight p
+    d <- choose (0,n)
+    let qs = subPartitions d p
+        ln = length qs
+    k <- choose (0,ln-1)
+    let q = qs !! k
+    return $ Skew $ mkSkewPartition (p,q) 
 
 --------------------------------------------------------------------------------
 -- * test group

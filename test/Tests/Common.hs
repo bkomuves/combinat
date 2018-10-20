@@ -29,6 +29,10 @@ myMkGen :: (forall g. RandomGen g => g -> (a,g)) -> Gen a
 myMkGen fun = MkGen (\r _ -> let (x,_) = fun r in x)
 
 -- | Generates a random element.
+myMkGen' :: (a -> b) -> (forall g. RandomGen g => g -> (a,g)) -> Gen b
+myMkGen' h fun = MkGen (\r _ -> let (x,_) = fun r in h x)
+
+-- | Generates a random element.
 myMkSizedGen :: (forall g. RandomGen g => Int -> g -> (a,g)) -> Gen a
 myMkSizedGen fun = MkGen (\r siz -> let (x,_) = fun siz r in x)
 

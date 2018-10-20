@@ -1,7 +1,7 @@
 
 -- | Tests for integer partitions.
 
-{-# LANGUAGE CPP, BangPatterns #-}
+{-# LANGUAGE CPP, BangPatterns, DataKinds, KindSignatures, ScopedTypeVariables #-}
 module Tests.Partitions.Integer where
 
 --------------------------------------------------------------------------------
@@ -24,6 +24,29 @@ import Control.Monad
 import Math.Combinat.Classes
 import Math.Combinat.Numbers ( factorial , binomial , multinomial )
 import Math.Combinat.Helper
+
+import Data.Proxy
+import GHC.TypeLits
+
+--------------------------------------------------------------------------------
+
+-- | Partitions of size at most n
+newtype Part (n :: Nat) = Part (Partition) deriving (Eq,Show)
+
+-- | usage: fromPart @20
+fromPart :: Part n -> Partition
+fromPart (Part p) = p
+
+fromPart20 :: Part 20 -> Partition
+fromPart20 (Part p) = p
+
+fromPart30 :: Part 30 -> Partition
+fromPart30 (Part p) = p 
+
+instance forall n. KnownNat n => Arbitrary (Part n) where
+  arbitrary = do
+    n <- choose (0, fromInteger (natVal (Proxy :: Proxy n)))
+    myMkGen' Part (randomPartition n)
 
 --------------------------------------------------------------------------------
 -- * Types and instances

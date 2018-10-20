@@ -1,7 +1,7 @@
 
 -- | Tests for skew tableaux
 
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances, TypeApplications, DataKinds #-}
 module Tests.SkewTableaux where
 
 --------------------------------------------------------------------------------
@@ -14,7 +14,7 @@ import Test.QuickCheck
 import Test.QuickCheck.Gen
 
 import Tests.Partitions.Integer ()
-import Tests.Partitions.Skew    ()      -- arbitrary instances
+import Tests.Partitions.Skew ( Skew(..) , fromSkew20 , fromSkew30 )     -- Arbitrary instances
 
 import Math.Combinat.Tableaux
 import Math.Combinat.Tableaux.Skew
@@ -52,7 +52,8 @@ disjointParts (SkewPartition xys) = map normalizeSkewPartition list where
 
 instance Arbitrary (SkewTableau Int) where
   arbitrary = do
-    shape <- arbitrary
+    pshape <- arbitrary
+    let shape = fromSkew20 pshape      -- skew partition of size at most 20
     let w = skewPartitionWeight shape
     content <- replicateM w $ choose (1,1000)
     return $ fillSkewPartitionWithRowWord shape content
@@ -90,8 +91,8 @@ prop_fill_shape shape = (shape == shape') where
   tableau = fillSkewPartitionWithColumnWord shape [1..]
   shape'  = skewTableauShape tableau
 
-prop_semistandard :: SkewPartition -> Bool
-prop_semistandard shape = and 
+prop_semistandard :: Skew 20 -> Bool
+prop_semistandard (Skew shape) = and 
   [ isSemiStandardSkewTableau st 
   | n  <- [kk..nn] 
   , st <- take 500 (semiStandardSkewTableaux n shape)         -- we only take the first 500 because impossibly slow otherwise

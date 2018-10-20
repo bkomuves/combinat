@@ -12,7 +12,7 @@ import Test.Framework.Providers.QuickCheck2
 import Test.QuickCheck
 
 import Tests.Common
-import Tests.Partitions.Integer ()     -- Arbitrary instances
+import Tests.Partitions.Integer ( Part(..) , fromPart20 , fromPart30 )     -- Arbitrary instances
 
 import Math.Combinat.Partitions.Integer
 import Math.Combinat.Partitions.Skew
@@ -39,9 +39,10 @@ instance Arbitrary Inner where
 
 instance Arbitrary Outer where
   arbitrary = do
-    p <- arbitrary
+    pp <- arbitrary
+    let p = fromPart30 pp    -- smaller partitions
     let (w,h) = (partitionWidth p, partitionHeight p)
-        n = w+h+10
+        n = w+h+10   
     d <- choose (1,n)
     return $ Outer p d
 
