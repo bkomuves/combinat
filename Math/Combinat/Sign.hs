@@ -1,12 +1,19 @@
 
 -- | Signs
 
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE CPP, BangPatterns #-}
 module Math.Combinat.Sign where
 
 --------------------------------------------------------------------------------
 
 import Data.Monoid
+
+-- Semigroup became a superclass of Monoid
+#if MIN_VERSION_base(4,11,0)     
+import Data.Foldable
+import Data.Semigroup
+#endif
+
 import System.Random
 
 --------------------------------------------------------------------------------
@@ -16,10 +23,29 @@ data Sign
   | Minus
   deriving (Eq,Ord,Show,Read)
 
+--------------------------------------------------------------------------------
+
+-- Semigroup became a superclass of Monoid
+#if MIN_VERSION_base(4,11,0)        
+
+instance Semigroup Sign where
+  (<>)    = mulSign
+  sconcat = foldl1 mulSign
+
+instance Monoid Sign where
+  mempty  = Plus
+  mconcat = productOfSigns
+
+#else
+
 instance Monoid Sign where
   mempty  = Plus
   mappend = mulSign
   mconcat = productOfSigns
+
+#endif
+
+--------------------------------------------------------------------------------
 
 instance Random Sign where
   random        g = let (b,g') = random g in (if b    then Plus else Minus, g')
