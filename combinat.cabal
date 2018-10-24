@@ -10,17 +10,21 @@ License-file:        LICENSE
 Author:              Balazs Komuves
 Copyright:           (c) 2008-2018 Balazs Komuves
 Maintainer:          bkomuves (plus) hackage (at) gmail (dot) com
-Homepage:            http://code.haskell.org/~bkomuves/
+Homepage:            http://moire.be/haskell/
 Stability:           Experimental
 Category:            Math
 Tested-With:         GHC == 8.0.2
-Cabal-Version:       >= 1.18
+Cabal-Version:       1.24
 Build-Type:          Simple
 
 extra-doc-files:     svg/*.svg 
 
 extra-source-files:  svg/*.svg
                      svg/src/gen_figures.hs                     
+
+source-repository head
+  type:                darcs 
+  location:            http://moire.be/haskell/projects/combinat/
 
 --------------------------------------------------------------------------------
 
@@ -84,6 +88,7 @@ Library
   C-Sources:           cbits/c_compact_partition.c
 
   ghc-options:         -fwarn-tabs -fno-warn-unused-matches -fno-warn-name-shadowing -fno-warn-unused-imports
+
     
 --------------------------------------------------------------------------------
 
