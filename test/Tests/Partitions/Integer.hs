@@ -79,6 +79,16 @@ instance Arbitrary PartitionIntPair where
     return (PartitionIntPair part k)
 
 --------------------------------------------------------------------------------
+
+-- {- CONJUGATE LEXICOGRAPHIC ordering is a refinement of dominance partial ordering -}
+-- let test n = [ ConjLex p >= ConjLex q | p <- partitions n , q <-partitions n ,  p `dominates` q ]
+-- and (test 20)
+
+-- {- LEXICOGRAPHIC ordering is a refinement of dominance partial ordering -}
+-- let test n = [ p >= q | p <- partitions n , q <-partitions n ,  p `dominates` q ]
+-- and (test 20)
+
+--------------------------------------------------------------------------------
 -- * test group
 
 testgroup_IntegerPartitions :: Test

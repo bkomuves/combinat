@@ -49,8 +49,12 @@ module Math.Combinat.Partitions.Integer
   , randomPartition
   , randomPartitions
     -- * Dominating \/ dominated partitions
+  , dominanceCompare
   , dominatedPartitions 
   , dominatingPartitions 
+    -- * Conjugate lexicographic ordering
+  , conjugateLexicographicCompare 
+  , ConjLex (..) , fromConjLex 
     -- * Partitions with given number of parts
   , partitionsWithKParts
     -- * Partitions with only odd\/distinct parts
@@ -232,6 +236,14 @@ randomPartitions howmany n = runRand $ replicateM howmany (worker n []) where
 --------------------------------------------------------------------------------
 -- * Dominating \/ dominated partitions
 
+-- | Dominance partial ordering as a partial ordering.
+dominanceCompare :: Partition -> Partition -> Maybe Ordering
+dominanceCompare p q  
+  | p==q             = Just EQ
+  | p `dominates` q  = Just GT
+  | q `dominates` p  = Just LT
+  | otherwise        = Nothing
+
 -- | Lists all partitions of the same weight as @lambda@ and also dominated by @lambda@
 -- (that is, all partial sums are less or equal):
 --
@@ -247,6 +259,28 @@ dominatedPartitions (Partition_ lambda) = map Partition_ (_dominatedPartitions l
 -- 
 dominatingPartitions :: Partition -> [Partition]    
 dominatingPartitions (Partition_ mu) = map Partition_ (_dominatingPartitions mu)
+
+--------------------------------------------------------------------------------
+-- * Conjugate lexicographic ordering
+
+conjugateLexicographicCompare :: Partition -> Partition -> Ordering
+conjugateLexicographicCompare p q = compare (dualPartition q) (dualPartition p) 
+
+newtype ConjLex = ConjLex Partition deriving (Eq,Show)
+
+fromConjLex :: ConjLex -> Partition
+fromConjLex (ConjLex p) = p
+
+instance Ord ConjLex where
+  compare (ConjLex p) (ConjLex q) = conjugateLexicographicCompare p q
+
+-- {- CONJUGATE LEXICOGRAPHIC ordering is a refinement of dominance partial ordering -}
+-- let test n = [ ConjLex p >= ConjLex q | p <- partitions n , q <-partitions n ,  p `dominates` q ]
+-- and (test 20)
+
+-- {- LEXICOGRAPHIC ordering is a refinement of dominance partial ordering -}
+-- let test n = [ p >= q | p <- partitions n , q <-partitions n ,  p `dominates` q ]
+-- and (test 20)
 
 --------------------------------------------------------------------------------
 -- * Partitions with given number of parts

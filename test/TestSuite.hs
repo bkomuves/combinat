@@ -22,6 +22,16 @@ import Tests.LatticePaths       ( testgroup_LatticePaths      )
 main :: IO ()
 main = defaultMain tests
 
+{- 
+
+----- missing (because tasty, not test-framework): -----
+
+Partitions.Compact
+Primes
+
+-}
+
+
 tests :: [Test]
 tests = 
   [ testgroup_Permutations
