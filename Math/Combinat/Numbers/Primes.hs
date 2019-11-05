@@ -2,8 +2,13 @@
 -- | Prime numbers and related number theoretical stuff.
 
 module Math.Combinat.Numbers.Primes 
-  ( -- * List of prime numbers
-    primes
+  ( -- * Elementary number theory
+    divides
+  , divisors, squareFreeDivisors, squareFreeDivisors_  
+  , divisorSum , divisorSum'
+  , moebiusMu , eulerTotient , liouvilleLambda
+    -- * List of prime numbers
+  , primes
   , primesSimple
   , primesTMWE
     -- * Prime factorization
@@ -20,12 +25,85 @@ module Math.Combinat.Numbers.Primes
 
 --------------------------------------------------------------------------------
 
+import Data.List ( group , sort , foldl' )
+
+import Math.Combinat.Sign
 import Math.Combinat.Numbers.Integers
 
-import Data.List ( group , sort )
+import Math.Combinat.Sets   ( sublists )
+import Math.Combinat.Tuples ( tuples'  )
+
 import Data.Bits
 
 import System.Random
+
+--------------------------------------------------------------------------------
+
+-- | @d `divides` n@
+divides :: Integer -> Integer -> Bool
+divides d n = (mod n d == 0)
+
+{-# SPECIALIZE moebiusMu :: Int     -> Int     #-}
+{-# SPECIALIZE moebiusMu :: Integer -> Integer #-}
+-- | The Moebius mu function
+moebiusMu :: (Integral a, Num b) => a -> b
+moebiusMu n 
+  | any (>1) expos       =  0
+  | even (length primes) =  1
+  | otherwise            = -1
+  where
+    factors = groupIntegerFactors $ integerFactorsTrialDivision $ fromIntegral n
+    (primes,expos) = unzip factors
+
+{-# SPECIALIZE liouvilleLambda :: Int     -> Int     #-}
+{-# SPECIALIZE liouvilleLambda :: Integer -> Integer #-}
+-- | The Liouville lambda function
+liouvilleLambda :: (Integral a, Num b) => a -> b
+liouvilleLambda n = 
+  if odd (foldl' (+) 0 $ map snd grps)
+    then -1
+    else  1
+  where
+    grps = groupIntegerFactors $ integerFactorsTrialDivision $ fromIntegral n
+
+-- | Sum ofthe of the divisors
+divisorSum :: Integer -> Integer
+divisorSum n = foldl' (+) 0 [ d | d <- divisors n]
+
+-- | Sum of @k@-th powers of the divisors
+divisorSum' :: Int -> Integer -> Integer
+divisorSum' k n = foldl' (+) 0 [ d^k | d <- divisors n]
+
+-- | Euler's totient function
+eulerTotient :: Integer -> Integer
+eulerTotient n = div n prodp * prodp1 where
+  grps   = groupIntegerFactors $ integerFactorsTrialDivision n
+  ps     = map fst grps
+  prodp  = foldl' (*) 1 [ p   | p <- ps ] 
+  prodp1 = foldl' (*) 1 [ p-1 | p <- ps ] 
+
+-- | Divisors of @n@ (note: the result is /not/ ordered!)
+divisors :: Integer -> [Integer]
+divisors n = [ f tup | tup <- tuples' expos ] where
+  grps = groupIntegerFactors $ integerFactorsTrialDivision n
+  (ps,expos) = unzip grps
+  f es = foldl' (*) 1 $ zipWith (^) ps es
+
+-- | List of square-free divisors together with their Mobius mu value
+-- (note: the result is /not/ ordered!)
+squareFreeDivisors :: Integer -> [(Integer,Sign)]
+squareFreeDivisors n = map f (sublists primes) where
+  grps = groupIntegerFactors $ integerFactorsTrialDivision n
+  primes = map fst grps
+  f ps = ( foldl' (*) 1 ps , if even (length ps) then Plus else Minus)
+
+-- | List of square-free divisors 
+-- (note: the result is /not/ ordered!)
+squareFreeDivisors_ :: Integer -> [Integer]
+squareFreeDivisors_ n = map f (sublists primes) where
+  grps = groupIntegerFactors $ integerFactorsTrialDivision n
+  primes = map fst grps
+  f ps = foldl' (*) 1 ps
 
 --------------------------------------------------------------------------------
 -- List of prime numbers 
