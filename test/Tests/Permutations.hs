@@ -2,7 +2,7 @@
 -- | Tests for permutations. 
 --
 
-{-# LANGUAGE CPP, ScopedTypeVariables, GeneralizedNewtypeDeriving, FlexibleContexts #-}
+{-# LANGUAGE CPP, BangPatterns, ScopedTypeVariables, GeneralizedNewtypeDeriving, FlexibleContexts #-}
 module Tests.Permutations where
 
 --------------------------------------------------------------------------------
@@ -134,6 +134,7 @@ testgroup_Permutations = testGroup "Permutations"
 
   , testProperty "sign of permutation is multiplicative"     prop_mulSign      
   , testProperty "inverse is compatible with multiplication" prop_invMul
+  , testProperty "sign of permutation is parity of inversions"  prop_sign_inversions
 
   , testProperty "parity of cyclic permutaiton" prop_cyclSign
   , testProperty "random permutation is valid"  prop_permIsPerm
@@ -207,6 +208,8 @@ prop_mulSign (SameSize perm1 perm2) =
     ( sgn perm1 * sgn perm2 == sgn (perm1 `multiply` perm2) ) 
   where 
     sgn = signValue . signOfPermutation :: Permutation -> Int
+
+prop_sign_inversions perm = signOfPermutation perm == paritySign (numberOfInversions perm)
 
 prop_invMul (SameSize perm1 perm2) =   
   ( inverse perm2 `multiply` inverse perm1 == inverse (perm1 `multiply` perm2) ) 
