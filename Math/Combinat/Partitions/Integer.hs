@@ -29,6 +29,10 @@ module Math.Combinat.Partitions.Integer
   , toPartition 
   , toPartitionUnsafe 
   , isPartition 
+    -- * Conversion to\/from exponent vectors
+  , toExponentVector
+  , fromExponentVector
+  , dropTailingZeros
     -- * Union and sum
   , unionOfPartitions
   , sumOfPartitions
@@ -87,7 +91,7 @@ import Math.Combinat.Helper
 import Data.Array
 import System.Random
 
-import Math.Combinat.Partitions.Integer.Naive
+import Math.Combinat.Partitions.Integer.Naive hiding ()    -- this is for haddock!
 import Math.Combinat.Partitions.Integer.IntList
 import Math.Combinat.Partitions.Integer.Count
 
@@ -118,6 +122,41 @@ isPartition :: [Int] -> Bool
 isPartition []  = True
 isPartition [x] = x > 0
 isPartition (x:xs@(y:_)) = (x >= y) && isPartition xs
+
+--------------------------------------------------------------------------------
+-- * Conversion to\/from exponent vectors
+     
+-- | Converts a partition to an exponent vector.
+--
+-- For example, 
+--
+-- > toExponentVector (Partition [4,4,2,2,2,1]) == [1,3,0,2]
+--
+-- meaning @(1^1,2^3,3^0,4^2)@.
+--
+toExponentVector :: Partition -> [Int]
+toExponentVector part = fun 1 $ reverse $ group (fromPartition part) where
+  fun _  [] = []
+  fun !k gs@(this@(i:_):rest) 
+    | k < i      = replicate (i-k) 0 ++ fun i gs
+    | otherwise  = length this : fun (k+1) rest
+
+fromExponentVector :: [Int] -> Partition
+fromExponentVector expos = Partition $ concat $ reverse $ zipWith f [1..] expos where
+  f !i !e = replicate e i
+
+dropTailingZeros :: [Int] -> [Int]
+dropTailingZeros = reverse . dropWhile (==0) . reverse
+
+{-
+-- alternative implementation
+toExponentialVector2 :: Partition -> [Int]
+toExponentialVector2 p = go 1 (toExponentialForm p) where
+  go _  []              = []
+  go !i ef@((j,e):rest) = if i<j 
+    then 0 : go (i+1) ef
+    else e : go (i+1) rest
+-}
 
 --------------------------------------------------------------------------------
 -- * Union and sum

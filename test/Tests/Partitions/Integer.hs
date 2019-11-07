@@ -48,13 +48,20 @@ instance forall n. KnownNat n => Arbitrary (Part n) where
     n <- choose (0, fromInteger (natVal (Proxy :: Proxy n)))
     myMkGen' Part (randomPartition n)
 
+newtype Expo = Expo [Int] deriving (Eq,Show)
+
+instance Arbitrary Expo where
+  arbitrary = do
+    n  <- choose (0, 10)
+    es <- replicateM n $ choose (0,4)
+    return $ Expo es
+
 --------------------------------------------------------------------------------
 -- * Types and instances
 
 newtype PartitionWeight     = PartitionWeight     Int              deriving (Eq,Show)
 data    PartitionWeightPair = PartitionWeightPair Int Int          deriving (Eq,Show)
 data    PartitionIntPair    = PartitionIntPair    Partition Int    deriving (Eq,Show)
-
 maxPartitionSize :: Int
 maxPartitionSize = 44
 
@@ -104,6 +111,11 @@ testgroup_IntegerPartitions = testGroup "Integer Partitions"
   , testProperty "dominating partitions"           prop_dominating_list
   , testProperty "counting partitions"             prop_countParts
   , testProperty "union/sum duality"               prop_union_sum_duality
+    --
+  , testProperty "to/from expo vector"             prop_to_from_expo_vector
+  , testProperty "to/from expo form"               prop_to_from_expo_form
+  , testProperty "from/to expo vector"             prop_from_to_expo_vector
+  , testProperty "from/to expo form"               prop_from_to_expo_form
   ]
 
 --------------------------------------------------------------------------------
@@ -143,3 +155,12 @@ prop_union_sum_duality p q = dualPartition (sumOfPartitions p q) == unionOfParti
 
 --------------------------------------------------------------------------------
 
+prop_to_from_expo_vector p  =  fromExponentVector  (toExponentVector  p) == p
+prop_to_from_expo_form   p  =  fromExponentialForm (toExponentialForm p) == p
+
+prop_from_to_expo_vector (Expo es) = toExponentVector (fromExponentVector es) == dropTailingZeros es
+
+prop_from_to_expo_form   p  =  let ef = toExponentialForm p
+                               in  toExponentialForm (fromExponentialForm ef) == ef
+
+--------------------------------------------------------------------------------
