@@ -159,7 +159,7 @@ newtype Rat    = Rat    { fromRat    :: Rational } deriving (Eq,Ord,Show,Num,Fra
 newtype NZRat  = NZRat  { fromNZRat  :: Rational } deriving (Eq,Ord,Show,Num,Fractional)
 
 -- type parameter is for controlling the size (length), because some tests are too slow
-newtype Ser  (n :: Nat) = Ser  { fromSer'  :: [Integer] } deriving (Eq,Ord,Show)
+newtype Ser  (n :: Nat) = Ser  { fromSer'  :: [Integer]  } deriving (Eq,Ord,Show)
 newtype SerR (n :: Nat) = SerR { fromSerR' :: [Rational] } deriving (Eq,Ord,Show)
 
 newtype Exp  = Exp  { fromExp  ::  Int  } deriving (Eq,Ord,Show,Num,Random)
@@ -371,7 +371,7 @@ prop_lagrange_inversion_int_naive2 ser = (=..=) 20 (substituteNaive (integralLag
 prop_diff_integrate ser = (xs =!= differentiateSeries (integrateSeries xs)) where
   xs = fromSerR ser
 
-prop_integrate_diff ser = (0 : tail xs =!= integrateSeries (differentiateSeries xs)) where
+prop_integrate_diff ser = (null xs) || (0 : tail xs =!= integrateSeries (differentiateSeries xs)) where
   xs = fromSerR ser
 
 prop_cos_vs_cos2 = (cosSeries =!= (cosSeries2 :: [Rational])) 
