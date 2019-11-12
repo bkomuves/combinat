@@ -4,29 +4,126 @@
 -- See the \"On-Line Encyclopedia of Integer Sequences\",
 -- <https://oeis.org> .
 
+{-# LANGUAGE BangPatterns, ScopedTypeVariables #-}
 module Math.Combinat.Numbers.Sequences where
 
 --------------------------------------------------------------------------------
 
 import Data.Array
+import Data.Bits ( shiftL , shiftR , (.&.) )
 
-import Math.Combinat.Helper ( sum' )
+import Math.Combinat.Helper 
 import Math.Combinat.Sign
+
+import Math.Combinat.Numbers.Primes ( primes , factorize , productOfFactors )
+
+import qualified Data.Map.Strict as Map   -- used for factorialPrimeExponentsNaive
 
 --------------------------------------------------------------------------------
 -- * Factorial
 
--- | A000142.
+-- | The factorial function (A000142).
 factorial :: Integral a => a -> Integer
-factorial n
-  | n <  0    = error "factorial: input should be nonnegative"
+factorial = factorialSplit
+
+-- | Faster implementation of the factorial function
+factorialSplit :: Integral a => a -> Integer
+factorialSplit n = productFromTo 1 n
+
+-- | Naive implementation of factorial
+factorialNaive :: Integral a => a -> Integer
+factorialNaive n
+  | n <  0    = error "factorialNaive: input should be nonnegative"
   | n == 0    = 1
   | otherwise = product [1..fromIntegral n]
 
--- | A006882.
+-- | \"Swing factorial\" algorithm
+factorialSwing :: Integral a => a -> Integer
+factorialSwing n = productOfFactors (factorialPrimeExponents $ fromIntegral n) where
+
+--------------------------------------------------------------------------------
+
+-- | Prime factorization of the factorial (using the \"swing factorial\" algorithm)
+factorialPrimeExponents :: Int -> [(Integer,Int)]
+factorialPrimeExponents n = filter cond $ zip primes (factorialPrimeExponents_ n) where
+  cond (_,!e) = e > 0
+
+factorialPrimeExponentsNaive :: forall a. Integral a => a -> [(Integer,Int)]
+factorialPrimeExponentsNaive n = result where
+  fi = fromIntegral :: a -> Integer
+  result = Map.toList 
+         $ Map.unionsWith (+) 
+         $ map Map.fromList 
+         $ map factorize 
+         $ map fi [1..n] 
+
+factorialPrimeExponents_ :: Int -> [Int]
+factorialPrimeExponents_ = go where
+  go  0 = []
+  go  1 = []
+  go  2 = [1]
+  go !n = longAdd half swing where
+    half  = map (flip shiftL 1) $ go (shiftR n 1)
+    swing = swingFactorialExponents_ n
+
+  longAdd :: [Int] -> [Int] -> [Int]
+  longAdd xs [] = xs
+  longAdd [] ys = ys
+  longAdd (!x:xs) (!y:ys) = (x+y) : longAdd xs ys
+
+-- | Prime factorizaiton of the \"swing factorial\" function)
+swingFactorialExponents_ :: Int -> [Int]
+swingFactorialExponents_ = go where
+  go 0 = []
+  go 1 = []
+  go 2 = [1]
+  go n = expo2 : map expo (tail ps) where
+
+    nn = fromIntegral n :: Integer
+
+    ps :: [Integer]
+    ps = takeWhile (<=nn) primes 
+
+    expo2 :: Int
+    expo2 = go 0 (shiftR n 1) where
+      go :: Int -> Int -> Int
+      go !acc !r  
+        | r < 1     = acc
+        | otherwise = go acc' r' 
+        where
+          acc' = acc + (r .&. 1)
+          r'   = shiftR r 1
+
+    expo :: Integer -> Int
+    expo pp = go 0 (div n p) where
+      p = fromInteger pp :: Int
+      go :: Int -> Int -> Int
+      go !acc !r  
+        | r < 1     = acc
+        | otherwise = go acc' r' 
+        where
+          acc' = acc + (r .&. 1)
+          r'   = div r p
+
+--------------------------------------------------------------------------------
+
+-- | The double factorial
 doubleFactorial :: Integral a => a -> Integer
-doubleFactorial n
-  | n <  0    = error "doubleFactorial: input should be nonnegative"
+doubleFactorial = doubleFactorialSplit
+
+-- | Faster implementation of the double factorial function
+doubleFactorialSplit :: Integral a => a -> Integer
+doubleFactorialSplit n
+  | n <  0    = error "doubleFactorialSplit: input should be nonnegative"
+  | n == 0    = 1
+  | odd n     = productFromToStride2 2 n
+  | otherwise = let halfn = div n 2 
+                in  shiftL (factorialSplit halfn) (fromIntegral halfn)
+
+-- | Naive implementation of the double factorial (A006882).
+doubleFactorialNaive :: Integral a => a -> Integer
+doubleFactorialNaive n
+  | n <  0    = error "doubleFactorialNaive: input should be nonnegative"
   | n == 0    = 1
   | odd n     = product [1,3..fromIntegral n]
   | otherwise = product [2,4..fromIntegral n]
@@ -34,9 +131,21 @@ doubleFactorial n
 --------------------------------------------------------------------------------
 -- * Binomial and multinomial
 
--- | A007318. Note: This is zero for @n<0@ or @k<0@; see also 'signedBinomial' below.
+-- | Binomial numbers (A007318). Note: This is zero for @n<0@ or @k<0@; see also 'signedBinomial' below.
 binomial :: Integral a => a -> a -> Integer
-binomial n k 
+binomial = binomialSplit
+
+-- | Faster implementation of binomial
+binomialSplit :: Integral a => a -> a -> Integer
+binomialSplit n k 
+  | k > n = 0
+  | k < 0 = 0
+  | k > (n `div` 2) = binomialSplit n (n-k)
+  | otherwise = (productFromTo (n-k) n) `div` (productFromTo 1 k)
+
+-- | A007318. Note: This is zero for @n<0@ or @k<0@; see also 'signedBinomial' below.
+binomialNaive :: Integral a => a -> a -> Integer
+binomialNaive n k 
   | k > n = 0
   | k < 0 = 0
   | k > (n `div` 2) = binomial n (n-k)

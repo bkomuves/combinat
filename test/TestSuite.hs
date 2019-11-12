@@ -27,7 +27,8 @@ main = defaultMain tests
 ----- missing (because tasty, not test-framework): -----
 
 Partitions.Compact
-Primes
+Numbers.Primes
+Numbers.Sequences
 
 -}
 

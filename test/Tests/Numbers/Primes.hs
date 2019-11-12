@@ -4,7 +4,7 @@
 --
 
 {-# LANGUAGE CPP, GeneralizedNewtypeDeriving, DataKinds, KindSignatures #-}
-module Tests.Primes where
+module Tests.Numbers.Primes where
 
 --------------------------------------------------------------------------------
 
@@ -60,13 +60,24 @@ prop_Liouville_sum n = sum [ liouvilleLambda d | d <- divisors n ] == (if isSqua
 
 --------------------------------------------------------------------------------
 
+prop_product_of_factors n  =  productOfFactors (factorize n) == n
+prop_factorize_vs_naive n  =  factorize n == factorizeNaive n
+
+--------------------------------------------------------------------------------
+
 main = defaultMain tests
 
 tests :: TestTree
 tests = testGroup "Tests" [{-properties,-} unitTests]
 
 unitTests :: TestTree
-unitTests = testGroup "Elementary number theory unit tests "
+unitTests = testGroup "Primes module"
+  [ unitTests1
+  , unitTests2
+  ]
+
+unitTests1 :: TestTree
+unitTests1 = testGroup "Elementary number theory unit tests "
   [ testCase "sum first 100 primes"         $ prop_primes_sum_100
   , testCase "sum first 1000 primes"        $ prop_primes_sum_1000
   , testCase "sum first 10000 primes"       $ prop_primes_sum_10000
@@ -81,6 +92,12 @@ unitTests = testGroup "Elementary number theory unit tests "
   , testCase "totient moebius inversion"    $ allTrue [ prop_totient_mobius_inv   n | n<-[1..1000] ]
   , testCase "Liouville square divs sumn"   $ allTrue [ prop_Liouville_squaredivs n | n<-[1..1000] ]
   , testCase "Liouville divisor sum"        $ allTrue [ prop_Liouville_sum        n | n<-[1..1000] ]
+  ]
+
+unitTests2 :: TestTree
+unitTests2 = testGroup "Integer factorization"
+  [ testCase "productOfFactors . factorize = id" $ allTrue [ prop_product_of_factors n | n<-[1..1000] ]
+  , testCase "factorize vs. factorizeNaive"      $ allTrue [ prop_factorize_vs_naive n | n<-[1..1000] ]
   ]
 
 allTrue :: [Bool] -> Assertion

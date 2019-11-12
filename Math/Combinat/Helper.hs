@@ -1,5 +1,5 @@
 
--- | Miscellaneous helper functions
+-- | Miscellaneous helper functions used internally
 
 {-# LANGUAGE BangPatterns, PolyKinds, GeneralizedNewtypeDeriving #-}
 module Math.Combinat.Helper where
@@ -57,6 +57,46 @@ interleave (x:xs) (y:ys) = x : y : interleave xs ys
 interleave [x]    []     = x : []
 interleave []     []     = []
 interleave _      _      = error "interleave: shouldn't happen"
+
+evens, odds :: [a] -> [a] 
+evens (x:xs) = x : odds xs
+evens [] = []
+odds (x:xs) = evens xs
+odds [] = []
+
+--------------------------------------------------------------------------------
+-- * multiplication
+
+-- | Product of list of integers, but in interleaved order (for a list of big numbers,
+-- it should be faster than the linear order)
+productInterleaved :: [Integer] -> Integer
+productInterleaved = go where
+  go []    = 1
+  go [x]   = x
+  go [x,y] = x*y
+  go list  = go (evens list) * go (odds list)
+
+-- | Faster implementation of @product [ i | i <- [a+1..b] ]@
+productFromTo :: Integral a => a -> a -> Integer
+productFromTo = go where
+  go !a !b 
+    | dif < 1     = 1
+    | dif < 5     = product [ fromIntegral i | i<-[a+1..b] ]
+    | otherwise   = go a half * go half b
+    where
+      dif  = b - a
+      half = div (a+b+1) 2
+
+-- | Faster implementation of product @[ i | i <- [a+1,a+3,..b] ]@
+productFromToStride2 :: Integral a => a -> a -> Integer
+productFromToStride2 = go where
+  go !a !b 
+    | dif < 1     = 1
+    | dif < 9     = product [ fromIntegral i | i<-[a+1,a+3..b] ]
+    | otherwise   = go a half * go half b
+    where
+      dif  = b - a
+      half = a + 2*(div dif 4)
 
 --------------------------------------------------------------------------------
 -- * equality and ordering 

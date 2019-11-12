@@ -12,8 +12,10 @@ module Math.Combinat.Numbers.Primes
   , primesSimple
   , primesTMWE
     -- * Prime factorization
-  , groupIntegerFactors
+  , factorize, factorizeNaive
+  , productOfFactors
   , integerFactorsTrialDivision
+  , groupIntegerFactors
     -- * Modulo @m@ arithmetic
   , powerMod
     -- * Prime testing
@@ -28,9 +30,10 @@ module Math.Combinat.Numbers.Primes
 import Data.List ( group , sort , foldl' )
 
 import Math.Combinat.Sign
+import Math.Combinat.Helper
 import Math.Combinat.Numbers.Integers
 
-import Math.Combinat.Sets   ( sublists )
+-- import Math.Combinat.Sets   ( sublists )       -- cyclic dependency...
 import Math.Combinat.Tuples ( tuples'  )
 
 import Data.Bits
@@ -105,6 +108,11 @@ squareFreeDivisors_ n = map f (sublists primes) where
   primes = map fst grps
   f ps = foldl' (*) 1 ps
 
+-- | To avoid cyclic dependencies, I made a local copy of this...
+sublists :: [a] -> [[a]]
+sublists [] = [[]]
+sublists (x:xs) = sublists xs ++ map (x:) (sublists xs)  
+
 --------------------------------------------------------------------------------
 -- List of prime numbers 
 
@@ -155,6 +163,22 @@ primesTMWE = 2:3:5:7: gaps 11 wheel (fold3t $ roll 11 wheel primes') where
 
 --------------------------------------------------------------------------------
 -- Prime factorization
+
+factorize :: Integer -> [(Integer,Int)]
+factorize = factorizeNaive
+
+factorizeNaive :: Integer -> [(Integer,Int)]
+factorizeNaive = groupIntegerFactors . integerFactorsTrialDivision
+
+productOfFactors :: [(Integer,Int)] -> Integer
+productOfFactors = productInterleaved . map (uncurry pow) where
+  pow _ 0 = 1
+  pow p 1 = p
+  pow 2 n = shiftL 1 n
+  pow p 2 = p*p
+  pow p n = if even n
+              then     (pow p (shiftR n 1))^2
+              else p * (pow p (shiftR n 1))^2 
 
 -- | Groups integer factors. Example: from [2,2,2,3,3,5] we produce [(2,3),(3,2),(5,1)]  
 groupIntegerFactors :: [Integer] -> [(Integer,Int)]
