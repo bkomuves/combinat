@@ -56,16 +56,16 @@ module Math.Combinat.Permutations
   , bubbleSort2
   , bubbleSort
     -- * Permutation groups
-  , identity
-  , inverse
-  , multiply
-  , multiplyMany 
-  , multiplyMany'
+  , identityPermutation
+  , inversePermutation
+  , multiplyPermutation
+  , productOfPermutations
+  , productOfPermutations'
     -- * Action of the permutation group
-  , permute 
+  , permuteArray 
   , permuteList
-  , permuteLeft , permuteRight
-  , permuteLeftList , permuteRightList
+  , permuteArrayLeft , permuteArrayRight
+  , permuteListLeft  , permuteListRight
     -- * Sorting
   , sortingPermutationAsc 
   , sortingPermutationDesc
@@ -328,7 +328,7 @@ twoLineNotation (Permutation arr) = genericTwoLineNotation $ zip [1..] (_elems a
 -- of the columns 'twoLineNotation'.
 --
 -- Remark: the top row of @inverseTwoLineNotation perm@ is the same 
--- as the bottom row of @twoLineNotation (inverse perm)@.
+-- as the bottom row of @twoLineNotation (inversePermutation perm)@.
 --
 inverseTwoLineNotation :: Permutation -> ASCII
 inverseTwoLineNotation (Permutation arr) =
@@ -693,47 +693,47 @@ cycleRight n = Permutation $ fromPermListN n (n : [1..n-1])
 --------------------------------------------------------------------------------
 -- * Permutation groups
 
--- | Multiplies two permutations together: @p `multiply` q@
+-- | Multiplies two permutations together: @p `multiplyPermutation` q@
 -- means the permutation when we first apply @p@, and then @q@
 -- (that is, the natural action is the /right/ action)
 --
--- See also 'permute' for our conventions.  
+-- See also 'permuteArray' for our conventions.  
 --
-multiply :: Permutation -> Permutation -> Permutation
-multiply pi1@(Permutation perm1) pi2@(Permutation perm2) = 
+multiplyPermutation :: Permutation -> Permutation -> Permutation
+multiplyPermutation pi1@(Permutation perm1) pi2@(Permutation perm2) = 
   if (n==m) 
     then Permutation $ fromUArray result
-    else error "multiply: permutations of different sets"  
+    else error "multiplyPermutation: permutations of different sets"  
   where
     n = _bound perm1
     m = _bound perm2    
-    result = permute pi2 (toUArray perm1)
+    result = permuteArray pi2 (toUArray perm1)
   
-infixr 7 `multiply`  
+infixr 7 `multiplyPermutation`  
 
 -- | The inverse permutation.
-inverse :: Permutation -> Permutation    
-inverse (Permutation perm1) = Permutation $ fromUArray result
+inversePermutation :: Permutation -> Permutation    
+inversePermutation (Permutation perm1) = Permutation $ fromUArray result
   where
     result = array (1,n) $ map swap $ _assocs perm1
     n = _bound perm1
     
 -- | The identity (or trivial) permutation.
-identity :: Int -> Permutation 
-identity n = Permutation $ fromPermListN n [1..n]
+identityPermutation :: Int -> Permutation 
+identityPermutation n = Permutation $ fromPermListN n [1..n]
 
 -- | Multiply together a /non-empty/ list of permutations (the reason for requiring the list to
 -- be non-empty is that we don\'t know the size of the result). See also 'multiplyMany''.
-multiplyMany :: [Permutation] -> Permutation 
-multiplyMany [] = error "multiplyMany: empty list, we don't know size of the result"
-multiplyMany ps = foldl1' multiply ps    
+productOfPermutations :: [Permutation] -> Permutation 
+productOfPermutations [] = error "productOfPermutations: empty list, we don't know size of the result"
+productOfPermutations ps = foldl1' multiplyPermutation ps    
 
 -- | Multiply together a (possibly empty) list of permutations, all of which has size @n@
-multiplyMany' :: Int -> [Permutation] -> Permutation 
-multiplyMany' n []       = identity n
-multiplyMany' n ps@(p:_) = if n == permutationSize p 
-  then foldl1' multiply ps    
-  else error "multiplyMany': incompatible permutation size(s)"
+productOfPermutations' :: Int -> [Permutation] -> Permutation 
+productOfPermutations' n []       = identityPermutation n
+productOfPermutations' n ps@(p:_) = if n == permutationSize p 
+  then foldl1' multiplyPermutation ps    
+  else error "productOfPermutations': incompatible permutation size(s)"
 
 --------------------------------------------------------------------------------
 -- * Action of the permutation group
@@ -748,75 +748,75 @@ multiplyMany' n ps@(p:_) = if n == permutationSize p
 -- We adopt the convention that permutations act /on the right/ 
 -- (as in Knuth):
 --
--- > permute pi2 (permute pi1 set) == permute (pi1 `multiply` pi2) set
+-- > permuteArray pi2 (permuteArray pi1 set) == permuteArray (pi1 `multiplyPermutation` pi2) set
 --
--- Synonym to 'permuteRight'
+-- Synonym to 'permuteArrayRight'
 --
-{-# SPECIALIZE permute :: Permutation -> Array  Int b   -> Array  Int b   #-}
-{-# SPECIALIZE permute :: Permutation -> UArray Int Int -> UArray Int Int #-}
-permute :: IArray arr b => Permutation -> arr Int b -> arr Int b    
-permute = permuteRight
+{-# SPECIALIZE permuteArray :: Permutation -> Array  Int b   -> Array  Int b   #-}
+{-# SPECIALIZE permuteArray :: Permutation -> UArray Int Int -> UArray Int Int #-}
+permuteArray :: IArray arr b => Permutation -> arr Int b -> arr Int b    
+permuteArray = permuteArrayRight
 
 -- | Right action on lists. Synonym to 'permuteListRight'
 --
 permuteList :: Permutation -> [a] -> [a]
-permuteList = permuteRightList
+permuteList = permuteListRight
     
 -- | The right (standard) action of permutations on sets. 
 -- 
--- > permuteRight pi2 (permuteRight pi1 set) == permuteRight (pi1 `multiply` pi2) set
+-- > permuteArrayRight pi2 (permuteArrayRight pi1 set) == permuteArrayRight (pi1 `multiplyPermutation` pi2) set
 --   
 -- The second argument should be an array with bounds @(1,n)@.
 -- The function checks the array bounds.
 --
-{-# SPECIALIZE permuteRight :: Permutation -> Array  Int b   -> Array  Int b   #-}
-{-# SPECIALIZE permuteRight :: Permutation -> UArray Int Int -> UArray Int Int #-}
-permuteRight :: IArray arr b => Permutation -> arr Int b -> arr Int b    
-permuteRight pi@(Permutation perm) ar = 
+{-# SPECIALIZE permuteArrayRight :: Permutation -> Array  Int b   -> Array  Int b   #-}
+{-# SPECIALIZE permuteArrayRight :: Permutation -> UArray Int Int -> UArray Int Int #-}
+permuteArrayRight :: IArray arr b => Permutation -> arr Int b -> arr Int b    
+permuteArrayRight pi@(Permutation perm) ar = 
   if (a==1) && (b==n) 
     then listArray (1,n) [ ar!(perm.!i) | i <- [1..n] ] 
-    else error "permuteRight: array bounds do not match"
+    else error "permuteArrayRight: array bounds do not match"
   where
     n     = _bound perm
     (a,b) = bounds ar   
 
 -- | The right (standard) action on a list. The list should be of length @n@.
 --
--- > fromPermutation perm == permuteRightList perm [1..n]
+-- > fromPermutation perm == permuteListRight perm [1..n]
 -- 
-permuteRightList :: forall a . Permutation -> [a] -> [a]    
-permuteRightList perm xs = elems $ permuteRight perm $ arr where
+permuteListRight :: forall a . Permutation -> [a] -> [a]    
+permuteListRight perm xs = elems $ permuteArrayRight perm $ arr where
   arr = listArray (1,n) xs :: Array Int a
   n   = permutationSize perm
 
 -- | The left (opposite) action of the permutation group.
 --
--- > permuteLeft pi2 (permuteLeft pi1 set) == permuteLeft (pi2 `multiply` pi1) set
+-- > permuteArrayLeft pi2 (permuteArrayLeft pi1 set) == permuteArrayLeft (pi2 `multiplyPermutation` pi1) set
 --
--- It is related to 'permuteLeft' via:
+-- It is related to 'permuteLeftArray' via:
 --
--- > permuteLeft  pi arr == permuteRight (inverse pi) arr
--- > permuteRight pi arr == permuteLeft  (inverse pi) arr
+-- > permuteArrayLeft  pi arr == permuteArrayRight (inversePermutation pi) arr
+-- > permuteArrayRight pi arr == permuteArrayLeft  (inversePermutation pi) arr
 --
-{-# SPECIALIZE permuteLeft :: Permutation -> Array  Int b   -> Array  Int b   #-}
-{-# SPECIALIZE permuteLeft :: Permutation -> UArray Int Int -> UArray Int Int #-}
-permuteLeft :: IArray arr b => Permutation -> arr Int b -> arr Int b    
-permuteLeft pi@(Permutation perm) ar =    
+{-# SPECIALIZE permuteArrayLeft :: Permutation -> Array  Int b   -> Array  Int b   #-}
+{-# SPECIALIZE permuteArrayLeft :: Permutation -> UArray Int Int -> UArray Int Int #-}
+permuteArrayLeft :: IArray arr b => Permutation -> arr Int b -> arr Int b    
+permuteArrayLeft pi@(Permutation perm) ar =    
   -- permuteRight (inverse pi) ar
   if (a==1) && (b==n) 
     then array (1,n) [ ( perm.!i , ar!i ) | i <- [1..n] ] 
-    else error "permuteLeft: array bounds do not match"
+    else error "permuteArrayLeft: array bounds do not match"
   where
     n     = _bound perm
     (a,b) = bounds ar   
 
 -- | The left (opposite) action on a list. The list should be of length @n@.
 --
--- > permuteLeftList perm set == permuteList (inverse perm) set
--- > fromPermutation (inverse perm) == permuteLeftList perm [1..n]
+-- > permuteListLeft perm set == permuteList (inversePermutation perm) set
+-- > fromPermutation (inversePermutation perm) == permuteListLeft perm [1..n]
 --
-permuteLeftList :: forall a. Permutation -> [a] -> [a]    
-permuteLeftList perm xs = elems $ permuteLeft perm $ arr where
+permuteListLeft :: forall a. Permutation -> [a] -> [a]    
+permuteListLeft perm xs = elems $ permuteArrayLeft perm $ arr where
   arr = listArray (1,n) xs :: Array Int a
   n   = permutationSize perm
 

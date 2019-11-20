@@ -128,7 +128,7 @@ replaceInverses n gens = worker gens where
     facs = leftGreedyFactors n $ map brGenIdx gs
   
   replaceFac idxs = XDelta (-1) : map XSigma (_permutationBraid perm) where
-    perm = (P.reversePermutation n) `P.multiply` (P.adjacentTranspositions n idxs)
+    perm = (P.reversePermutation n) `P.multiplyPermutation` (P.adjacentTranspositions n idxs)
 
 
 -- | Replaces @sigma_i^-1@ generators by @(Delta^-1 * L_i)@.
@@ -259,13 +259,13 @@ posR k = braid where
 -- | The permutation @posL k :: Braid n@ is realizing
 posLPerm :: Int -> Int -> Permutation
 posLPerm n k 
-  | k>0 && k<n  = (P.reversePermutation n `P.multiply` P.adjacentTransposition n k)
+  | k>0 && k<n  = (P.reversePermutation n `P.multiplyPermutation` P.adjacentTransposition n k)
   | otherwise   = error "posLPerm: index out of range"
 
 -- | The permutation @posR k :: Braid n@ is realizing
 posRPerm :: Int -> Int -> Permutation
 posRPerm n k 
-  | k>0 && k<n  = (P.adjacentTransposition n k `P.multiply` P.reversePermutation n )
+  | k>0 && k<n  = (P.adjacentTransposition n k `P.multiplyPermutation` P.reversePermutation n )
   | otherwise   = error "posRPerm: index out of range"
 
 --------------------------------------------------------------------------------
@@ -333,7 +333,7 @@ permWordFinishingSet n input = runST action where
 -- > permutationStartingSet p == permWordStartingSet n (_permutationBraid p)
 --
 permutationStartingSet :: Permutation -> [Int]
-permutationStartingSet = permutationFinishingSet . P.inverse
+permutationStartingSet = permutationFinishingSet . P.inversePermutation
 
 -- | This satisfies
 -- 
@@ -417,8 +417,8 @@ normalizePermFactors1 n input = (exp, reverse output) where
           []    -> let (e',rs) = worker' eq 0 e rest in (e', preal : rs)
           (j:_) -> worker' (-e) (-e) e (p':q':rest') where 
                      s  = P.adjacentTransposition n j
-                     p' = P.multiply s preal
-                     q' = P.multiply qreal s
+                     p' = P.multiplyPermutation s preal
+                     q' = P.multiplyPermutation qreal s
         where
           preal = oddTau (e+ep) p       -- the "real" p
           qreal = oddTau (e+eq) q       -- the "real" q

@@ -179,40 +179,40 @@ xdisjcyc = DisjointCycles [ [1, 12, 18, 19, 14, 21, 23, 13, 22], [2, 15, 8, 9, 2
 
 prop_randCyclic cycl = ( isCyclicPermutation (fromCyclic cycl) )
 
-prop_inverse perm = ( perm == inverse (inverse perm) ) 
+prop_inverse perm = ( perm == inversePermutation (inversePermutation perm) ) 
 
 prop_mulPerm (SameSize perm1 perm2) = 
-    ( permute perm2 (permute perm1 set) == permute (perm1 `multiply` perm2) set ) 
+    ( permuteArray perm2 (permuteArray perm1 set) == permuteArray (perm1 `multiplyPermutation` perm2) set ) 
   where 
     set = naturalSet perm1
 
 prop_mulPermRight (SameSize perm1 perm2) = 
-    ( permuteRight perm2 (permuteRight perm1 set) == permuteRight (perm1 `multiply` perm2) set ) 
+    ( permuteArrayRight perm2 (permuteArrayRight perm1 set) == permuteArrayRight (perm1 `multiplyPermutation` perm2) set ) 
   where 
     set = naturalSet perm1
 
 prop_mulPermLeft (SameSize perm1 perm2) = 
-    ( permuteLeft perm2 (permuteLeft perm1 set) == permuteLeft (perm2 `multiply` perm1) set ) 
+    ( permuteArrayLeft perm2 (permuteArrayLeft perm1 set) == permuteArrayLeft (perm2 `multiplyPermutation` perm1) set ) 
   where 
     set = naturalSet perm1
 
-prop_perm          perm = permute perm (naturalSet perm) == permInternalSet perm
-prop_permLeft      perm = permuteLeft  perm (permInternalSet perm) == naturalSet perm
-prop_permRight     perm = permuteRight perm (naturalSet perm) == permInternalSet perm
-prop_permLeftRight perm = permuteLeft (inverse perm) (naturalSet perm) == permuteRight (perm) (naturalSet perm) 
+prop_perm          perm = permuteArray      perm (naturalSet perm) == permInternalSet perm
+prop_permLeft      perm = permuteArrayLeft  perm (permInternalSet perm) == naturalSet perm
+prop_permRight     perm = permuteArrayRight perm (naturalSet perm) == permInternalSet perm
+prop_permLeftRight perm = permuteArrayLeft (inversePermutation perm) (naturalSet perm) == permuteArrayRight (perm) (naturalSet perm) 
 
 prop_cycleLeft  = permuteList (cycleLeft  5) "abcde" == "bcdea"
 prop_cycleRight = permuteList (cycleRight 5) "abcde" == "eabcd"
 
 prop_mulSign (SameSize perm1 perm2) = 
-    ( sgn perm1 * sgn perm2 == sgn (perm1 `multiply` perm2) ) 
+    ( sgn perm1 * sgn perm2 == sgn (perm1 `multiplyPermutation` perm2) ) 
   where 
     sgn = signValue . signOfPermutation :: Permutation -> Int
 
 prop_sign_inversions perm = signOfPermutation perm == paritySign (numberOfInversions perm)
 
 prop_invMul (SameSize perm1 perm2) =   
-  ( inverse perm2 `multiply` inverse perm1 == inverse (perm1 `multiply` perm2) ) 
+  ( inversePermutation perm2 `multiplyPermutation` inversePermutation perm1 == inversePermutation (perm1 `multiplyPermutation` perm2) ) 
 
 prop_cyclSign cycl = ( isEvenPermutation perm == odd n ) where
   perm = fromCyclic cycl
@@ -224,17 +224,17 @@ prop_isEven perm = ( isEvenPermutation perm == isEvenAlternative perm ) where
   isEvenAlternative p = 
     even $ sum $ map (\x->x-1) $ map length $ fromDisjointCycles $ permutationToDisjointCycles p
 
-prop_bubbleSort perm = multiplyMany' n (map (adjacentTransposition n) $ bubbleSort perm) == perm where
+prop_bubbleSort perm = productOfPermutations' n (map (adjacentTransposition n) $ bubbleSort perm) == perm where
   n = permutationSize perm
 
-prop_bubbleSort2 perm = multiplyMany' n (map (transposition n) $ bubbleSort2 perm) == perm where
+prop_bubbleSort2 perm = productOfPermutations' n (map (transposition n) $ bubbleSort2 perm) == perm where
   n = permutationSize perm
 
 prop_bubble_inversions perm = length (bubbleSort perm) == numberOfInversions perm
 
 prop_number_inversions perm = length (inversions perm) == numberOfInversions perm
 
-prop_ninversions_inverse perm = numberOfInversions perm == numberOfInversions (inverse perm)
+prop_ninversions_inverse perm = numberOfInversions perm == numberOfInversions (inversePermutation perm)
 
 prop_merge_inversions perm = (numberOfInversionsMerge perm == numberOfInversionsNaive perm)
 

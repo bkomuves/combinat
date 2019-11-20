@@ -265,7 +265,7 @@ composeDontReduce (Braid gs) (Braid hs) = Braid (gs++hs)
 
 -- | A braid is pure if its permutation is trivial
 isPureBraid :: KnownNat n => Braid n -> Bool
-isPureBraid braid = (braidPermutation braid == P.identity n) where
+isPureBraid braid = (braidPermutation braid == P.identityPermutation n) where
   n = numberOfStrands braid
 
 -- | Returns the left-to-right permutation associated to the braid. 

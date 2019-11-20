@@ -226,7 +226,7 @@ prop_permBraid_valid (PermBraid perm braid) = isPermutationBraid braid
 prop_braidPerm_comp :: TwoBraids -> Bool
 prop_braidPerm_comp (TwoBraids b1 b2) = (p == q) where
   p = braidPermutation (compose b1 b2) 
-  q = braidPermutation b1 `P.multiply` braidPermutation b2
+  q = braidPermutation b1 `P.multiplyPermutation` braidPermutation b2
 
 prop_link_positive :: PositiveBraid -> Bool
 prop_link_positive (PositiveB braid) = all (>=0) $ elems $ linkingMatrix braid
