@@ -24,7 +24,7 @@ extra-source-files:  svg/*.svg
 
 source-repository head
   type:                darcs 
-  location:            http://moire.be/haskell/projects/combinat/
+  location:            https://hub.darcs.net/bkomuves/combinat
 
 --------------------------------------------------------------------------------
 
