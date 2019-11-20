@@ -53,7 +53,7 @@ import Control.Monad.ST
 import Math.Combinat.Helper
 import Math.Combinat.Sign
 
-import Math.Combinat.Permutations ( Permutation(..) , isIdentityPermutation , isReversePermutation )
+import Math.Combinat.Permutations ( Permutation(..) , (!!!) , isIdentityPermutation , isReversePermutation )
 import qualified Math.Combinat.Permutations as P
 
 import Math.Combinat.Groups.Braid
@@ -340,8 +340,8 @@ permutationStartingSet = permutationFinishingSet . P.inverse
 -- > permutationFinishingSet p == permWordFinishingSet n (_permutationBraid p)
 --
 permutationFinishingSet :: Permutation -> [Int]
-permutationFinishingSet (Permutation arr) 
-  = [ i | i<-[1..n-1] , arr ! i > arr ! (i+1) ] where (1,n) = bounds arr
+permutationFinishingSet perm
+  = [ i | i<-[1..n-1] , perm !!! i > perm !!! (i+1) ] where n = P.permutationSize perm
 
 -- | Returns the list of permutations failing Lemma 2.5 in [2] 
 -- (so an empty list means the implementaton is correct)

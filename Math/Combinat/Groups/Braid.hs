@@ -48,7 +48,7 @@ import Math.Combinat.Helper
 import Math.Combinat.TypeLevel
 import Math.Combinat.Numbers.Series
 
-import Math.Combinat.Permutations ( Permutation(..) )
+import Math.Combinat.Permutations ( Permutation(..) , (!!!) )
 import qualified Math.Combinat.Permutations as P
 
 --------------------------------------------------------------------------------
@@ -233,8 +233,8 @@ tau braid@(Braid gens) = Braid (map f gens) where
 -- | The involution @tau@ on permutations (permutation braids)
 --
 tauPerm :: Permutation -> Permutation
-tauPerm (Permutation arr) = Permutation $ listArray (1,n) [ (n+1) - arr!(n-i) | i<-[0..n-1] ] where
-  (1,n) = bounds arr
+tauPerm perm = P.toPermutationUnsafeN n [ (n+1) - perm !!! (n-i) | i<-[0..n-1] ] where
+  n = P.permutationSize perm
 
 --------------------------------------------------------------------------------
 -- * Group operations
@@ -288,7 +288,7 @@ braidPermutation braid@ (Braid gens) = perm where
 
 -- | This is an untyped version of 'braidPermutation'
 _braidPermutation :: Int -> [Int] -> Permutation
-_braidPermutation n idxs = Permutation (runSTUArray action) where
+_braidPermutation n idxs = P.uarrayToPermutationUnsafe (runSTUArray action) where
 
   action :: forall s. ST s (STUArray s Int Int) 
   action = do 
@@ -358,8 +358,8 @@ _permutationBraid = concat . _permutationBraid'
 -- | Returns the individual \"phases\" of the a permutation braid realizing the
 -- given permutation.
 _permutationBraid' :: Permutation -> [[Int]]
-_permutationBraid' perm@(Permutation arr) = runST action where
-  (1,n) = bounds arr
+_permutationBraid' perm = runST action where
+  n = P.permutationSize perm
 
   action :: forall s. ST s [[Int]]
   action = do
@@ -388,7 +388,7 @@ _permutationBraid' perm@(Permutation arr) = runST action where
     let worker phase
           | phase >= n  = return []
           | otherwise   = do
-              let tgt = (arr ! phase)
+              let tgt = P.lookupPermutation perm phase  -- (arr ! phase)
               src <- readArray cfwd tgt
               let this = [src-1,src-2..phase]
               mapM_ doSwap $ this 

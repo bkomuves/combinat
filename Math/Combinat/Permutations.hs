@@ -13,6 +13,7 @@ module Math.Combinat.Permutations
   ( -- * The Permutation type
     Permutation (..)
   , fromPermutation
+  , lookupPermutation , (!!!)
   , permutationArray
   , permutationUArray
   , uarrayToPermutationUnsafe
@@ -20,6 +21,7 @@ module Math.Combinat.Permutations
   , maybePermutation
   , toPermutation
   , toPermutationUnsafe
+  , toPermutationUnsafeN
   , permutationSize
     -- * Disjoint cycles
   , DisjointCycles (..)
@@ -108,6 +110,9 @@ import Data.Array.IArray
 import Data.Array.MArray
 import Data.Array.Unsafe
 
+import Data.Vector.Compact.WordVec ( WordVec )
+import qualified Data.Vector.Compact.WordVec as V
+
 import Math.Combinat.ASCII
 import Math.Combinat.Classes
 import Math.Combinat.Helper
@@ -117,10 +122,58 @@ import Math.Combinat.Numbers ( factorial , binomial )
 import System.Random
 
 --------------------------------------------------------------------------------
+-- WordVec helpers
+
+toUArray :: WordVec -> UArray Int Int
+toUArray vec = listArray (1,n) (map fromIntegral $ V.toList vec) where n = V.vecLen vec
+
+fromUArray :: UArray Int Int -> WordVec
+fromUArray arr = fromPermListN n (map fromIntegral $ elems arr) where
+  (1,n) = bounds arr
+
+-- | maximum = length
+fromPermListN :: Int -> [Int] -> WordVec
+fromPermListN n perm = V.fromList' shape (map fromIntegral perm) where
+  shape = V.Shape n bits
+  bits  = V.bitsNeededFor (fromIntegral n :: Word)
+
+fromPermList :: [Int] -> WordVec
+fromPermList perm = V.fromList (map fromIntegral perm)
+
+(.!) :: WordVec -> Int -> Int
+(.!) vec idx = fromIntegral (V.unsafeIndex (idx-1) vec)
+
+_elems :: WordVec -> [Int]
+_elems = map fromIntegral . V.toList
+
+_assocs :: WordVec -> [(Int,Int)]
+_assocs vec = zip [1..] (_elems vec)
+
+_bound :: WordVec -> Int
+_bound = V.vecLen
+
+{- 
+-- the old internal representation (UArray Int Int)
+
+_elems :: UArray Int Int -> [Int]
+_elems = elems
+
+_assocs :: UArray Int Int -> [(Int,Int)]
+_assocs = elems
+
+_bound :: UArray Int Int -> Int
+_bound = snd . bounds
+-}
+
+
+toPermN :: Int -> [Int] -> Permutation
+toPermN n xs = Permutation (fromPermListN n xs)
+
+--------------------------------------------------------------------------------
 -- * Types
 
--- | A permutation. Internally it is an (unboxed) array of the integers @[1..n]@, with 
--- indexing range also being @(1,n)@. 
+-- | A permutation. Internally it is an (compact) vector 
+-- of the integers @[1..n]@.
 --
 -- If this array of integers is @[p1,p2,...,pn]@, then in two-line 
 -- notations, that represents the permutation
@@ -136,12 +189,12 @@ import System.Random
 --
 -- (NOTE: this changed at version 0.2.8.0!)
 --
-newtype Permutation = Permutation (UArray Int Int) deriving (Eq,Ord) -- ,Show,Read)
+newtype Permutation = Permutation WordVec deriving (Eq,Ord) -- ,Show,Read)
 
 instance Show Permutation where
   showsPrec d (Permutation arr) 
     = showParen (d > 10)  
-    $ showString "toPermutation " . showsPrec 11 (elems arr)       -- app_prec = 10
+    $ showString "toPermutation " . showsPrec 11 (_elems arr)       -- app_prec = 10
 
 instance Read Permutation where
   readsPrec d r = readParen (d > 10) fun r where
@@ -164,25 +217,26 @@ instance DrawASCII Permutation where
 newtype DisjointCycles = DisjointCycles [[Int]] deriving (Eq,Ord,Show,Read)
 
 fromPermutation :: Permutation -> [Int]
-fromPermutation (Permutation ar) = elems ar
+fromPermutation (Permutation ar) = _elems ar
 
 permutationUArray :: Permutation -> UArray Int Int
-permutationUArray (Permutation ar) = ar
+permutationUArray (Permutation ar) = toUArray ar
 
--- | Note: this is slower than 'permutationUArray'
 permutationArray :: Permutation -> Array Int Int
-permutationArray (Permutation ar) = listArray (1,n) (elems ar) where
-  (1,n) = bounds ar
+permutationArray (Permutation ar) = listArray (1,n) (_elems ar) where
+  n = _bound ar
 
 -- | Assumes that the input is a permutation of the numbers @[1..n]@.
 toPermutationUnsafe :: [Int] -> Permutation
-toPermutationUnsafe xs = Permutation perm where
-  n    = length xs
-  perm = listArray (1,n) xs
+toPermutationUnsafe xs = Permutation (fromPermList xs) 
+
+-- | This is faster than 'toPermutationUnsafe', but you need to supply @n@.
+toPermutationUnsafeN :: Int -> [Int] -> Permutation
+toPermutationUnsafeN n xs = Permutation (fromPermListN n xs) 
 
 -- | Note: Indexing starts from 1.
 uarrayToPermutationUnsafe :: UArray Int Int -> Permutation
-uarrayToPermutationUnsafe = Permutation
+uarrayToPermutationUnsafe = Permutation . fromUArray
 
 -- | Checks whether the input is a permutation of the numbers @[1..n]@.
 isPermutation :: [Int] -> Bool
@@ -200,7 +254,7 @@ maybePermutation input = runST action where
   action :: forall s. ST s (Maybe Permutation)
   action = do
     ar <- newArray (1,n) 0 :: ST s (STUArray s Int Int)
-    let go []     = return $ Just (Permutation $ listArray (1,n) input)
+    let go []     = return $ Just (toPermutationUnsafe input)
         go (j:js) = if j<1 || j>n 
           then return Nothing
           else do
@@ -218,15 +272,27 @@ toPermutation xs = case maybePermutation xs of
 
 -- | Returns @n@, where the input is a permutation of the numbers @[1..n]@
 permutationSize :: Permutation -> Int
-permutationSize (Permutation ar) = snd $ bounds ar
+permutationSize (Permutation ar) = _bound ar
+
+-- | Returns the image @sigma(k)@ of @k@ under the permutation @sigma@.
+-- 
+-- Note: we don't check the bounds! It may even crash if you index out of bounds!
+lookupPermutation :: Permutation -> Int -> Int
+lookupPermutation (Permutation ar) idx = ar .! idx
+
+-- infix 8 !!!
+
+-- | Infix version of 'lookupPermutation'
+(!!!) :: Permutation -> Int -> Int
+(!!!) (Permutation ar) idx = ar .! idx
 
 instance HasWidth Permutation where
   width = permutationSize
 
 -- | Checks whether the permutation is the identity permutation
 isIdentityPermutation :: Permutation -> Bool
-isIdentityPermutation (Permutation ar) = (elems ar == [1..n]) where
-  (1,n) = bounds ar
+isIdentityPermutation (Permutation ar) = (_elems ar == [1..n]) where
+  n = _bound ar
 
 -- | Given a permutation of @n@ and a permutation of @m@, we return
 -- a permutation of @n+m@ resulting by putting them next to each other.
@@ -255,7 +321,7 @@ asciiDisjointCycles (DisjointCycles cycles) = final where
 -- | The standard two-line notation, moving the element indexed by the top row into
 -- the place indexed by the corresponding element in the bottom row.
 twoLineNotation :: Permutation -> ASCII
-twoLineNotation (Permutation arr) = genericTwoLineNotation $ zip [1..] (elems arr)
+twoLineNotation (Permutation arr) = genericTwoLineNotation $ zip [1..] (_elems arr)
 
 -- | The inverse two-line notation, where the it\'s the bottom line 
 -- which is in standard order. The columns of this are a permutation
@@ -266,7 +332,7 @@ twoLineNotation (Permutation arr) = genericTwoLineNotation $ zip [1..] (elems ar
 --
 inverseTwoLineNotation :: Permutation -> ASCII
 inverseTwoLineNotation (Permutation arr) =
-  genericTwoLineNotation $ sortBy (comparing snd) $ zip [1..] (elems arr) 
+  genericTwoLineNotation $ sortBy (comparing snd) $ zip [1..] (_elems arr) 
 
 -- | Two-line notation for any set of numbers
 genericTwoLineNotation :: [(Int,Int)] -> ASCII
@@ -301,7 +367,7 @@ instance HasNumberOfCycles Permutation where
   numberOfCycles = numberOfCycles . permutationToDisjointCycles
   
 disjointCyclesToPermutation :: Int -> DisjointCycles -> Permutation
-disjointCyclesToPermutation n (DisjointCycles cycles) = Permutation perm where
+disjointCyclesToPermutation n (DisjointCycles cycles) = Permutation $ fromUArray perm where
 
   pairs :: [Int] -> [(Int,Int)]
   pairs xs@(x:_) = worker (xs++[x]) where
@@ -329,7 +395,7 @@ disjointCyclesToPermutation n (DisjointCycles cycles) = Permutation perm where
 permutationToDisjointCycles :: Permutation -> DisjointCycles
 permutationToDisjointCycles (Permutation perm) = res where
 
-  (1,n) = bounds perm
+  n = _bound perm
 
   -- we don't want trivial cycles
   f :: [Int] -> Bool
@@ -357,7 +423,7 @@ permutationToDisjointCycles (Permutation perm) = res where
   worker :: STUArray s Int Bool -> Int -> Int -> [Int] -> ST s [Int]
   worker tag k l cyc = do
     writeArray tag l True
-    let m = perm ! l
+    let m = perm .! l
     if m == k 
       then return cyc
       else worker tag k m (m:cyc)      
@@ -365,7 +431,7 @@ permutationToDisjointCycles (Permutation perm) = res where
 isEvenPermutation :: Permutation -> Bool
 isEvenPermutation (Permutation perm) = res where
 
-  (1,n) = bounds perm
+  n = _bound perm
   res = runST $ do
     tag <- newArray (1,n) False 
     cycles <- unfoldM (step tag) 1 
@@ -387,7 +453,7 @@ isEvenPermutation (Permutation perm) = res where
   worker :: STUArray s Int Bool -> Int -> Int -> Int -> ST s Int
   worker tag k l cyclen = do
     writeArray tag l True
-    let m = perm ! l
+    let m = perm .! l
     if m == k 
       then return cyclen
       else worker tag k m (1+cyclen)      
@@ -426,8 +492,8 @@ isCyclicPermutation perm =
 --
 inversions :: Permutation -> [(Int,Int)]
 inversions (Permutation arr) = list where
-  (_,n) = bounds arr
-  list = [ (i,j) | i<-[1..n-1], j<-[i+1..n], arr!i > arr!j ]
+  n =  _bound arr
+  list = [ (i,j) | i<-[1..n-1], j<-[i+1..n], arr.!i > arr.!j ]
 
 -- | Returns the number of inversions:
 --
@@ -442,8 +508,8 @@ numberOfInversions = numberOfInversionsMerge
 -- This should be @O(n*log(n))@
 --
 numberOfInversionsMerge :: Permutation -> Int
-numberOfInversionsMerge (Permutation arr) = fst (sortCnt n $ elems arr) where
-  (_,n) = bounds arr
+numberOfInversionsMerge (Permutation arr) = fst (sortCnt n $ _elems arr) where
+  n = _bound arr
                                         
   -- | First argument is length of the list.
   -- Returns also the inversion count.
@@ -471,8 +537,8 @@ numberOfInversionsMerge (Permutation arr) = fst (sortCnt n $ elems arr) where
 --
 numberOfInversionsNaive :: Permutation -> Int
 numberOfInversionsNaive (Permutation arr) = length list where
-  (_,n) = bounds arr
-  list = [ (0::Int) | i<-[1..n-1], j<-[i+1..n], arr!i > arr!j ]
+  n    = _bound arr
+  list = [ (0::Int) | i<-[1..n-1], j<-[i+1..n], arr.!i > arr.!j ]
 
 -- | Bubble sorts breaks a permutation into the product of adjacent transpositions:
 --
@@ -491,7 +557,7 @@ bubbleSort2 = map f . bubbleSort where f i = (i,i+1)
 --
 bubbleSort :: Permutation -> [Int]
 bubbleSort perm@(Permutation tgt) = runST action where
-  (_,n)           = bounds tgt
+  n = _bound tgt
 
   action :: forall s. ST s [Int]
   action = do
@@ -502,7 +568,7 @@ bubbleSort perm@(Permutation tgt) = runST action where
 
     list <- forM [1..n] $ \x -> do
 
-      let k = tgt ! x        -- we take the number which will be at the @x@-th position at the end
+      let k = tgt .! x       -- we take the number which will be at the @x@-th position at the end
       i <- readArray inv k   -- number @k@ is at the moment at position @i@
       let j = x              -- but the final place is at @x@      
 
@@ -534,11 +600,11 @@ bubbleSort perm@(Permutation tgt) = runST action where
 
 -- | The permutation @[n,n-1,n-2,...,2,1]@. Note that it is the inverse of itself.
 reversePermutation :: Int -> Permutation
-reversePermutation n = Permutation $ listArray (1,n) [n,n-1..1]
+reversePermutation n = Permutation $ fromPermListN n [n,n-1..1]
 
 -- | Checks whether the permutation is the reverse permutation @[n,n-1,n-2,...,2,1].
 isReversePermutation :: Permutation -> Bool
-isReversePermutation (Permutation arr) = elems arr == [n,n-1..1] where (1,n) = bounds arr
+isReversePermutation (Permutation arr) = _elems arr == [n,n-1..1] where n = _bound arr
 
 -- | A transposition (swapping two elements). 
 --
@@ -547,7 +613,7 @@ isReversePermutation (Permutation arr) = elems arr == [n,n-1..1] where (1,n) = b
 transposition :: Int -> (Int,Int) -> Permutation
 transposition n (i,j) = 
   if i>=1 && j>=1 && i<=n && j<=n 
-    then Permutation $ listArray (1,n) [ f k | k<-[1..n] ]
+    then Permutation $ fromPermListN n [ f k | k<-[1..n] ]
     else error "transposition: index out of range"
   where
     f k | k == i    = j
@@ -559,7 +625,7 @@ transposition n (i,j) =
 -- > transpositions n list == multiplyMany [ transposition n pair | pair <- list ]
 --
 transpositions :: Int -> [(Int,Int)] -> Permutation
-transpositions n list = Permutation (runSTUArray action) where
+transpositions n list = Permutation (fromUArray $ runSTUArray action) where
 
   action :: ST s (STUArray s Int Int)
   action = do
@@ -584,7 +650,7 @@ adjacentTransposition n k
 -- > adjacentTranspositions n list == multiplyMany [ adjacentTransposition n idx | idx <- list ]
 --
 adjacentTranspositions :: Int -> [Int] -> Permutation
-adjacentTranspositions n list = Permutation (runSTUArray action) where
+adjacentTranspositions n list = Permutation (fromUArray $ runSTUArray action) where
 
   action :: ST s (STUArray s Int Int)
   action = do
@@ -610,7 +676,7 @@ adjacentTranspositions n list = Permutation (runSTUArray action) where
 -- > ( 2 3 4 5 1 )
 -- 
 cycleLeft :: Int -> Permutation
-cycleLeft n = Permutation $ listArray (1,n) $ [2..n] ++ [1]
+cycleLeft n = Permutation $ fromPermListN n ([2..n] ++ [1])
 
 -- | The permutation which cycles a list right by one step:
 -- 
@@ -622,7 +688,7 @@ cycleLeft n = Permutation $ listArray (1,n) $ [2..n] ++ [1]
 -- > ( 5 1 2 3 4 )
 -- 
 cycleRight :: Int -> Permutation
-cycleRight n = Permutation $ listArray (1,n) $ n : [1..n-1]
+cycleRight n = Permutation $ fromPermListN n (n : [1..n-1])
    
 --------------------------------------------------------------------------------
 -- * Permutation groups
@@ -636,25 +702,25 @@ cycleRight n = Permutation $ listArray (1,n) $ n : [1..n-1]
 multiply :: Permutation -> Permutation -> Permutation
 multiply pi1@(Permutation perm1) pi2@(Permutation perm2) = 
   if (n==m) 
-    then Permutation result
+    then Permutation $ fromUArray result
     else error "multiply: permutations of different sets"  
   where
-    (_,n) = bounds perm1
-    (_,m) = bounds perm2    
-    result = permute pi2 perm1
+    n = _bound perm1
+    m = _bound perm2    
+    result = permute pi2 (toUArray perm1)
   
 infixr 7 `multiply`  
 
 -- | The inverse permutation.
 inverse :: Permutation -> Permutation    
-inverse (Permutation perm1) = Permutation result
+inverse (Permutation perm1) = Permutation $ fromUArray result
   where
-    result = array (1,n) $ map swap $ assocs perm1
-    (_,n) = bounds perm1
+    result = array (1,n) $ map swap $ _assocs perm1
+    n = _bound perm1
     
 -- | The identity (or trivial) permutation.
 identity :: Int -> Permutation 
-identity n = Permutation $ listArray (1,n) [1..n]
+identity n = Permutation $ fromPermListN n [1..n]
 
 -- | Multiply together a /non-empty/ list of permutations (the reason for requiring the list to
 -- be non-empty is that we don\'t know the size of the result). See also 'multiplyMany''.
@@ -708,10 +774,10 @@ permuteList = permuteRightList
 permuteRight :: IArray arr b => Permutation -> arr Int b -> arr Int b    
 permuteRight pi@(Permutation perm) ar = 
   if (a==1) && (b==n) 
-    then listArray (1,n) [ ar!(perm!i) | i <- [1..n] ] 
+    then listArray (1,n) [ ar!(perm.!i) | i <- [1..n] ] 
     else error "permuteRight: array bounds do not match"
   where
-    (_,n) = bounds perm  
+    n     = _bound perm
     (a,b) = bounds ar   
 
 -- | The right (standard) action on a list. The list should be of length @n@.
@@ -738,10 +804,10 @@ permuteLeft :: IArray arr b => Permutation -> arr Int b -> arr Int b
 permuteLeft pi@(Permutation perm) ar =    
   -- permuteRight (inverse pi) ar
   if (a==1) && (b==n) 
-    then array (1,n) [ ( perm!i , ar!i ) | i <- [1..n] ] 
+    then array (1,n) [ ( perm.!i , ar!i ) | i <- [1..n] ] 
     else error "permuteLeft: array bounds do not match"
   where
-    (_,n) = bounds perm  
+    n     = _bound perm
     (a,b) = bounds ar   
 
 -- | The left (opposite) action on a list. The list should be of length @n@.
@@ -843,7 +909,7 @@ randomPermutationDurstenfeldSattolo isSattolo n rnd = res where
     forM_ [1..n] $ \i -> writeArray ar i i
     rnd' <- worker n (if isSattolo then n-1 else n) rnd ar 
     perm <- Data.Array.Unsafe.unsafeFreeze ar
-    return (Permutation perm, rnd')
+    return (Permutation (fromUArray perm), rnd')
   worker :: RandomGen g => Int -> Int -> g -> STUArray s Int Int -> ST s g 
   worker n m rnd ar = 
     if n==1 

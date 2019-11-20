@@ -46,7 +46,7 @@ naturalSet perm = listArray (1,n) [ Elem i | i<-[1..n] ] where
   n = permutationSize perm
 
 permInternalSet :: Permutation -> Array Int Elem
-permInternalSet perm@(Permutation arr) = listArray (1,n) [ Elem (arr!i) | i<-[1..n] ] where
+permInternalSet perm@(Permutation arr) = listArray (1,n) [ Elem (perm !!! i) | i<-[1..n] ] where
   n = permutationSize perm
 
 sameSize :: Permutation ->  Permutation -> Bool
