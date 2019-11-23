@@ -9,21 +9,21 @@ from many standard combinatorial objects, including:
 * compositions
 * trees
 * numbers:
-  * natural numbers
-  * prime numbers
-  * formal power series
+    * natural numbers
+    * prime numbers
+    * formal power series
 * permutations
 * partitions:
-  * integer partitions
-  * set partitions, multiset partitions, non-crossing partitions
-  * plane partitions
-  * vector partitions
-  * skew partitions, ribbons
+    * integer partitions
+    * set partitions, multiset partitions, non-crossing partitions
+    * plane partitions
+    * vector partitions
+    * skew partitions, ribbons
 * Young tableaux, Littlewood-Richardson coefficients
 * lattice paths, Dyck paths
 * groups:
-  * permutation groups
-  * braid groups
-  * free groups, free products of cyclic groups
-  * Thompson's group F
+    * permutation groups
+    * braid groups
+    * free groups, free products of cyclic groups
+    * Thompson's group F
 
