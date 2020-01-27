@@ -41,6 +41,18 @@ instance HasNumberOfParts Partition where
 
 ---------------------------------------------------------------------------------
 
+toList :: Partition -> [Int]
+toList (Partition xs) = xs
+
+fromList :: [Int] -> Partition 
+fromList = mkPartition where
+  mkPartition xs = Partition $ sortBy (reverseCompare) $ filter (>0) xs
+
+fromListUnsafe :: [Int] -> Partition
+fromListUnsafe = Partition
+
+---------------------------------------------------------------------------------
+
 isEmptyPartition :: Partition -> Bool
 isEmptyPartition (Partition p) = null p
 

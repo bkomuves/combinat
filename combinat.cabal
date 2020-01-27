@@ -32,7 +32,7 @@ Library
 
   Build-Depends:       base >= 4 && < 5, 
                        array >= 0.5, containers, random, transformers,
-                       compact-word-vectors >= 0.1
+                       compact-word-vectors >= 0.2.0.1
 
   Exposed-Modules:     Math.Combinat
                        Math.Combinat.Classes
@@ -87,8 +87,6 @@ Library
   Default-Language:    Haskell2010
 
   Hs-Source-Dirs:      .
-
-  C-Sources:           cbits/c_compact_partition.c
 
   ghc-options:         -fwarn-tabs -fno-warn-unused-matches -fno-warn-name-shadowing -fno-warn-unused-imports
 
