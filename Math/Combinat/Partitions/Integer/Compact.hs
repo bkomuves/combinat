@@ -9,6 +9,8 @@ This is very helpful when building large tables indexed by partitions, for examp
 and hopefully quite a bit faster, too.
 
 Note: This is an internal module, you are not supposed to import it directly.
+It is also not fully ready to be used yet...
+
 -}
 
 {-# LANGUAGE BangPatterns, PatternSynonyms, ViewPatterns #-}
@@ -39,7 +41,7 @@ instance Show Partition where
 showsPrecPartition :: Int -> Partition -> ShowS
 showsPrecPartition prec (Partition vec)
   = showParen (prec > 10) 
-  $ showString "Partition "
+  $ showString "Partition"
   . showChar ' ' 
   . shows (V.toList vec)
 
@@ -112,6 +114,7 @@ partitionTail (Partition vec) = Partition (V.tail vec)
 -- | We assume that @x >= partitionHeight p@!
 cons :: Int -> Partition -> Partition
 cons !x (Partition !vec) 
+  | V.null vec = Partition (if x > 0 then V.singleton y else V.empty) 
   | y >= h     = Partition (V.cons y vec)
   | otherwise  = error "Partition/cons: invalid element to cons"
   where  
@@ -122,9 +125,10 @@ cons !x (Partition !vec)
 
 -- | We assume that the element is not bigger than the last element!
 snoc :: Partition -> Int -> Partition
-snoc !part            0 = part
 snoc (Partition !vec) !x
-  | y >= V.last vec  = Partition (V.snoc vec y)
+  | x == 0           = Partition vec
+  | V.null vec       = Partition (V.singleton y)
+  | y <= V.last vec  = Partition (V.snoc vec y)
   | otherwise        = error "Partition/snoc: invalid element to snoc"
   where
     y = i2w x
@@ -171,9 +175,9 @@ diffSequence = go . toDescList where
 -- | From a non-increasing sequence @[a1,a2,..,an]@ this computes the reversed sequence of differences
 -- @[ a[n]-0 , a[n-1]-a[n] , ... , a[2]-a[3] , a[1]-a[2] ] @
 reverseDiffSequence :: Partition -> [Int]
-reverseDiffSequence = go . toAscList where
+reverseDiffSequence p = go (0 : toAscList p) where
   go (x:ys@(y:_)) = (y-x) : go ys 
-  go [x] = [x]
+  go [x] = []
   go []  = []
 
 --------------------------------------------------------------------------------
