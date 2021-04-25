@@ -282,7 +282,7 @@ isPureBraid braid = (braidPermutation braid == P.identityPermutation n) where
 -- we got the two-line notation of the permutation.
 --
 braidPermutation :: KnownNat n => Braid n -> Permutation
-braidPermutation braid@ (Braid gens) = perm where
+braidPermutation braid@(Braid gens) = perm where
   n    = numberOfStrands braid
   perm = _braidPermutation n (map brGenIdx gens)
 

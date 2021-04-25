@@ -140,10 +140,10 @@ primesTMWE = 2:3:5:7: gaps 11 wheel (fold3t $ roll 11 wheel primes') where
   pairs ((x:xs):ys:t) = (x : union xs ys) : pairs t 
   wheel = 2:4:2:4:6:2:6:4:2:4:6:6:2:6:4:2:6:4:6:8:4:2:4:2:  
           4:8:6:4:6:2:4:6:2:6:6:4:2:4:6:2:6:4:2:4:2:10:2:10:wheel 
-  gaps k ws@(w:t) cs@ ~(c:u) 
+  gaps k ws@(w:t) cs@(~(c:u))
     | k==c  = gaps (k+w) t u              
     | True  = k : gaps (k+w) t cs  
-  roll k ws@(w:t) ps@ ~(p:u) 
+  roll k ws@(w:t) ps@(~(p:u)) 
     | k==p  = scanl (\c d->c+p*d) (p*p) ws : roll (k+w) t u              
     | True  = roll (k+w) t ps   
 

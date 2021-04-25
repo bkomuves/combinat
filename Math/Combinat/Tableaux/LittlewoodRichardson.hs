@@ -212,8 +212,8 @@ lrScalar :: SkewPartition -> SkewPartition -> Int
 lrScalar lambdaMu alphaBeta = _lrScalar (fromSkewPartition lambdaMu) (fromSkewPartition alphaBeta)
 
 _lrScalar :: (Partition,Partition) -> (Partition,Partition) -> Int
-_lrScalar (plam  @(Partition lam  ) , pmu  @(Partition mu0)  ) 
-         (palpha@(Partition alpha) , pbeta@(Partition beta)) = 
+_lrScalar ( plam@(  Partition lam  ) , pmu@(  Partition mu0 ) ) 
+          ( palpha@(Partition alpha) , pbeta@(Partition beta) ) = 
   if    not (pmu   `isSubPartitionOf` plam  ) 
      || not (pbeta `isSubPartitionOf` palpha) 
      || (sum' lam + sum' beta) /= (sum' alpha + sum' mu0)     -- equivalent to (lambda-mu) /= (alpha-beta)
