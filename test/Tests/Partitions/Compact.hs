@@ -3,16 +3,18 @@ module Tests.Partitions.Compact where
 
 --------------------------------------------------------------------------------
 
-import Data.List hiding ( uncons )
+import Data.List hiding ( uncons , singleton )
 import Data.Ord
 
 import Test.Tasty
 import Test.Tasty.HUnit      as U
 import Test.Tasty.QuickCheck as Q 
 
+import qualified Data.Vector.Compact.WordVec as Vec
+
 import Math.Combinat.Partitions.Integer.Compact
-import Math.Combinat.Partitions.Integer as P
--- import qualified Math.Combinat.Parititions.Integer.IntList as P 
+-- import qualified Math.Combinat.Partitions.Integer as P
+import qualified Math.Combinat.Partitions.Integer.IntList as P 
 
 --------------------------------------------------------------------------------
 
@@ -20,6 +22,11 @@ main = defaultMain tests
 
 tests :: TestTree
 tests = testGroup "Tests" [properties, unitTests]
+
+--------------------------------------------------------------------------------
+
+cmp :: Partition -> Partition -> Ordering
+cmp (Partition x) (Partition y) = Vec.cmpExtZero x y
 
 --------------------------------------------------------------------------------
 
@@ -80,7 +87,7 @@ unitTests = testGroup "Unit tests"
   , testCase "dominates/15"            $ allTrue [ P._dominates xs1 xs2 == dominates p1 p2 | xs1 <- _parts    15 , xs2 <- _parts    15 , let p1 = fromDescList xs1 , let p2 = fromDescList xs2 ]
   , testCase "dominates/16"            $ allTrue [ P._dominates xs1 xs2 == dominates p1 p2 | xs1 <- _parts    16 , xs2 <- _parts    16 , let p1 = fromDescList xs1 , let p2 = fromDescList xs2 ]
   , testCase "dominates/17"            $ allTrue [ P._dominates xs1 xs2 == dominates p1 p2 | xs1 <- _parts    17 , xs2 <- _parts    17 , let p1 = fromDescList xs1 , let p2 = fromDescList xs2 ]
-  , testCase "pieriRuleSingleBox"      $ allTrue [ pieriRuleSingleBox p =%%= map fromDescList (P._pieriRule xs 1) | xs <- _testPartitions      , let p = fromDescList xs ] 
+--  , testCase "pieriRuleSingleBox"      $ allTrue [ pieriRuleSingleBox p =%%= map fromDescList (P._pieriRule xs 1) | xs <- _testPartitions      , let p = fromDescList xs ] 
   , testCase "pieriRule"               $ allTrue [ pieriRule p k        =%%= map fromDescList (P._pieriRule xs k) | xs <- every10th _testPartitionsSmall , let p = fromDescList xs , k <- [1..2] ] 
   ]
 
@@ -122,7 +129,7 @@ properties = localOption (QuickCheckTests 1000)  -- 200
   , prop "fromExpo . toExpo == id" $ \p -> fromExponentialForm (toExponentialForm p) == p
   , prop "isSubPartitionOf"        $ \p q -> isSubPartitionOf p q == P._isSubPartitionOf (toList p) (toList q)
   , prop "dominates"               $ \p q -> dominates p q == P._dominates (toList p) (toList q)
-  , prop "pieriRuleSingleBox"      $ \p -> map toList (pieriRuleSingleBox p) =%%= P._pieriRule (toList p) 1 
+--  , prop "pieriRuleSingleBox"      $ \p -> map toList (pieriRuleSingleBox p) =%%= P._pieriRule (toList p) 1 
 
   , localOption (QuickCheckTests 100) 
   $ prop "pieriRule /1"            $ \p (PieriK k) -> map toList (pieriRule p k) =%%= P._pieriRule (toList p) k 
