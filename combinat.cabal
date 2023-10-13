@@ -18,6 +18,7 @@ Cabal-Version:       1.24
 Build-Type:          Simple
 
 extra-doc-files:     svg/*.svg 
+                     README.md
 
 extra-source-files:  svg/*.svg
                      svg/src/gen_figures.hs                     
@@ -31,8 +32,11 @@ source-repository head
 Library
 
   Build-Depends:       base >= 4 && < 5, 
-                       array >= 0.5, containers, random, transformers,
-                       compact-word-vectors >= 0.2.0.2
+                       array >= 0.5 && < 0.7, 
+                       containers >= 0.6 && < 0.9, 
+                       random >= 1.1 && < 1.4, 
+                       transformers >= 0.4.2 && < 0.8,
+                       compact-word-vectors >= 0.2.0.2 && < 0.4
 
   Exposed-Modules:     Math.Combinat
                        Math.Combinat.Classes
@@ -113,11 +117,19 @@ test-suite combinat-tests
                        Tests.Numbers.Primes   
                        Tests.Numbers.Sequences
                        
-  build-depends:       base >= 4 && < 5, array >= 0.5, containers >= 0.5, random, transformers,
-                       combinat, compact-word-vectors >= 0.2.0.2,
-                       test-framework, 
-                       test-framework-quickcheck2, QuickCheck >= 2,
-                       tasty, tasty-quickcheck, tasty-hunit
+  build-depends:       base >= 4 && < 5, 
+                       array >= 0.5 && < 0.7, 
+                       containers >= 0.6 && < 0.9, 
+                       random >= 1.1 && < 1.4, 
+                       transformers >= 0.4.2 && < 0.8,
+                       compact-word-vectors >= 0.2.0.2 && < 0.4,
+                       combinat, 
+                       test-framework > 0.8.1 && < 0.10, 
+                       test-framework-quickcheck2 >= 0.3 && < 0.5, 
+                       QuickCheck >= 2 && < 0.3,
+                       tasty >= 0.11 && < 1.7, 
+                       tasty-quickcheck >= 0.9 && < 1.0, 
+                       tasty-hunit >= 0.10 && < 1.0
 
   Default-Language:    Haskell2010
   Default-Extensions:  CPP, BangPatterns
