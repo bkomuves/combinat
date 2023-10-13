@@ -10,7 +10,7 @@ License-file:        LICENSE
 Author:              Balazs Komuves
 Copyright:           (c) 2008-2023 Balazs Komuves
 Maintainer:          bkomuves (plus) hackage (at) gmail (dot) com
-Homepage:            http://moire.be/haskell/
+Homepage:            https://github.com/bkomuves/combinat
 Stability:           Experimental
 Category:            Math
 Tested-With:         GHC == 8.6.5, GHC == 9.4.7
@@ -23,8 +23,8 @@ extra-source-files:  svg/*.svg
                      svg/src/gen_figures.hs                     
 
 source-repository head
-  type:                darcs 
-  location:            https://hub.darcs.net/bkomuves/combinat
+  type:                git
+  location:            https://github.com/bkomuves/combinat
 
 --------------------------------------------------------------------------------
 
