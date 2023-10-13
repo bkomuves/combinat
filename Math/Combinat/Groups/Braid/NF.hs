@@ -485,8 +485,10 @@ leftGreedyFactors n input = filter (not . null) $ runST (action input) where
           doSwap p
           if c<=1
             then do
-              (f:fs) <- worker ps
-              return ((p:f):fs)
+              ffs <- worker ps
+              case ffs of
+                (f:fs) -> return ((p:f):fs)
+                _      -> error "Braid/NF/leftGreedyFactors/worker: fatal error; should not happen"
             else do
               clearMat
               fs <- worker (p:ps)
