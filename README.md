@@ -1,6 +1,8 @@
 combinat - a Haskell combinatorics library
 ------------------------------------------
 
+For the API docs, [check out Hackage](https://hackage.haskell.org/package/combinat).
+
 This is a combinatorics library for Haskell. It contains functions 
 enumerating, counting, visualizing, manipulating, and sometimes randomly sampling 
 from many standard combinatorial objects, including:
