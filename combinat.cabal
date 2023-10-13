@@ -13,7 +13,7 @@ Maintainer:          bkomuves (plus) hackage (at) gmail (dot) com
 Homepage:            http://moire.be/haskell/
 Stability:           Experimental
 Category:            Math
-Tested-With:         GHC == 8.6.5
+Tested-With:         GHC == 8.6.5, GHC == 9.4.7
 Cabal-Version:       1.24
 Build-Type:          Simple
 
@@ -86,7 +86,7 @@ Library
 
   Default-Language:    Haskell2010
 
-  Hs-Source-Dirs:      .
+  Hs-Source-Dirs:      src
 
   ghc-options:         -fwarn-tabs -fno-warn-unused-matches -fno-warn-name-shadowing -fno-warn-unused-imports
 
