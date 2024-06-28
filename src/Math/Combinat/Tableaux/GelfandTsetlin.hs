@@ -144,7 +144,7 @@ kostkaGelfandTsetlinPatterns lambda (Partition mu) = kostkaGelfandTsetlinPattern
 --
 kostkaGelfandTsetlinPatterns' :: Partition -> [Int] -> [GT]
 kostkaGelfandTsetlinPatterns' plam@(Partition lambda0) mu0
-  | minimum mu0 < 0                       = []
+  | any (<0) mu0                          = []
   | wlam == 0                             = if wmu == 0 then [ [] ] else []
   | wmu  == wlam && plam `dominates` pmu  = list
   | otherwise                             = []
