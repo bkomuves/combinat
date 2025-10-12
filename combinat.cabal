@@ -1,9 +1,9 @@
 Name:                combinat
-Version:             0.2.10.1
+Version:             0.3.0.0
 Synopsis:            Generate and manipulate various combinatorial objects.
 Description:         A collection of functions to generate, count, manipulate
-                     and visualize all kinds of combinatorial objects like 
-                     partitions, compositions, trees, permutations, braids, 
+                     and visualize all kinds of combinatorial objects like
+                     partitions, compositions, trees, permutations, braids,
                      Young tableaux, and so on.
 License:             BSD3
 License-file:        LICENSE
@@ -17,11 +17,11 @@ Tested-With:         GHC == 8.6.5, GHC == 9.4.7
 Cabal-Version:       1.24
 Build-Type:          Simple
 
-extra-doc-files:     svg/*.svg 
+extra-doc-files:     svg/*.svg
                      README.md
 
 extra-source-files:  svg/*.svg
-                     svg/src/gen_figures.hs                     
+                     svg/src/gen_figures.hs
 
 source-repository head
   type:                git
@@ -31,16 +31,17 @@ source-repository head
 
 Library
 
-  Build-Depends:       base >= 4 && < 5, 
-                       array >= 0.5 && < 0.7, 
-                       containers >= 0.6 && < 0.9, 
-                       random >= 1.1 && < 1.4, 
+  Build-Depends:       base >= 4 && < 5,
+                       array >= 0.5 && < 0.7,
+                       containers >= 0.6 && < 0.9,
+                       random >= 1.1 && < 1.4,
                        transformers >= 0.4.2 && < 0.8,
                        compact-word-vectors >= 0.2.0.2 && < 0.4
 
   Exposed-Modules:     Math.Combinat
                        Math.Combinat.Classes
                        Math.Combinat.Numbers
+                       Math.Combinat.Numbers.HalfInt
                        Math.Combinat.Numbers.Integers
                        Math.Combinat.Numbers.Sequences
                        Math.Combinat.Numbers.Primes
@@ -48,7 +49,7 @@ Library
                        Math.Combinat.Sign
                        Math.Combinat.Sets
                        Math.Combinat.Sets.VennDiagrams
-                       Math.Combinat.Tuples 
+                       Math.Combinat.Tuples
                        Math.Combinat.Compositions
                        Math.Combinat.Groups.Thompson.F
                        Math.Combinat.Groups.Free
@@ -83,8 +84,8 @@ Library
                        Math.Combinat.Helper
                        Math.Combinat.TypeLevel
 
-  Default-Extensions:  CPP, BangPatterns
-  Other-Extensions:    MultiParamTypeClasses, ScopedTypeVariables, 
+  Default-Extensions:  BangPatterns
+  Other-Extensions:    MultiParamTypeClasses, ScopedTypeVariables,
                        GeneralizedNewtypeDeriving,
                        DataKinds, KindSignatures
 
@@ -94,15 +95,15 @@ Library
 
   ghc-options:         -fwarn-tabs -fno-warn-unused-matches -fno-warn-name-shadowing -fno-warn-unused-imports
 
-    
+
 --------------------------------------------------------------------------------
 
 test-suite combinat-tests
-                      
+
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             TestSuite.hs
-  
+
   other-modules:       Tests.Braid
                        Tests.Common
                        Tests.LatticePaths
@@ -111,29 +112,30 @@ test-suite combinat-tests
                        Tests.SkewTableaux
                        Tests.Thompson
                        Tests.Partitions.Integer
-                       Tests.Partitions.Compact  
+                       Tests.Partitions.Compact
                        Tests.Partitions.Skew
                        Tests.Partitions.Ribbon
-                       Tests.Numbers.Primes   
+                       Tests.Numbers.HalfInt
+                       Tests.Numbers.Primes
                        Tests.Numbers.Sequences
-                       
-  build-depends:       base >= 4 && < 5, 
-                       array >= 0.5 && < 0.7, 
-                       containers >= 0.6 && < 0.9, 
-                       random >= 1.1 && < 1.4, 
-                       transformers >= 0.4.2 && < 0.8,
+
+  build-depends:       base >= 4 && < 5,
+                       array >= 0.5 && < 0.7,
+                       containers >= 0.6 && < 0.9,
                        compact-word-vectors >= 0.2.0.2 && < 0.4,
-                       combinat, 
-                       test-framework > 0.8.1 && < 0.10, 
-                       test-framework-quickcheck2 >= 0.3 && < 0.5, 
+                       combinat,
+                       random >= 1.1 && < 1.4,
+                       transformers >= 0.4.2 && < 0.8,
+                       HUnit >= 1.6 && < 1.7,
+                       test-framework > 0.8.1 && < 0.10,
+                       test-framework-hunit > 0.3 && < 0.4,
+                       test-framework-quickcheck2 >= 0.3 && < 0.5,
                        QuickCheck >= 2 && < 3,
-                       tasty >= 0.11 && < 1.7, 
-                       tasty-quickcheck >= 0.9 && < 1.0, 
+                       tasty >= 0.11 && < 1.7,
+                       tasty-quickcheck >= 0.9 && < 1.0,
                        tasty-hunit >= 0.10 && < 1.0
 
   Default-Language:    Haskell2010
   Default-Extensions:  CPP, BangPatterns
 
 --------------------------------------------------------------------------------
-
-

@@ -12,7 +12,6 @@
 -- <<svg/skew3.svg>>
 --
 
-{-# LANGUAGE CPP, BangPatterns #-}
 module Math.Combinat.Partitions.Skew where
 
 --------------------------------------------------------------------------------

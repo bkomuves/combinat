@@ -6,7 +6,9 @@
 -- <<svg/skew_tableau.svg>>
 --
 
-{-# LANGUAGE CPP, BangPatterns, ScopedTypeVariables, MultiParamTypeClasses #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Math.Combinat.Tableaux.Skew where
 
@@ -125,7 +127,7 @@ semiStandardSkewTableaux n (SkewPartition abs) = map SkewTableau stuff where
   worker :: [Int] -> [Int] -> [Int] -> [Int] -> [[(Int,[Int])]]
   worker (a:as) (b:bs) (d:ds) lb = [ (a,this):rest 
                                    | this <- row b 1 lb 
-                                   , let lb' = (replicate d 1 ++ map (+1) this) 
+                                   , let lb' = replicate d 1 ++ map (+1) this
                                    , rest <- worker as bs ds lb' ] 
   worker []     _      _      _  = [ [] ]
 

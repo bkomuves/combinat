@@ -23,7 +23,9 @@
 -- > ]
 --
 
-{-# LANGUAGE CPP, BangPatterns, FlexibleInstances, TypeSynonymInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 module Math.Combinat.Tableaux where
 
 --------------------------------------------------------------------------------
@@ -49,8 +51,7 @@ type Tableau a = [[a]]
 -- | ASCII diagram of a tableau
 asciiTableau :: Show a => Tableau a -> ASCII
 asciiTableau t = tabulate (HRight,VTop) (HSepSpaces 1, VSepEmpty) 
-           $ (map . map) asciiShow
-           $ t
+           $ (map . map) asciiShow t
 
 instance CanBeEmpty (Tableau a) where
   empty   = []
@@ -60,11 +61,11 @@ instance Show a => DrawASCII (Tableau a) where
   ascii = asciiTableau
 
 _tableauShape :: Tableau a -> [Int]
-_tableauShape t = map length t 
+_tableauShape = map length
 
 -- | The shape of a tableau
 tableauShape :: Tableau a -> Partition
-tableauShape t = toPartition (_tableauShape t)
+tableauShape = toPartition . _tableauShape
 
 instance HasShape (Tableau a) Partition where
   shape = tableauShape
@@ -142,10 +143,7 @@ isLatticeWord :: [Int] -> Bool
 isLatticeWord = go Map.empty where
   go :: Map Int Int -> [Int] -> Bool
   go _      []     = True
-  go !table (i:is) =
-    if check i
-      then go table' is
-      else False
+  go !table (i:is) = check i && go table' is
     where
       table'  = Map.insertWith (+) i 1 table
       check j = j==1 || cnt (j-1) >= cnt j
@@ -170,19 +168,19 @@ semiStandardYoungTableaux n part = worker (repeat 0) shape where
   shape = fromPartition part
   worker _ [] = [[]] 
   worker prevRow (s:ss) 
-    = [ (r:rs) | r <- row n s 1 prevRow, rs <- worker (map (+1) r) ss ]
+    = [r:rs | r <- row n s 1 prevRow, rs <- worker (map (+1) r) ss]
 
   -- weekly increasing lists of length @len@, pointwise at least @xs@, 
   -- maximum value @n@, minimum value @prev@.
   row :: Int -> Int -> Int -> [Int] -> [[Int]]
   row _ 0   _    _      = [[]]
-  row n len prev (x:xs) = [ (a:as) | a <- [max x prev..n] , as <- row n (len-1) a xs ]
+  row n len prev (x:xs) = [a:as | a <- [max x prev..n] , as <- row n (len-1) a xs]
 
 -- | Stanley's hook formula (cf. Fulton page 55)
 countSemiStandardYoungTableaux :: Int -> Partition -> Integer
 countSemiStandardYoungTableaux n shape = k `div` h where
   h = product $ map fromIntegral $ concat $ hookLengths shape 
-  k = product [ fromIntegral (n+j-i) | (i,j) <- elements shape ]
+  k = product [fromIntegral (n+j-i) | (i,j) <- elements shape]
 
    
 --------------------------------------------------------------------------------

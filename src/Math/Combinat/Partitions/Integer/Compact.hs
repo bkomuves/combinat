@@ -13,7 +13,9 @@ It is also not fully ready to be used yet...
 
 -}
 
-{-# LANGUAGE BangPatterns, PatternSynonyms, ViewPatterns #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE ViewPatterns #-}
 module Math.Combinat.Partitions.Integer.Compact where
 
 --------------------------------------------------------------------------------
@@ -85,7 +87,7 @@ cmpLexico (Partition vec1) (Partition vec2) = compare (V.toList vec1) (V.toList 
 -- * Basic (de)constructrion
 
 empty :: Partition
-empty = Partition (V.empty)
+empty = Partition V.empty
 
 isEmpty :: Partition -> Bool
 isEmpty (Partition vec) = V.null vec

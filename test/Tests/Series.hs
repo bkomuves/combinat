@@ -2,7 +2,9 @@
 -- | Tests for power series
 --
 
-{-# LANGUAGE CPP, GeneralizedNewtypeDeriving, DataKinds, KindSignatures #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
 module Tests.Series where
 
 --------------------------------------------------------------------------------
@@ -137,7 +139,7 @@ infix 4 =..=
 
 -- compare the first 100 elements of the infinite lists
 (=!=) :: (Eq a, Num a) => [a] -> [a] -> Bool
-(=!=) xs1 ys1 = (take m xs == take m ys) where 
+(=!=) xs1 ys1 = take m xs == take m ys where 
   m = 100
   xs = xs1 ++ repeat 0
   ys = ys1 ++ repeat 0
@@ -146,7 +148,7 @@ infix 4 =!=
 
 -- compare the first 500 elements of the infinite lists
 (=!!=) :: (Eq a, Num a) => [a] -> [a] -> Bool
-(=!!=) xs1 ys1 = (take m xs == take m ys) where 
+(=!!=) xs1 ys1 = take m xs == take m ys where 
   m = 500
   xs = xs1 ++ repeat 0
   ys = ys1 ++ repeat 0
@@ -173,7 +175,7 @@ serProxy :: f (n :: Nat) -> Proxy n
 serProxy _ = Proxy
 
 seriesSize :: KnownNat (n :: Nat) => f (n :: Nat) -> Int
-seriesSize ser = fromInteger $ natVal (serProxy ser) where 
+seriesSize ser = fromInteger $ natVal (serProxy ser)
 
 ----------------------------------------
 
@@ -221,18 +223,18 @@ instance Random Rat where
   random g = (Rat (fromIntegral x % fromIntegral y), g'') where
     (x,g' ) = randomR (-100,100::Int) g
     (y,g'') = randomR (   1, 25::Int) g'        -- hackety hack hack
-  randomR _ g = random g
+  randomR _ = random
 
 instance Random NZRat where
-  random g = let (Rat q , g') = random g
+  random g = let (Rat q, g') = random g
              in  if q /= 0 then (NZRat q, g') else random g'            
-  randomR _ g = random g
+  randomR _ = random
 
 instance Arbitrary XNat where
-  arbitrary = choose (XNat 0 , XNat 750)
+  arbitrary = choose (XNat 0, XNat 750)
 
 instance Arbitrary Exp where
-  arbitrary = choose (Exp 1 , Exp 32)
+  arbitrary = choose (Exp 1, Exp 32)
 
 instance Arbitrary CoeffExp where
   arbitrary = do
@@ -335,7 +337,7 @@ testgroup_PowerSeries = testGroup "Power series"
 --------------------------------------------------------------------------------
 -- * properties
 
-prop_mulSeries_vs_naive ser1 ser2 = (mulSeries xs ys =!= mulSeriesNaive xs ys) where
+prop_mulSeries_vs_naive ser1 ser2 = mulSeries xs ys =!= mulSeriesNaive xs ys where
   xs = fromSer ser1
   ys = fromSer ser2
 
@@ -343,7 +345,7 @@ prop_divSeries_vs_mult_with_recip (NZRat q) ser1 ser2 = (=..=) 60 (divSeries xs 
   xs =     fromSerR100 ser1
   ys = q : fromSerR100 ser2
 
-prop_recipSeries_vs_one_over (NZRat q) ser = (reciprocalSeries xs =!= divSeries unitSeries xs) where
+prop_recipSeries_vs_one_over (NZRat q) ser = reciprocalSeries xs =!= divSeries unitSeries xs where
   xs = q : fromSerR100 ser
 
 prop_compose_vs_naive ser1 ser2 = (=..=) 25 (composeSeries xs ys) (composeSeriesNaive xs ys) where
@@ -368,28 +370,28 @@ prop_lagrange_inversion_int_naive2 ser = (=..=) 20 (substituteNaive (integralLag
 
 --------------------------------------------------------------------------------
 
-prop_diff_integrate ser = (xs =!= differentiateSeries (integrateSeries xs)) where
+prop_diff_integrate ser = xs =!= differentiateSeries (integrateSeries xs) where
   xs = fromSerR ser
 
-prop_integrate_diff ser = (null xs) || (0 : tail xs =!= integrateSeries (differentiateSeries xs)) where
+prop_integrate_diff ser = null xs || (0 : tail xs =!= integrateSeries (differentiateSeries xs)) where
   xs = fromSerR ser
 
-prop_cos_vs_cos2 = (cosSeries =!= (cosSeries2 :: [Rational])) 
-prop_sin_vs_sin2 = (sinSeries =!= (sinSeries2 :: [Rational])) 
+prop_cos_vs_cos2 = cosSeries =!= (cosSeries2 :: [Rational])
+prop_sin_vs_sin2 = sinSeries =!= (sinSeries2 :: [Rational])
 
 --------------------------------------------------------------------------------
      
-prop_leftIdentity ser = ( xs =!= unitSeries `convolve` xs ) where 
+prop_leftIdentity ser = xs =!= unitSeries `convolve` xs where 
   xs = fromSer100 ser 
 
-prop_rightIdentity ser = ( unitSeries `convolve` xs =!= xs ) where 
+prop_rightIdentity ser = unitSeries `convolve` xs =!= xs where 
   xs = fromSer100 ser 
 
-prop_commutativity ser1 ser2 = ( xs `convolve` ys =!= ys `convolve` xs ) where 
+prop_commutativity ser1 ser2 = xs `convolve` ys =!= ys `convolve` xs where 
   xs = fromSer100 ser1
   ys = fromSer100 ser2
 
-prop_associativity ser1 ser2 ser3 = ( one =!= two ) where
+prop_associativity ser1 ser2 ser3 = one =!= two where
   one = (xs `convolve` ys) `convolve` zs
   two = xs `convolve` (ys `convolve` zs)
   xs = fromSer100 ser1
@@ -398,20 +400,20 @@ prop_associativity ser1 ser2 ser3 = ( one =!= two ) where
 
 --------------------------------------------------------------------------------
   
-prop_conv1_vs_gen exp1 ser = ( one =!= two ) where
+prop_conv1_vs_gen exp1 ser = one =!= two where
   one = convolveWithPSeries1 k1 xs 
   two = convolveWithPSeries [k1] xs
   k1 = fromExp exp1
   xs = fromSer ser  
 
-prop_conv2_vs_gen exp1 exp2 ser = (one =!= two) where
+prop_conv2_vs_gen exp1 exp2 ser = one =!= two where
   one = convolveWithPSeries2 k1 k2 xs 
   two = convolveWithPSeries [k2,k1] xs
   k1 = fromExp exp1
   k2 = fromExp exp2
   xs = fromSer ser  
 
-prop_conv3_vs_gen exp1 exp2 exp3 ser = (one =!= two) where
+prop_conv3_vs_gen exp1 exp2 exp3 ser = one =!= two where
   one = convolveWithPSeries3 k1 k2 k3 xs 
   two = convolveWithPSeries [k2,k3,k1] xs
   k1 = fromExp exp1
@@ -419,20 +421,20 @@ prop_conv3_vs_gen exp1 exp2 exp3 ser = (one =!= two) where
   k3 = fromExp exp3
   xs = fromSer ser  
 
-prop_conv1_vs_gen' exp1 ser = ( one =!= two ) where
+prop_conv1_vs_gen' exp1 ser = one =!= two where
   one = convolveWithPSeries1' ak1 xs 
   two = convolveWithPSeries' [ak1] xs
   ak1 = fromCoeffExp exp1
   xs = fromSer ser  
 
-prop_conv2_vs_gen' exp1 exp2 ser = (one =!= two) where
+prop_conv2_vs_gen' exp1 exp2 ser = one =!= two where
   one = convolveWithPSeries2' ak1 ak2 xs 
   two = convolveWithPSeries' [ak2,ak1] xs
   ak1 = fromCoeffExp exp1
   ak2 = fromCoeffExp exp2
   xs = fromSer ser  
 
-prop_conv3_vs_gen' exp1 exp2 exp3 ser = (one =!= two) where
+prop_conv3_vs_gen' exp1 exp2 exp3 ser = one =!= two where
   one = convolveWithPSeries3' ak1 ak2 ak3 xs 
   two = convolveWithPSeries' [ak2,ak3,ak1] xs
   ak1 = fromCoeffExp exp1
@@ -440,24 +442,24 @@ prop_conv3_vs_gen' exp1 exp2 exp3 ser = (one =!= two) where
   ak3 = fromCoeffExp exp3
   xs = fromSer ser  
 
-prop_convolve_pseries exps1 ser = (one =!= two) where
+prop_convolve_pseries exps1 ser = one =!= two where
   one = convolveWithPSeries ks1 xs 
   two = xs `convolve` pseries ks1 
   ks1 = fromExps exps1
   xs = fromSer ser  
 
-prop_convolve_pseries' cexps1 ser = (one =!= two) where
+prop_convolve_pseries' cexps1 ser = one =!= two where
   one = convolveWithPSeries' aks1 xs 
   two = xs `convolve` pseries' aks1 
   aks1 = fromCoeffExps cexps1
   xs = fromSer ser  
 
-prop_coin_vs_pseries exps1 = (one =!= two) where
+prop_coin_vs_pseries exps1 = one =!= two where
   one = coinSeries ks1 
   two = convolveMany (map pseries1 ks1)
   ks1 = fromExps exps1
 
-prop_coin_vs_pseries' cexps1 = (one =!= two) where
+prop_coin_vs_pseries' cexps1 = one =!= two where
   one = coinSeries' aks1 
   two = convolveMany (map pseries1' aks1)
   aks1 = fromCoeffExps cexps1

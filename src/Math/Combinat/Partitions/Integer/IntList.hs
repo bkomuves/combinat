@@ -3,7 +3,8 @@
 -- 
 -- It's not recommended to use this module directly.
 
-{-# LANGUAGE CPP, BangPatterns, ScopedTypeVariables #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Math.Combinat.Partitions.Integer.IntList where
 
 --------------------------------------------------------------------------------
@@ -24,7 +25,7 @@ import Math.Combinat.Partitions.Integer.Count ( countPartitions )
 
 -- | Sorts the input, and cuts the nonpositive elements.
 _mkPartition :: [Int] -> [Int]
-_mkPartition xs = sortBy (reverseCompare) $ filter (>0) xs
+_mkPartition xs = sortBy reverseCompare $ filter (>0) xs
  
 -- | This returns @True@ if the input is non-increasing sequence of 
 -- /positive/ integers (possibly empty); @False@ otherwise.
@@ -184,7 +185,7 @@ _randomPartitions howmany n = runRand $ replicateM howmany (worker n []) where
   worker :: Int -> [(Int,Int)] -> Rand g [Int]
   worker  0 acc = return $ finish acc
   worker !m acc = do
-    capm <- randChoose (0, (fi m) * cnt m - 1)
+    capm <- randChoose (0, fi m * cnt m - 1)
     let jd@(!j,!d) = find_jd m capm
     worker (m - j*d) (jd:acc)
 
@@ -218,7 +219,7 @@ _dominatedPartitions lambda = go (head lambda) w dsums 0 where
 
   go _   0 _       _  = [[]]
   go !h !w (!d:ds) !e  
-    | w >  0  = [ (a:as) | a <- [1..min h (d-e)] , as <- go a (w-a) ds (e+a) ] 
+    | w >  0  = [a:as | a <- [1..min h (d-e)] , as <- go a (w-a) ds (e+a)] 
     | w == 0  = [[]]
     | w <  0  = error "_dominatedPartitions: fatal error; shouldn't happen"
 
@@ -237,7 +238,7 @@ _dominatingPartitions mu     = go w w dsums 0 where
 
   go _   0 _       _  = [[]]
   go !h !w (!d:ds) !e  
-    | w >  0  = [ (a:as) | a <- [max 0 (d-e)..min h w] , as <- go a (w-a) ds (e+a) ] 
+    | w >  0  = [a:as | a <- [max 0 (d-e)..min h w] , as <- go a (w-a) ds (e+a)] 
     | w == 0  = [[]]
     | w <  0  = error "_dominatingPartitions: fatal error; shouldn't happen"
 
@@ -271,7 +272,7 @@ _partitionsWithKParts k n = go n k n where
 
 -- | Partitions of @n@ with only odd parts
 _partitionsWithOddParts :: Int -> [[Int]]
-_partitionsWithOddParts d = (go d d) where
+_partitionsWithOddParts d = go d d where
   go _  0  = [[]]
   go !h !n = [ a:as | a<-[1,3..min n h], as <- go a (n-a) ]
 
@@ -293,7 +294,7 @@ _partitionsWithEvenParts d = (go d d) where
 -- > length (partitionsWithDistinctParts d) == length (partitionsWithOddParts d)
 --
 _partitionsWithDistinctParts :: Int -> [[Int]]
-_partitionsWithDistinctParts d = (go d d) where
+_partitionsWithDistinctParts d = go d d where
   go _  0  = [[]]
   go !h !n = [ a:as | a<-[1..min n h], as <- go (a-1) (n-a) ]
 

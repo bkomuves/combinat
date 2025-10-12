@@ -1,7 +1,9 @@
 
 -- | Tests for integer partitions.
 
-{-# LANGUAGE CPP, BangPatterns, DataKinds, KindSignatures, ScopedTypeVariables #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Tests.Partitions.Integer where
 
 --------------------------------------------------------------------------------
@@ -31,7 +33,7 @@ import GHC.TypeLits
 --------------------------------------------------------------------------------
 
 -- | Partitions of size at most n
-newtype Part (n :: Nat) = Part (Partition) deriving (Eq,Show)
+newtype Part (n :: Nat) = Part Partition deriving (Eq,Show)
 
 -- | usage: fromPart @20
 fromPart :: Part n -> Partition
@@ -71,7 +73,7 @@ instance Arbitrary Partition where
     myMkGen (randomPartition n)
 
 instance Arbitrary PartitionWeight where
-  arbitrary = liftM PartitionWeight $ choose (0,maxPartitionSize)
+  arbitrary = PartitionWeight <$> choose (0,maxPartitionSize)
 
 instance Arbitrary PartitionWeightPair where
   arbitrary = do
@@ -122,36 +124,41 @@ testgroup_IntegerPartitions = testGroup "Integer Partitions"
 -- * properties
 
 prop_partitions_in_bigbox :: PartitionWeight -> Bool
-prop_partitions_in_bigbox (PartitionWeight n) = (partitions n == partitions' (n,n) n)
+prop_partitions_in_bigbox (PartitionWeight n) = partitions n == partitions' (n,n) n
 
 prop_kparts :: PartitionWeightPair -> Bool
-prop_kparts (PartitionWeightPair n k) = (partitionsWithKParts k n == [ mu | mu <- partitions n, numberOfParts mu == k ])
+prop_kparts (PartitionWeightPair n k) =
+  partitionsWithKParts k n == [mu | mu <- partitions n, numberOfParts mu == k]
 
 prop_odd_partitions :: PartitionWeight -> Bool
 prop_odd_partitions (PartitionWeight n) = 
-  (partitionsWithOddParts n == [ mu | mu <- partitions n, and (map odd (fromPartition mu)) ])
+  partitionsWithOddParts n == [mu | mu <- partitions n, all odd (fromPartition mu)]
 
 prop_distinct_partitions :: PartitionWeight -> Bool
 prop_distinct_partitions (PartitionWeight n) = 
-  (partitionsWithDistinctParts n == [ mu | mu <- partitions n, let xs = fromPartition mu, xs == nub xs ])
+  partitionsWithDistinctParts n == [mu | mu <- partitions n, let xs = fromPartition mu, xs == nub xs]
 
 prop_subparts :: PartitionIntPair -> Bool
-prop_subparts (PartitionIntPair lam d) = (subPartitions d lam) == sort [ p | p <- partitions d, isSubPartitionOf p lam ]
+prop_subparts (PartitionIntPair lam d) =
+  subPartitions d lam == sort [p | p <- partitions d, isSubPartitionOf p lam]
 
 prop_dual_dual :: Partition -> Bool
-prop_dual_dual lam = (lam == dualPartition (dualPartition lam))
+prop_dual_dual lam = lam == dualPartition (dualPartition lam)
 
 prop_dominated_list :: Partition -> Bool
-prop_dominated_list lam = (dominatedPartitions  lam == [ mu  | mu  <- partitions (weight lam), lam `dominates` mu ])
+prop_dominated_list lam =
+  dominatedPartitions  lam == [mu  | mu  <- partitions (weight lam), lam `dominates` mu]
 
 prop_dominating_list :: Partition -> Bool
-prop_dominating_list mu  = (dominatingPartitions mu  == [ lam | lam <- partitions (weight mu ), lam `dominates` mu ])
+prop_dominating_list mu =
+  dominatingPartitions mu == [lam | lam <- partitions (weight mu ), lam `dominates` mu]
 
 prop_countParts :: Bool
-prop_countParts = (take 50 partitionCountList == take 50 partitionCountListNaive)
+prop_countParts = take 50 partitionCountList == take 50 partitionCountListNaive
 
 prop_union_sum_duality :: Partition -> Partition -> Bool
-prop_union_sum_duality p q = dualPartition (sumOfPartitions p q) == unionOfPartitions (dualPartition p) (dualPartition q)
+prop_union_sum_duality p q =
+  dualPartition (sumOfPartitions p q) == unionOfPartitions (dualPartition p) (dualPartition q)
 
 --------------------------------------------------------------------------------
 

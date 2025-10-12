@@ -20,7 +20,7 @@
 -- Actually @mu@ doesn't even need to the be non-increasing.
 --
 
-{-# LANGUAGE BangPatterns, ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Math.Combinat.Tableaux.GelfandTsetlin where
 
 --------------------------------------------------------------------------------
@@ -91,10 +91,10 @@ kostkaNumbersWithGivenLambda plambda@(Partition lam) = evalState (worker lam) Ma
                   []    -> if t >  0 then Just (Partition [t]    , c) else Nothing
             if t > 0
               then return $ Map.fromList $ mapMaybe f $ Map.toList sub
-              else return $ Map.empty
+              else return Map.empty
 
           let sol = Map.unionsWith (+) subsols
-          put $! (Map.insert (Partition unlam) sol cache)
+          put $! Map.insert (Partition unlam) sol cache
           return sol
 
   -- needs decreasing sequence
@@ -122,8 +122,7 @@ type GT = [[Int]]
 
 asciiGT :: GT -> ASCII
 asciiGT gt = tabulate (HRight,VTop) (HSepSpaces 1, VSepEmpty) 
-           $ (map . map) asciiShow
-           $ gt
+           $ (map . map) asciiShow gt
 
 kostkaGelfandTsetlinPatterns :: Partition -> Partition -> [GT]
 kostkaGelfandTsetlinPatterns lambda (Partition mu) = kostkaGelfandTsetlinPatterns' lambda mu
@@ -169,7 +168,7 @@ kostkaGelfandTsetlinPatterns' plam@(Partition lambda0) mu0
              revlam 
              (scanl1 (+) mu) 
              (replicate (n-1) 0) 
-             (replicate (n  ) 0) 
+             (replicate n     0) 
              []
 
     worker
@@ -226,7 +225,7 @@ countKostkaGelfandTsetlinPatterns plam@(Partition lambda0) pmu@(Partition mu0)
             revlam 
             (scanl1 (+) mu) 
             (replicate (n-1) 0) 
-            (replicate (n  ) 0) 
+            (replicate n     0) 
 
     worker
       :: [Int]       -- lambda_i in reverse order
@@ -297,7 +296,7 @@ iteratedPieriRule = iteratedPieriRule' (Partition [])
 -- | Iterating the Pieri rule, we can compute the Schur expansion of
 -- @h[lambda]*h[n1]*h[n2]*h[n3]*...*h[nk]@
 iteratedPieriRule' :: Num coeff => Partition -> [Int] -> Map Partition coeff
-iteratedPieriRule' plambda ns = iteratedPieriRule'' (plambda,1) ns
+iteratedPieriRule' plambda = iteratedPieriRule'' (plambda,1)
 
 {-# SPECIALIZE iteratedPieriRule'' :: (Partition,Int    ) -> [Int] -> Map Partition Int     #-}
 {-# SPECIALIZE iteratedPieriRule'' :: (Partition,Integer) -> [Int] -> Map Partition Integer #-}
@@ -326,7 +325,7 @@ iteratedDualPieriRule = iteratedDualPieriRule' (Partition [])
 -- | Iterating the Pieri rule, we can compute the Schur expansion of
 -- @e[lambda]*e[n1]*e[n2]*e[n3]*...*e[nk]@
 iteratedDualPieriRule' :: Num coeff => Partition -> [Int] -> Map Partition coeff
-iteratedDualPieriRule' plambda ns = iteratedDualPieriRule'' (plambda,1) ns
+iteratedDualPieriRule' plambda = iteratedDualPieriRule'' (plambda,1)
 
 {-# SPECIALIZE iteratedDualPieriRule'' :: (Partition,Int    ) -> [Int] -> Map Partition Int     #-}
 {-# SPECIALIZE iteratedDualPieriRule'' :: (Partition,Integer) -> [Int] -> Map Partition Integer #-}

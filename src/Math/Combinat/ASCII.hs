@@ -222,11 +222,11 @@ vExtendWith valign d (ASCII (x,y) ls) = ASCII (x,y+d) (f ls) where
 
 -- | Horizontal indentation
 hIndent :: Int -> ASCII -> ASCII
-hIndent d = hExtendWith HRight d
+hIndent = hExtendWith HRight
 
 -- | Vertical indentation
 vIndent :: Int -> ASCII -> ASCII
-vIndent d = vExtendWith VBottom d
+vIndent = vExtendWith VBottom
 
 --------------------------------------------------------------------------------
 -- * Cutting
@@ -290,9 +290,9 @@ pasteOnto' transparent (xpos,ypos) small big = new where
   new = ASCII (xbig,ybig) lines'
   (xbig,ybig) = asciiSize  big
   bigLines    = asciiLines big
-  small'      = (if (ypos>=0) then vExtendWith VBottom ypos else vCut VBottom (-ypos))
-              $ (if (xpos>=0) then hExtendWith HRight  xpos else hCut HRight  (-xpos))
-              $ small
+  small'      = (if ypos >= 0 then vExtendWith VBottom ypos else vCut VBottom (-ypos))
+              $ (if xpos >= 0 then hExtendWith HRight  xpos else hCut HRight  (-xpos))
+                small
   smallLines  = asciiLines small'
   lines'  = zipWith f bigLines (smallLines ++ repeat "")
   f bl sl = zipWith g bl (sl ++ repeat ' ')
@@ -333,8 +333,8 @@ tabulate (halign,valign) (hsep,vsep) rects0 = final where
   n = length rects0
   m = maximum (map length rects0)
   rects1 = map (\rs -> rs ++ replicate (m - length rs) emptyRect) rects0
-  ys = map (\rs -> maximum (map asciiYSize rs)) rects1
-  xs = map (\rs -> maximum (map asciiXSize rs)) (transpose rects1)
+  ys = map (maximum . map asciiYSize) rects1
+  xs = map (maximum . map asciiXSize) (transpose rects1)
   rects2 = map (\rs -> [      hExtendTo halign x  r  | (x,r ) <- zip xs rs     ]) rects1
   rects3 =             [ map (vExtendTo valign y) rs | (y,rs) <- zip ys rects2 ]  
   final  = vCatWith HLeft vsep 
@@ -376,7 +376,7 @@ autoTabulate mtxorder ei list = final where
     go [] = []
     go xs = take d xs : go (drop d xs)
 
-  invparts d xs = parts' ds xs where
+  invparts d = parts' ds where
     (q,r) = divMod n d
     ds = replicate r (q+1) ++ replicate (d-r) q
 
@@ -392,8 +392,8 @@ autoTabulate mtxorder ei list = final where
 caption :: String -> ASCII -> ASCII
 caption = caption' False HLeft
 
--- | Adds a caption to the bottom. The @Bool@ flag specifies whether to add an empty between 
--- the caption and the figure
+-- | Adds a caption to the bottom. The @Bool@ flag specifies whether
+-- to add an empty line between the caption and the figure
 caption' :: Bool -> HAlign -> String -> ASCII -> ASCII
 caption' emptyline halign str rect = vCatWith halign sep [rect,capt] where
   sep  = if emptyline then VSepSpaces 1 else VSepEmpty 

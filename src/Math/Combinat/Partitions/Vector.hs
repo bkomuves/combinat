@@ -4,7 +4,6 @@
 --  * Donald E. Knuth: The Art of Computer Programming, vol 4, pre-fascicle 3B.
 --
 
-{-# LANGUAGE BangPatterns #-}
 module Math.Combinat.Partitions.Vector where
 
 --------------------------------------------------------------------------------
@@ -57,7 +56,7 @@ fasc3B_algorithm_M xs = worker [start] where
       _ -> error "fasc3B_algorithm_M: should not happen"
         
   to_vector cuvs = 
-    accumArray (flip const) 0 (1,m)
+    accumArray (const id) 0 (1,m)
       [ (c,v) | (c,_,v) <- cuvs ] 
 
   subtract_rec all@(last:_) = 

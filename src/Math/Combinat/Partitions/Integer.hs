@@ -17,12 +17,11 @@
 -- <<svg/ferrers.svg>>
 -- 
 
-{-# LANGUAGE CPP, BangPatterns, ScopedTypeVariables #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Math.Combinat.Partitions.Integer 
   ( -- module Math.Combinat.Partitions.Integer.Count
     module Math.Combinat.Partitions.Integer.Naive
-    -- * Types and basic stuff
-  , Partition
     -- * Conversion to\/from lists
   , fromPartition 
   , mkPartition 
@@ -103,7 +102,7 @@ fromPartition (Partition_ part) = part
   
 -- | Sorts the input, and cuts the nonpositive elements.
 mkPartition :: [Int] -> Partition
-mkPartition xs = toPartitionUnsafe $ sortBy (reverseCompare) $ filter (>0) xs
+mkPartition xs = toPartitionUnsafe $ sortBy reverseCompare $ filter (>0) xs
 
 -- | Checks whether the input is an integer partition. See the note at 'isPartition'!
 toPartition :: [Int] -> Partition
@@ -268,7 +267,7 @@ randomPartitions howmany n = runRand $ replicateM howmany (worker n []) where
   worker :: Int -> [(Int,Int)] -> Rand g Partition
   worker  0 acc = return $ finish acc
   worker !m acc = do
-    capm <- randChoose (0, (fi m) * cnt m - 1)
+    capm <- randChoose (0, fi m * cnt m - 1)
     let jd@(!j,!d) = find_jd m capm
     worker (m - j*d) (jd:acc)
 
@@ -450,7 +449,7 @@ asciiFerrersDiagram' conv ch part = ASCII.asciiFromLines (map f ys) where
   ys  = case conv of
           EnglishNotation    -> fromPartition part
           EnglishNotationCCW -> reverse $ fromPartition $ dualPartition part
-          FrenchNotation     -> reverse $ fromPartition $ part
+          FrenchNotation     -> reverse $ fromPartition part
 
 instance DrawASCII Partition where
   ascii = asciiFerrersDiagram

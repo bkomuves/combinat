@@ -5,8 +5,11 @@
 -- for example finite cyclic groups, free groups, symmetric groups and braid groups.
 --
 
-{-# LANGUAGE PolyKinds, DataKinds, KindSignatures, ScopedTypeVariables, 
-             ExistentialQuantification, Rank2Types #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Math.Combinat.TypeLevel 
   ( -- * Proxy

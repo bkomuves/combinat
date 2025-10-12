@@ -3,7 +3,8 @@
 -- | Tests for integer sequences
 --
 
-{-# LANGUAGE CPP, GeneralizedNewtypeDeriving, DataKinds, KindSignatures #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
 module Tests.Numbers.Sequences where
 
 --------------------------------------------------------------------------------
@@ -61,6 +62,6 @@ unitTests = testGroup "Numbers.Sequences module"
   ]
 
 allTrue :: [Bool] -> Assertion
-allTrue bools = (and bools @=? True)
+allTrue bools = and bools @=? True
 
 --------------------------------------------------------------------------------

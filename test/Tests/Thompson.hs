@@ -2,7 +2,7 @@
 -- | Tests for Thompson's group F
 --
 
-{-# LANGUAGE CPP, GeneralizedNewtypeDeriving, FlexibleInstances, TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Tests.Thompson where
 
 --------------------------------------------------------------------------------
@@ -31,7 +31,7 @@ import Math.Combinat.Helper
 (**) x y = x `compose` y
 
 (//) :: TDiag -> TDiag -> TDiag
-(//) x y = x `compose` (inverse y)
+(//) x y = x `compose` inverse y
 
 growth_n_sphere     = [1,4,12,36,108,314,906,2576,7280,20352] :: [Int]
 growth_pos_n_sphere = [1,2, 4, 9, 20, 45,101, 227, 510, 1146] :: [Int]
@@ -45,7 +45,7 @@ data TPair = TPair !T !T deriving (Eq,Show)
 newtype Unreduced = Unreduced TDiag deriving (Eq,Show)
 
 instance Arbitrary T where
-  arbitrary = liftM fromBinTree $ myMkSizedGen B.randomBinaryTree
+  arbitrary = fromBinTree <$> myMkSizedGen B.randomBinaryTree
 
 instance Arbitrary TPair where
   arbitrary = myMkSizedGen $ \siz -> runRand $ do
@@ -84,17 +84,17 @@ testgroup_ThompsonF = testGroup "Thompson's group F"
 -- * properties
     
 prop_relations :: Bool
-prop_relations = and [ rel k n | n<-[1..30] , k<-[0..n-1] ] where
-  rel k n = (inverse $ xk k) `compose` (xk n) `compose` (xk k) == xk (n+1)
+prop_relations = and [rel k n | n <- [1..30] , k <- [0..n-1]] where
+  rel k n = inverse (xk k) `compose` xk n `compose` xk k == xk (n+1)
 
 prop_quot_positive :: TPair -> Bool
-prop_quot_positive (TPair t1 t2) = (mkTDiag t1 t2) == (positive t1 // positive t2)
+prop_quot_positive (TPair t1 t2) = mkTDiag t1 t2 == (positive t1 // positive t2)
 
 prop_identity :: TDiag -> Bool
 prop_identity x = (x ** identity) == x && (identity ** x) == x
 
 prop_assoc :: TDiag -> TDiag -> TDiag -> Bool
-prop_assoc a b c = (p == q) where
+prop_assoc a b c = p == q where
   p = compose (compose a b) c
   q = compose a (compose b c)
 

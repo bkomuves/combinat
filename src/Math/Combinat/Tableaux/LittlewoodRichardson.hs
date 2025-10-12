@@ -100,8 +100,8 @@ type Diagram = [ (Int,Int) ]
 fillings :: Int -> Diagram -> [Filling]
 fillings _ []                   = [ ([],[]) ]
 fillings n diagram@((x,y):rest) = concatMap (nextLetter lower upper) (fillings (n-1) rest) where
-  upper = case findIndex (==(x  ,y+1)) diagram of { Just j -> n-j ; Nothing -> 0 }
-  lower = case findIndex (==(x-1,y  )) diagram of { Just j -> n-j ; Nothing -> 0 }
+  upper = case elemIndex (x  ,y+1) diagram of { Just j -> n-j ; Nothing -> 0 }
+  lower = case elemIndex (x-1,y  ) diagram of { Just j -> n-j ; Nothing -> 0 }
 
 {-
 LR_fillings:=proc(dgrm) local n,x,upper,lower;
@@ -250,8 +250,8 @@ fillings' :: Int -> Diagram -> ([Int],[Int]) -> [Filling]
 fillings' _         []                     (alpha,beta) = [ (beta,[]) ]
 fillings' n diagram@((x,y):rest) alphaBeta@(alpha,beta) = stuff where
   stuff = concatMap (nextLetter' lower upper alpha) (fillings' (n-1) rest alphaBeta) 
-  upper = case findIndex (==(x  ,y+1)) diagram of { Just j -> n-j ; Nothing -> 0 }
-  lower = case findIndex (==(x-1,y  )) diagram of { Just j -> n-j ; Nothing -> 0 }
+  upper = case elemIndex (x  ,y+1) diagram of { Just j -> n-j ; Nothing -> 0 }
+  lower = case elemIndex (x-1,y  ) diagram of { Just j -> n-j ; Nothing -> 0 }
 
 {-
 LR_fillings:=proc(dgrm) local n,x,upper,lower;
@@ -340,7 +340,7 @@ type Part = [Int]
 --
 lrMult :: Partition -> Partition -> Map Partition Int
 lrMult pmu@(Partition mu) pnu@(Partition nu) = result where
-  result = foldl' add Map.empty (addMu mu nu) where
+  result = foldl' add Map.empty (addMu mu nu)
   add !old lambda = Map.insertWith (+) (Partition lambda) 1 old
 
 -- | This basically lists all the outer shapes (with multiplicities) which can be result from the LR rule
@@ -379,7 +379,7 @@ newBoxes lb ub part = reverse $ go [1..] part (headOrZero part + 1) where
 
 -- | Adds a box to a partition
 addBox :: (Int,Int) -> Part -> Part
-addBox (k,_) part = go 1 part where
+addBox (k,_) = go 1 where
   go !i (p:ps) = if i==k then (p+1):ps else p : go (i+1) ps
   go !i []     = if i==k then [1] else error "addBox: shouldn't happen"
 

@@ -7,7 +7,7 @@
 -- <<svg/bintrees.svg>>
 --
 
-{-# LANGUAGE FlexibleInstances, TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Math.Combinat.Trees.Binary 
   ( -- * Types
     BinTree(..)
@@ -196,7 +196,7 @@ instance Functor BinTree where
 instance Foldable BinTree where
   foldMap f = go where
     go (Leaf x) = f x
-    go (Branch left right) = (go left) `mappend` (go right)  
+    go (Branch left right) = go left `mappend` go right
 
 instance Traversable BinTree where
   traverse f = go where 
@@ -210,7 +210,6 @@ instance Applicative BinTree where
     go (Leaf   f  ) = fmap f t
 
 instance Monad BinTree where
-  return    = Leaf
   (>>=) t f = go t where
     go (Branch l r) = Branch (go l) (go r)
     go (Leaf   y  ) = f y 
@@ -251,7 +250,7 @@ forestToNestedParentheses = forest where
 forestToBinaryTree :: Forest a -> BinTree ()
 forestToBinaryTree = forest where
   -- forest :: Forest a -> BinTree ()
-  forest = foldr Branch leaf . map tree 
+  forest = foldr (Branch . tree) leaf
   -- tree :: Tree a -> BinTree ()
   tree (Node _ sf) = case sf of
     [] -> leaf
@@ -265,7 +264,7 @@ nestedParenthesesToForest ps =
       _  -> Nothing
   where  
     parseForest :: [Paren] -> ( [Paren] , Forest () )
-    parseForest ps = unfoldEither parseTree ps
+    parseForest = unfoldEither parseTree
     parseTree :: [Paren] -> Either [Paren] ( [Paren] , Tree () )  
     parseTree orig@(LeftParen:ps) = let (rest,ts) = parseForest ps in case rest of
       (RightParen:qs) -> Right (qs, Node () ts)
@@ -337,8 +336,8 @@ fasc4A_algorithm_P n = unfold next ( start , [] ) where
   start = concat $ replicate n [RightParen,LeftParen]  -- already reversed!
    
   next :: ([Paren],[Paren]) -> ( [Paren] , Maybe ([Paren],[Paren]) )
-  next ( (a:b:ls) , [] ) = next ( ls , b:a:[] )
-  next ( lls@(l:ls) , rrs@(r:rs) ) = ( visit , new ) where
+  next (a:b:ls, []) = next (ls, [b,a])
+  next (lls@(l:ls), rrs@(r:rs)) = (visit, new) where
     visit = reverse lls ++ rrs
     new = 
       {- debug (reverse ls,l,r,rs) $ -} 
@@ -358,7 +357,6 @@ fasc4A_algorithm_P n = unfold next ( start , [] ) where
         (a:_:as) -> findj ( ls, RightParen:rs ) ( as , LeftParen:a:ys )
         _ -> findj ( lls, [] ) ( reverse rs ++ xs , ys) 
       RightParen -> Just ( reverse ys ++ xs ++ reverse (LeftParen:rs) ++ ls , [] )
-  findj _ _ = error "fasc4A_algorithm_P: fatal error shouldn't happen"
     
 -- | Generates a uniformly random sequence of nested parentheses of length 2n.    
 -- Based on \"Algorithm W\" in Knuth.
@@ -424,7 +422,7 @@ binaryTreesNaive n =
 randomBinaryTree :: RandomGen g => Int -> g -> (BinTree (), g)
 randomBinaryTree n rnd = (tree,rnd') where
   (decorated,rnd') = fasc4A_algorithm_R n rnd      
-  tree = fmap (const ()) $ forgetNodeDecorations decorated
+  tree = void $ forgetNodeDecorations decorated
 
 -- | Grows a uniformly random binary tree. 
 -- \"Algorithm R\" (Remy's procudere) in Knuth.

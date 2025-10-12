@@ -9,7 +9,6 @@
 --  * <http://en.wikipedia.org/wiki/Partition_(number_theory)>
 --
 
-{-# LANGUAGE BangPatterns #-}
 module Math.Combinat.Partitions
   ( module Math.Combinat.Partitions.Integer
   )

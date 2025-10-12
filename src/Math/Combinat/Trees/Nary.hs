@@ -1,7 +1,7 @@
 
 -- | N-ary trees.
 
-{-# LANGUAGE FlexibleInstances, TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Math.Combinat.Trees.Nary 
   (      
     -- * Types
@@ -153,7 +153,7 @@ semiRegularTrees dset_ n =
     then go n
     else error "semiRegularTrees: expecting a list of positive integers"
   where
-    dset = map head $ group $ sort $ dset_
+    dset = map head $ group $ sort dset_
     
     go 0 = [ Node () [] ]
     go n = [ Node () cs
@@ -199,10 +199,10 @@ asciiTreeVertical_ tree = ASCII.asciiFromLines (go tree) where
   f :: Bool -> Bool -> [String] -> [String] 
   f bf bl (l:ls) = let indent = if bl           then "  "  else  "| "
                        gap    = if bl           then []    else ["| "]
-                       branch = if bl && not bf 
-                                  then "\\-" 
-                                  else if bf then "@-"
-                                             else "+-"
+                       branch
+                         | bl && not bf = "\\-" 
+                         | bf           = "@-"
+                         | otherwise    = "+-"
                    in  (branch++l) : map (indent++) ls ++ gap
 
 instance DrawASCII (Tree ()) where
@@ -223,15 +223,14 @@ asciiTreeVertical tree = ASCII.asciiFromLines (go tree) where
     
   f :: String -> Bool -> Bool -> [String] -> [String] 
   f label bf bl (l:ls) =
-        let spaces = (map (const ' ') label  ) 
-            dashes = (map (const '-') spaces ) 
+        let spaces = map (const ' ') label
+            dashes = map (const '-') spaces
             indent = if bl then "  " ++spaces++"  " else  " |" ++ spaces ++ "  "
             gap    = if bl then []                  else [" |" ++ spaces ++ "  "]
-            branch = if bl && not bf
-                           then " \\"++dashes++"--" 
-                           else if bf 
-                             then "-(" ++ label  ++ ")-"
-                             else " +" ++ dashes ++ "--"
+            branch
+              | bl && not bf = " \\"++dashes++"--" 
+              | bf           = "-(" ++ label  ++ ")-"
+              | otherwise    = " +" ++ dashes ++ "--"
         in  (branch++l) : map (indent++) ls ++ gap
 
 -- | Prints the labels for the leaves, but not for the  nodes.
@@ -245,10 +244,10 @@ asciiTreeVerticalLeavesOnly tree = ASCII.asciiFromLines (go tree) where
   f :: Bool -> Bool -> [String] -> [String] 
   f bf bl (l:ls) = let indent = if bl           then "  "  else  "| "
                        gap    = if bl           then []    else ["| "]
-                       branch = if bl && not bf 
-                                  then "\\-" 
-                                  else if bf then "@-"
-                                             else "+-"
+                       branch
+                         | bl && not bf = "\\-" 
+                         | bf           = "@-"
+                         | otherwise    = "+-"
                    in  (branch++l) : map (indent++) ls ++ gap
   
 --------------------------------------------------------------------------------
@@ -365,11 +364,11 @@ addUniqueLabelsForest_ = map (fmap snd) . addUniqueLabelsForest
     
 -- | Attaches the depth to each node. The depth of the root is 0. 
 labelDepthTree :: Tree a -> Tree (a,Int) 
-labelDepthTree tree = worker 0 tree where
+labelDepthTree = worker 0 where
   worker depth (Node label subtrees) = Node (label,depth) (map (worker (depth+1)) subtrees)
 
 labelDepthForest :: Forest a -> Forest (a,Int) 
-labelDepthForest forest = map labelDepthTree forest
+labelDepthForest = map labelDepthTree
     
 labelDepthTree_ :: Tree a -> Tree Int
 labelDepthTree_ = fmap snd . labelDepthTree
@@ -385,7 +384,7 @@ labelNChildrenTree (Node x subforest) =
   Node (x, length subforest) (map labelNChildrenTree subforest)
   
 labelNChildrenForest :: Forest a -> Forest (a,Int) 
-labelNChildrenForest forest = map labelNChildrenTree forest
+labelNChildrenForest = map labelNChildrenTree
 
 labelNChildrenTree_ :: Tree a -> Tree Int
 labelNChildrenTree_ = fmap snd . labelNChildrenTree
@@ -414,7 +413,7 @@ derivTrees' [n] =
   where 
     f k = if k<n then ((),[k+1]) else ((),[])
 derivTrees' ks = 
-  if and (map (>0) ks)
+  if all (>0) ks
     then
       [ Node () sub 
       | part <- parts

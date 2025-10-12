@@ -47,7 +47,7 @@
 -- to the dimension), which encode the combinatorics of Kostka numbers.
 --
 
-{-# LANGUAGE FlexibleInstances, TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Math.Combinat.Tableaux.GelfandTsetlin.Cone
   ( 
     -- * Types
@@ -109,7 +109,7 @@ deIndex' m = Tri ( i+1 , m - binom2 (i+1) + 1 ) where
 
 instance Ix Tri where
   index   (a,b) x = index' x - index' a 
-  inRange (a,b) x = (u<=j && j<=v) where
+  inRange (a,b) x = u<=j && j<=v where
     u = index' a 
     v = index' b
     j = index' x
@@ -130,9 +130,8 @@ asciiTriangularArray :: Show a => TriangularArray a -> ASCII
 asciiTriangularArray = asciiTableau . fromTriangularArray
 
 asciiTableau :: Show a => Tableau a -> ASCII
-asciiTableau xxs = tabulate (HRight,VTop) (HSepSpaces 1, VSepEmpty) 
-                 $ (map . map) asciiShow
-                 $ xxs
+asciiTableau = tabulate (HRight,VTop) (HSepSpaces 1, VSepEmpty) 
+               . (map . map) asciiShow
 
 instance Show a => DrawASCII (TriangularArray a) where
   ascii = asciiTriangularArray
@@ -160,7 +159,7 @@ reverseTableau = reverse . map reverse
 --------------------------------------------------------------------------------
 
 gtSimplexContent :: TriangularArray Int -> Int
-gtSimplexContent arr = max (arr ! (fst (bounds arr))) (arr ! (snd (bounds arr)))   -- we also handle inverted tableau
+gtSimplexContent arr = max (arr ! fst (bounds arr)) (arr ! snd (bounds arr))   -- we also handle inverted tableau
 
 _gtSimplexContent :: Tableau Int -> Int
 _gtSimplexContent t = max (head $ head t) (last $ last t)   -- we also handle inverted tableau
@@ -174,11 +173,11 @@ normalize' holes = ( c , array (Tri (1,1), Tri (k,k)) xys ) where
   k = length holes
   c = length sorted
   xys = concat $ zipWith hs [1..] sorted
-  hs a xs     = map (h a) xs
+  hs a     = map (h a)
   h  a (ij,_) = (Tri ij , a)  
   sorted = groupSortBy snd (concat withPos)
   withPos = zipWith f [1..] (reverseTableau holes) 
-  f i xs = zipWith (g i) [1..] xs 
+  f i = zipWith (g i) [1..]
   g i j hole = ((i,j),hole) 
 
 --------------------------------------------------------------------------------
@@ -198,7 +197,7 @@ enumHoles c start@(Hole k l)
 helper :: Int -> [Int] -> [Hole] -> [[Hole]]
 helper c [] this = [[]] 
 helper c prev@(p:ps) this = 
-  [ t:rest | t <- enumHoles c (startHole this prev), rest <- helper c ps (t:this) ]
+  [t:rest | t <- enumHoles c (startHole this prev), rest <- helper c ps (t:this)]
 
 newLines' :: Int -> [Int] -> [[Hole]]
 newLines' c lastReversed = helper c last []  
@@ -217,7 +216,7 @@ gtSimplexTableaux k = map normalize $ concatMap f smalls where
   smalls :: [ [[Int]] ]
   smalls = map (reverseTableau . fromTriangularArray) $ gtSimplexTableaux (k-1)
   f :: [[Int]] -> [ [[Hole]] ]
-  f small = map (:smallhole) $ map reverse $ newLines (head small) where
+  f small = (:smallhole) . reverse <$> newLines (head small) where
     smallhole = map (map toHole) small
 
 _gtSimplexTableaux :: Int -> [Tableau Int]

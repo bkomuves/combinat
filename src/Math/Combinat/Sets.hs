@@ -1,7 +1,8 @@
 
 -- | Subsets. 
 
-{-# LANGUAGE BangPatterns, Rank2Types #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE Rank2Types #-}
 module Math.Combinat.Sets 
   ( 
     -- * Choices
@@ -46,11 +47,10 @@ import Math.Combinat.Helper  ( swap )
 -- > choose_ k n == choose k [1..n]
 --
 choose_ :: Int -> Int -> [[Int]]
-choose_ k n  = if n<0 || k<0
-  then error "choose_: n and k should nonnegative"
-  else if k>n || k<0 
-    then []
-    else choose k [1..n]
+choose_ k n
+  | n<0 || k<0 = error "choose_: n and k should nonnegative"
+  | k>n || k<0 = []
+  | otherwise  = choose k [1..n]
 
 -- | All possible ways to choose @k@ elements from a list, without
 -- repetitions. \"Antisymmetric power\" for lists. Synonym for 'kSublists'.
@@ -59,7 +59,7 @@ choose 0 _  = [[]]
 choose k [] = []
 choose k (x:xs) = map (x:) (choose (k-1) xs) ++ choose k xs  
 
--- | A version of 'choose' which also returns the complementer sets.
+-- | A version of 'choose' which also returns the complementary sets.
 --
 -- > choose k = map fst . choose' k
 --
@@ -116,14 +116,14 @@ compose = combine
 -- TODO: better name?
 tuplesFromList :: Int -> [a] -> [[a]]
 tuplesFromList 0 _  = [[]]
-tuplesFromList k xs = [ (y:ys) | ys <- tuplesFromList (k-1) xs , y <- xs ]
+tuplesFromList k xs = [y:ys | ys <- tuplesFromList (k-1) xs , y <- xs]
 --the order seems to be very important, the wrong order causes a memory leak!
 --tuplesFromList k xs = [ (y:ys) | y <- xs, ys <- tuplesFromList (k-1) xs ]
  
 -- | \"Tensor product\" for lists.
 listTensor :: [[a]] -> [[a]]
 listTensor [] = [[]]
-listTensor (xs:xss) = [ y:ys | ys <- listTensor xss , y <- xs ]
+listTensor (xs:xss) = [y:ys | ys <- listTensor xss , y <- xs]
 --the order seems to be very important, the wrong order causes a memory leak!
 --listTensor (xs:xss) = [ y:ys | y <- xs, ys <- listTensor xss ]
 

@@ -7,7 +7,8 @@
 -- <<svg/dyck_path.svg>>
 --
 
-{-# LANGUAGE BangPatterns, FlexibleInstances, TypeSynonymInstances #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Math.Combinat.LatticePaths where
 
 --------------------------------------------------------------------------------
@@ -71,8 +72,7 @@ isValidPath = go 0 where
   go :: Int -> LatticePath -> Bool
   go !y []     = y>=0
   go !y (t:ts) = let y' = case t of { UpStep -> y+1 ; DownStep -> y-1 }
-                 in  if y'<0 then False 
-                             else go y' ts
+                 in y' >= 0 && go y' ts
 
 -- | A Dyck path is a lattice path whose last point lies on the @y=0@ line
 isDyckPath :: LatticePath -> Bool
@@ -80,8 +80,7 @@ isDyckPath = go 0 where
   go :: Int -> LatticePath -> Bool
   go !y []     = y==0
   go !y (t:ts) = let y' = case t of { UpStep -> y+1 ; DownStep -> y-1 }
-                 in  if y'<0 then False 
-                             else go y' ts
+                 in y' >= 0 && go y' ts
 
 -- | Maximal height of a lattice path
 pathHeight :: LatticePath -> Int
@@ -193,7 +192,7 @@ dyckPathsNaive = worker where
 
 -- | The number of Dyck paths from @(0,0)@ to @(2m,0)@ is simply the m\'th Catalan number.
 countDyckPaths :: Int -> Integer
-countDyckPaths m = catalan m
+countDyckPaths = catalan
 
 -- | The trivial bijection
 nestedParensToDyckPath :: [Paren] -> LatticePath

@@ -2,7 +2,9 @@
 -- | Tests for skew partitions.
 --
 
-{-# LANGUAGE CPP, BangPatterns, ScopedTypeVariables, DataKinds, KindSignatures #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Tests.Partitions.Skew where
 
 --------------------------------------------------------------------------------
@@ -41,7 +43,7 @@ instance Arbitrary SkewPartition where
 --------------------------------------------------------------------------------
 
 -- | Skew partitions of size at most n
-newtype Skew (n :: Nat) = Skew (SkewPartition) deriving (Eq,Show)
+newtype Skew (n :: Nat) = Skew SkewPartition deriving (Eq,Show)
 
 -- | usage: fromSkew @20
 fromSkew :: Skew n -> SkewPartition
@@ -82,16 +84,16 @@ testgroup_SkewPartitions = testGroup "Skew Partitions"
 -- * properties
 
 prop_dual_dual :: SkewPartition -> Bool
-prop_dual_dual sp = (dualSkewPartition (dualSkewPartition sp) == sp)
+prop_dual_dual sp = dualSkewPartition (dualSkewPartition sp) == sp
 
 prop_dual_from :: SkewPartition -> Bool
-prop_dual_from sp = (p == dual p' && q == dual q') where
+prop_dual_from sp = p == dual p' && q == dual q' where
   (p,q)   = fromSkewPartition sp
   sp'     = dualSkewPartition sp
   (p',q') = fromSkewPartition sp'
 
 prop_from_to :: SkewPartition -> Bool
-prop_from_to sp = (mkSkewPartition (fromSkewPartition sp) == sp)
+prop_from_to sp = mkSkewPartition (fromSkewPartition sp) == sp
 
 prop_to_from :: (Partition,Partition) -> Bool
 prop_to_from (p,q) = 
@@ -102,13 +104,13 @@ prop_to_from (p,q) =
     mb = safeSkewPartition (p,q)
 
 prop_from_to_from :: SkewPartition -> Bool
-prop_from_to_from sp = (pq == pq') where
+prop_from_to_from sp = pq == pq' where
   pq  = fromSkewPartition sp
   sp' = mkSkewPartition pq
   pq' = fromSkewPartition sp'
 
 prop_weight :: SkewPartition -> Bool
-prop_weight sp = (skewPartitionWeight sp == weight p - weight q) where
+prop_weight sp = skewPartitionWeight sp == weight p - weight q where
   (p,q) = fromSkewPartition sp
 
 --------------------------------------------------------------------------------

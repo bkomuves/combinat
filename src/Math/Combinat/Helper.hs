@@ -1,7 +1,9 @@
 
 -- | Miscellaneous helper functions used internally
 
-{-# LANGUAGE BangPatterns, PolyKinds, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Math.Combinat.Helper where
 
 --------------------------------------------------------------------------------
@@ -26,7 +28,7 @@ import Control.Monad.Trans.State
 -- * debugging
 
 debug :: Show a => a -> b -> b
-debug x y = trace ("-- " ++ show x ++ "\n") y
+debug x = trace ("-- " ++ show x ++ "\n")
 
 --------------------------------------------------------------------------------
 -- * pairs
@@ -54,7 +56,7 @@ sum' = foldl' (+) 0
 
 interleave :: [a] -> [a] -> [a]
 interleave (x:xs) (y:ys) = x : y : interleave xs ys
-interleave [x]    []     = x : []
+interleave [x]    []     = [x]
 interleave []     []     = []
 interleave _      _      = error "interleave: shouldn't happen"
 
@@ -63,6 +65,13 @@ evens (x:xs) = x : odds xs
 evens [] = []
 odds (x:xs) = evens xs
 odds [] = []
+
+-- | As `zipWith`, but raises an error if the lists have different lengths
+safeZip :: (a -> b -> c) -> [a] -> [b] -> [c]
+safeZip f = go where
+  go (x:xs) (y:ys) = f x y : go xs ys
+  go []     []     = []
+  go _      _      = error "safeZip: the lists do not have equal length"
 
 --------------------------------------------------------------------------------
 -- * multiplication
@@ -96,13 +105,13 @@ productFromToStride2 = go where
     | otherwise   = go a half * go half b
     where
       dif  = b - a
-      half = a + 2*(div dif 4)
+      half = a + 2 * div dif 4
 
 --------------------------------------------------------------------------------
 -- * equality and ordering 
 
 equating :: Eq b => (a -> b) -> a -> a -> Bool
-equating f x y = (f x == f y)
+equating f x y = f x == f y
 
 reverseOrdering :: Ordering -> Ordering
 reverseOrdering LT = GT
@@ -169,8 +178,8 @@ isStrictlyDecreasing = go where
 -- | The boolean argument will @True@ only for the last element
 mapWithLast :: (Bool -> a -> b) -> [a] -> [b]
 mapWithLast f = go where
-  go (x : []) = f True  x : []
-  go (x : xs) = f False x : go xs
+  go [x]    = [f True x]
+  go (x:xs) = f False x : go xs
 
 mapWithFirst :: (Bool -> a -> b) -> [a] -> [b]
 mapWithFirst f = go True where
@@ -178,8 +187,8 @@ mapWithFirst f = go True where
   
 mapWithFirstLast :: (Bool -> Bool -> a -> b) -> [a] -> [b]
 mapWithFirstLast f = go True where
-  go b (x : []) = f b True  x : []
-  go b (x : xs) = f b False x : go False xs
+  go b [x]    = [f b True x]
+  go b (x:xs) = f b False x: go False xs
 
 --------------------------------------------------------------------------------
 -- * older helpers for ASCII drawing
@@ -241,7 +250,7 @@ boolToInt True  = 1
     
 -- iterated function application
 nest :: Int -> (a -> a) -> a -> a
-nest !0 _ x = x
+nest 0  _ x = x
 nest !n f x = nest (n-1) f (f x)
 
 unfold1 :: (a -> Maybe a) -> a -> [a]
@@ -310,7 +319,7 @@ runRandT (RandT stuff) = runStateT stuff
 
 -- | This may be occasionally useful
 flipRunRandT :: Monad m => RandT s m a -> s -> m (s,a)
-flipRunRandT action ini = liftM swap $ runRandT action ini
+flipRunRandT action ini = swap <$> runRandT action ini
 
 
 -- | Puts a standard-conforming random function into the monad

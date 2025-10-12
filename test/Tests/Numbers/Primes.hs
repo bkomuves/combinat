@@ -3,7 +3,8 @@
 -- | Tests for number theory
 --
 
-{-# LANGUAGE CPP, GeneralizedNewtypeDeriving, DataKinds, KindSignatures #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
 module Tests.Numbers.Primes where
 
 --------------------------------------------------------------------------------
@@ -78,15 +79,15 @@ unitTests = testGroup "Primes module"
 
 unitTests1 :: TestTree
 unitTests1 = testGroup "Elementary number theory unit tests "
-  [ testCase "sum first 100 primes"         $ prop_primes_sum_100
-  , testCase "sum first 1000 primes"        $ prop_primes_sum_1000
-  , testCase "sum first 10000 primes"       $ prop_primes_sum_10000
-  , testCase "sum first 100000 primes"      $ prop_primes_sum_100000
+  [ testCase "sum first 100 primes"           prop_primes_sum_100
+  , testCase "sum first 1000 primes"          prop_primes_sum_1000
+  , testCase "sum first 10000 primes"         prop_primes_sum_10000
+  , testCase "sum first 100000 primes"        prop_primes_sum_100000
   , testCase "divisor set"                  $ allTrue [ prop_divisors_def n | n<-[1..1000] ]
-  , testCase "sum 1000 divisor sigma_1"     $ prop_divisorsigma1_sum_1000
-  , testCase "sum 1000 divisor sigma_1 /b"  $ prop_divisorsigma1_sum_1000_b
-  , testCase "sum 1000 divisor sigma_2"     $ prop_divisorsigma2_sum_1000
-  , testCase "sum 1000 divisor sigma_3"     $ prop_divisorsigma3_sum_1000
+  , testCase "sum 1000 divisor sigma_1"       prop_divisorsigma1_sum_1000
+  , testCase "sum 1000 divisor sigma_1 /b"    prop_divisorsigma1_sum_1000_b
+  , testCase "sum 1000 divisor sigma_2"       prop_divisorsigma2_sum_1000
+  , testCase "sum 1000 divisor sigma_3"       prop_divisorsigma3_sum_1000
   , testCase "moebius inversion"            $ allTrue [ prop_moebius_inversion    n | n<-[1..1000] ]
   , testCase "totient divisor sum"          $ allTrue [ prop_totient_divisorsum   n | n<-[1..1000] ]
   , testCase "totient moebius inversion"    $ allTrue [ prop_totient_mobius_inv   n | n<-[1..1000] ]
@@ -101,6 +102,6 @@ unitTests2 = testGroup "Integer factorization"
   ]
 
 allTrue :: [Bool] -> Assertion
-allTrue bools = (and bools @=? True)
+allTrue bools = and bools @=? True
 
 --------------------------------------------------------------------------------

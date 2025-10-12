@@ -1,7 +1,7 @@
 
 -- | Type classes for some common properties shared by different objects
 
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
+{-# LANGUAGE FunctionalDependencies #-}
 module Math.Combinat.Classes where
 
 --------------------------------------------------------------------------------
@@ -20,11 +20,14 @@ class HasNumberOfParts a where
 
 --------------------------------------------------------------------------------
 
+class HasHeight a where
+  height :: a -> Int
+
 class HasWidth a where
   width :: a -> Int
 
-class HasHeight a where
-  height :: a -> Int
+heightWidth :: (HasHeight a, HasWidth a) => a -> (Int,Int)
+heightWidth x = (height x, width x)
 
 --------------------------------------------------------------------------------
 

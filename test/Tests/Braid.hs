@@ -1,12 +1,12 @@
 
 -- | Tests for braids. 
 
-{-# LANGUAGE 
-      CPP, BangPatterns, 
-      ScopedTypeVariables, ExistentialQuantification,
-      DataKinds, KindSignatures, Rank2Types,
-      TypeOperators, TypeFamilies,
-      StandaloneDeriving #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Tests.Braid where
 
@@ -68,7 +68,7 @@ shrinkBraid (Braid gens) = map Braid list where
 
 -- | equality as /braid words/
 (=:=) :: Braid n -> Braid n -> Bool
-(=:=) (Braid gens1) (Braid gens2) = (gens1 == gens2)
+Braid gens1 =:= Braid gens2 = gens1 == gens2
 
 data UnreducedBraid   = forall n. KnownNat n => Unreduced (Braid n)              
 data ReducedBraid     = forall n. KnownNat n => Reduced   (Braid n)              
@@ -155,9 +155,7 @@ mkPermBraid perm =
     Just snat = someNatVal (fromIntegral n :: Integer)
 
 instance Arbitrary PermutationBraid where
-  arbitrary = do
-    perm <- arbitrary
-    return $ mkPermBraid perm
+  arbitrary = mkPermBraid <$> arbitrary
   shrink (PermBraid x b) = [ PermBraid (braidPermutation s) s | s <- shrinkBraid b ]
 
 --------------------------------------------------------------------------------
@@ -218,58 +216,58 @@ prop_permTau_1 :: PermutationBraid -> Bool
 prop_permTau_1 (PermBraid perm braid) = tauPerm perm == braidPermutation (tau braid)
 
 prop_permBraid_perm :: PermutationBraid -> Bool
-prop_permBraid_perm (PermBraid perm braid) = (braidPermutation braid == perm)
+prop_permBraid_perm (PermBraid perm braid) = braidPermutation braid == perm
 
 prop_permBraid_valid :: PermutationBraid -> Bool
 prop_permBraid_valid (PermBraid perm braid) = isPermutationBraid braid
 
 prop_braidPerm_comp :: TwoBraids -> Bool
-prop_braidPerm_comp (TwoBraids b1 b2) = (p == q) where
+prop_braidPerm_comp (TwoBraids b1 b2) = p == q where
   p = braidPermutation (compose b1 b2) 
   q = braidPermutation b1 `P.multiplyPermutation` braidPermutation b2
 
 prop_link_positive :: PositiveBraid -> Bool
-prop_link_positive (PositiveB braid) = all (>=0) $ elems $ linkingMatrix braid
+prop_link_positive (PositiveB braid) = all (>= 0) $ elems $ linkingMatrix braid
 
 prop_linking :: UnreducedBraid -> Bool
-prop_linking (Unreduced braid) = (linkingMatrix braid == matrix) where
+prop_linking (Unreduced braid) = linkingMatrix braid == matrix where
   n = numberOfStrands braid
   matrix = array ((1,1),(n,n)) [ ((i,j),strandLinking braid i j) | i<-[1..n], j<-[1..n] ]
 
 --------------------------------------------------------------------------------
 
 prop_braidnf_naive :: UnreducedBraid -> Bool
-prop_braidnf_naive (Unreduced braid) = (braidNormalFormNaive' braid == braidNormalForm' braid)
+prop_braidnf_naive (Unreduced braid) = braidNormalFormNaive' braid == braidNormalForm' braid
 
 prop_braidnf_reduce :: UnreducedBraid -> Bool
-prop_braidnf_reduce (Unreduced braid) = (braidNormalForm' braid == braidNormalForm braid)
+prop_braidnf_reduce (Unreduced braid) = braidNormalForm' braid == braidNormalForm braid
 
 prop_braidnf_reprs :: ReducedBraid -> Bool
-prop_braidnf_reprs (Reduced braid) = (nf == nf') where
+prop_braidnf_reprs (Reduced braid) = nf == nf' where
   nf  = braidNormalForm braid 
   nf' = braidNormalForm braid'
   braid' = nfReprWord nf
 
 prop_braidnf_perturb :: PerturbedBraid -> Bool
-prop_braidnf_perturb (Perturbed braid1 braid2) = (braidNormalForm braid1 == braidNormalForm braid2)
+prop_braidnf_perturb (Perturbed braid1 braid2) = braidNormalForm braid1 == braidNormalForm braid2
 
 prop_braidnf_link :: UnreducedBraid -> Bool
-prop_braidnf_link (Unreduced braid) = (linkingMatrix braid == linkingMatrix braid') where
+prop_braidnf_link (Unreduced braid) = linkingMatrix braid == linkingMatrix braid' where
   nf  = braidNormalForm braid 
   braid' = nfReprWord nf
 
 prop_braidnf_pos :: PositiveBraid -> Bool
-prop_braidnf_pos (PositiveB braid) = (_nfDeltaExp (braidNormalForm braid) >= 0)
+prop_braidnf_pos (PositiveB braid) = _nfDeltaExp (braidNormalForm braid) >= 0
  
 prop_lemma_2_5 :: Permutation -> Bool
-prop_lemma_2_5 p = and [ check i | i<-[1..n-1] ] where
+prop_lemma_2_5 p = and [check i | i<-[1..n-1]] where
   n = P.permutationSize p
   w = _permutationBraid p
   s = permWordStartingSet n w
-  check i = _isPermutationBraid n (i:w) == (not $ elem i s)
+  check i = _isPermutationBraid n (i:w) == notElem i s
 
 prop_permTau_2 :: PermutationBraid -> Bool
-prop_permTau_2 (PermBraid perm braid) = (nf1 == nf2) where
+prop_permTau_2 (PermBraid perm braid) = nf1 == nf2 where
   nf1 = braidNormalForm $ permutationBraid (tauPerm perm)
   nf2 = braidNormalForm $ tau braid
 

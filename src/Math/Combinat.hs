@@ -34,7 +34,7 @@
 --
 -- Naming conventions (subject to change): 
 --
---  * prime suffix: additional constrains, typically more general;
+--  * prime suffix: additional constraints, typically more general;
 --
 --  * underscore prefix: use plain lists instead of other types with 
 --    enforced invariants;

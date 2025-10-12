@@ -7,7 +7,10 @@
 -- see <http://www.math.u-psud.fr/~breuilla/Belk.pdf>
 --
 
-{-# LANGUAGE TypeSynonymInstances, FlexibleInstances, BangPatterns, PatternSynonyms, DeriveFunctor #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE PatternSynonyms #-}
 module Math.Combinat.Groups.Thompson.F where
 
 --------------------------------------------------------------------------------
@@ -54,13 +57,13 @@ mkTDiagDontReduce top bot =
 
 
 isValidTDiag :: TDiag -> Bool
-isValidTDiag (TDiag w top bot) = (treeWidth top == w && treeWidth bot == w)
+isValidTDiag (TDiag w top bot) = treeWidth top == w && treeWidth bot == w
 
 isPositive :: TDiag -> Bool
-isPositive (TDiag w top bot) = (bot == rightVine w)
+isPositive (TDiag w top bot) = bot == rightVine w
 
 isReduced :: TDiag -> Bool
-isReduced diag = (reduce diag == diag)
+isReduced diag = reduce diag == diag
 
 -- | The generator x0
 x0 :: TDiag
@@ -95,7 +98,7 @@ inverse (TDiag w top bot) = TDiag w bot top
 
 -- | Decides whether two (possibly unreduced) tree diagrams represents the same group element in F.
 equivalent :: TDiag -> TDiag -> Bool
-equivalent diag1 diag2 = (identity == reduce (compose diag1 (inverse diag2)))
+equivalent diag1 diag2 = identity == reduce (compose diag1 (inverse diag2))
 
 --------------------------------------------------------------------------------
 -- * Reduction of tree diagrams
@@ -147,7 +150,7 @@ treeCaretList = snd . go 0 where
 removeCarets :: [Int] -> T -> T
 removeCarets idxs tree = if null rem then final else error ("removeCarets: some stuff remained: " ++ show rem) where
 
-  (_,rem,final) =  go 0 idxs tree where
+  (_,rem,final) =  go 0 idxs tree
 
   go :: Int -> [Int] -> T -> (Int,[Int],T)
   go !x []         t  = (x + treeWidth t , [] , t)

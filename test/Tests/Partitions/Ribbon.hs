@@ -2,7 +2,6 @@
 -- | Tests for ribbons (border strip skew partitions).
 --
 
-{-# LANGUAGE CPP, BangPatterns #-}
 module Tests.Partitions.Ribbon where
 
 --------------------------------------------------------------------------------
@@ -78,9 +77,9 @@ prop_outer_length (Outer p n) = sort (outerRibbonsOfLength p n) == sort (outerRi
 -- * corner properties
 
 prop_innerCornerBoxes :: Partition -> Bool
-prop_innerCornerBoxes p  =  (innerCornerBoxes p == innerCornerBoxesNaive p)
+prop_innerCornerBoxes p = innerCornerBoxes p == innerCornerBoxesNaive p
 
 prop_outerCornerBoxes :: Partition -> Bool
-prop_outerCornerBoxes p  =  (outerCornerBoxes p == outerCornerBoxesNaive p)
+prop_outerCornerBoxes p = outerCornerBoxes p == outerCornerBoxesNaive p
 
 --------------------------------------------------------------------------------

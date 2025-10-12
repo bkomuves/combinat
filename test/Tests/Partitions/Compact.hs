@@ -4,6 +4,7 @@ module Tests.Partitions.Compact where
 --------------------------------------------------------------------------------
 
 import Data.List hiding ( uncons , singleton )
+import Data.Maybe (isNothing)
 import Data.Ord
 
 import Test.Tasty
@@ -38,57 +39,57 @@ unitTests = testGroup "Unit tests"
   , testCase "toAscList . fromList == reverse /2" $ allTrue [ reverse xs == toAscList (fromDescList xs) | xs <- _allparts 18    ]
   , testCase "fromList . toList == id"    $ allTrue [ p ==  fromDescList (toList p ) | p  <- testPartitions  ]
   , testCase "singleton"               $ allTrue [ toList (singleton n) == [n] | n <- [1..300] ]
-  , testCase "singleton 0 is empty"    $ allTrue [ toList (singleton 0) == [] ]
-  , testCase "uncons empty"            $ allTrue [ uncons empty == Nothing ]
+  , testCase "singleton 0 is empty"    $ allTrue [ null (toList (singleton 0)) ]
+  , testCase "uncons empty"            $ allTrue [ isNothing (uncons empty) ]
   , testCase "uncons singleton"        $ allTrue [ uncons (singleton x) == Just (x,empty) | x <- [1..300] ]
-  , testCase "cons/snoc 0 empty"       $ allTrue [ (cons 0 empty) == empty , (snoc empty 0) == empty ] 
+  , testCase "cons/snoc 0 empty"       $ allTrue [ cons 0 empty == empty, snoc empty 0 == empty ] 
   , testCase "cons empty"              $ allTrue [ toList (cons n empty) == [n] | n <- [1..300] ]
   , testCase "snoc empty"              $ allTrue [ toList (snoc empty n) == [n] | n <- [1..300] ]
-  , testCase "width/height of empty"   $ allTrue [ width empty == 0 , height empty == 0 ]
-  , testCase "width of all "           $ allTrue [ length   xs == width  p | xs <- _testPartitions , let p = fromDescList xs ]
-  , testCase "height of all"           $ allTrue [ safeHead xs == height p | xs <- _testPartitions , let p = fromDescList xs ]
+  , testCase "width/height of empty"   $ allTrue [ width empty == 0, height empty == 0 ]
+  , testCase "width of all "           $ allTrue [ length   xs == width  p | xs <- _testPartitions, let p = fromDescList xs ]
+  , testCase "height of all"           $ allTrue [ safeHead xs == height p | xs <- _testPartitions, let p = fromDescList xs ]
   , testCase "(width,height)"          $ allTrue [ widthHeight p == (width p, height p) | p <- testPartitions ]
-  , testCase "tail of all"             $ allTrue [ safeTail xs == toList (partitionTail p) | xs <- _testPartitions , let p = fromDescList xs ]
-  , testCase "toList using uncons"     $ allTrue [ xs == toListViaUncons p                      | xs <- _testPartitionsSmall , let p = fromDescList xs ] 
+  , testCase "tail of all"             $ allTrue [ safeTail xs == toList (partitionTail p) | xs <- _testPartitions, let p = fromDescList xs ]
+  , testCase "toList using uncons"     $ allTrue [ xs == toListViaUncons p                      | xs <- _testPartitionsSmall, let p = fromDescList xs ] 
   , testCase "fromList using cons"     $ allTrue [ xs == toList (fromListViaCons (DescList xs)) | xs <- _testPartitionsSmall ]
   , testCase "fromList using snoc"     $ allTrue [ xs == toList (fromListViaSnoc (DescList xs)) | xs <- _testPartitionsSmall ]
-  , testCase "reflexivity"             $ allTrue [ (fromDescList xs == p) | xs <- _testPartitions , let p = fromDescList xs]
-  , testCase "snoc1"                   $ allTrue [ toList (snoc     p 1)  == xs ++ [1]           | xs <- _testPartitions , let p = fromDescList xs]
-  , testCase "snocN/2..5"              $ allTrue [ toList (snocN n (p,1)) == xs ++ replicate n 1 | xs <- _testPartitions , let p = fromDescList xs , n <- [2..5] ]
-  , testCase "compare/staircase"       $ allTrue [ compare xs1 xs2 == cmp p1 p2 | n1<-[0..100] , n2<-[0..100], let xs1 = _staircase n1 , let xs2 = _staircase n2 , let p1 = staircase n1 , let p2 = staircase n2 ]
-  , testCase "compare/slope"           $ allTrue [ compare xs1 xs2 == cmp p1 p2 | n1<-[0..100] , n2<-[0..100], let xs1 = _slope n1 , let xs2 = _slope n2 , let p1 = slope n1 , let p2 = slope n2 ]
-  , testCase "compare/steep"           $ allTrue [ compare xs1 xs2 == cmp p1 p2 | n1<-[0..100] , n2<-[0..100], let xs1 = _steep n1 , let xs2 = _steep n2 , let p1 = steep n1 , let p2 = steep n2 ]
-  , testCase "compare/small"           $ allTrue [ compare xs1 xs2 == cmp p1 p2 | xs1 <- _allparts 12 , xs2 <- _allparts 12 , let p1 = fromDescList xs1 , let p2 = fromDescList xs2 ]
-  , testCase "compare/15"              $ allTrue [ compare xs1 xs2 == cmp p1 p2 | xs1 <- _parts    15 , xs2 <- _parts    15 , let p1 = fromDescList xs1 , let p2 = fromDescList xs2 ]
-  , testCase "compare/16"              $ allTrue [ compare xs1 xs2 == cmp p1 p2 | xs1 <- _parts    16 , xs2 <- _parts    16 , let p1 = fromDescList xs1 , let p2 = fromDescList xs2 ]
-  , testCase "compare/17"              $ allTrue [ compare xs1 xs2 == cmp p1 p2 | xs1 <- _parts    17 , xs2 <- _parts    17 , let p1 = fromDescList xs1 , let p2 = fromDescList xs2 ]
-  , testCase "ineq/small"              $ allTrue [ ineqTestPartition p1 p2 | xs1 <- _allparts 13 , xs2 <- _allparts 13 , let p1 = fromDescList xs1 , let p2 = fromDescList xs2 ]
-  , testCase "consN 15 / staircase"    $ allTrue [ (replicate k 15  ++ xs) == toList (consN k (15,p)) | n<-[0..15] , let xs = _staircase n , let p = fromDescList xs , k <- [1..80] ]
-  , testCase "consN 15 / slope"        $ allTrue [ (replicate k 15  ++ xs) == toList (consN k (15,p)) | n<-[0..15] , let xs = _slope n , let p = fromDescList xs , k <- [1..80] ]
-  , testCase "consN 15 / steep"        $ allTrue [ (replicate k 15  ++ xs) == toList (consN k (15,p)) | n<-[0..15] , let xs = _steep n , let p = fromDescList xs , k <- [1..40] ]
-  , testCase "consN 16 / staircase"    $ allTrue [ (replicate k  16 ++ xs) == toList (consN k (16,p)) | n<-[0..16] , let xs = _staircase n , let p = fromDescList xs , k <- [1..80] ]
-  , testCase "consN 16 / slope"        $ allTrue [ (replicate k  16 ++ xs) == toList (consN k (16,p)) | n<-[0..16] , let xs = _slope n , let p = fromDescList xs , k <- [1..80] ]
-  , testCase "consN 16 / steep"        $ allTrue [ (replicate k  16 ++ xs) == toList (consN k (16,p)) | n<-[0..16] , let xs = _steep n , let p = fromDescList xs , k <- [1..40] ]
-  , testCase "consN 256 / staircase"   $ allTrue [ (replicate k 256 ++ xs) == toList (consN k (256,p)) | n<-[0..40] , let xs = _staircase n , let p = fromDescList xs , k <- [1..40] ]
-  , testCase "consN 256 / slope"       $ allTrue [ (replicate k 256 ++ xs) == toList (consN k (256,p)) | n<-[0..40] , let xs = _slope n , let p = fromDescList xs , k <- [1..35] ]
-  , testCase "consN 256 / steep"       $ allTrue [ (replicate k 256 ++ xs) == toList (consN k (256,p)) | n<-[0..40] , let xs = _steep n , let p = fromDescList xs , k <- [1..35] ]
-  , testCase "diffSequence"            $ allTrue [ diffSequence p == refDiffSeq xs | xs <- _testPartitions , let p = fromDescList xs ]
-  , testCase "reverseDiffSequence"     $ allTrue [ reverseDiffSequence p == reverse (refDiffSeq xs) | xs <- _testPartitions , let p = fromDescList xs ]
+  , testCase "reflexivity"             $ allTrue [ fromDescList xs == p | xs <- _testPartitions, let p = fromDescList xs]
+  , testCase "snoc1"                   $ allTrue [ toList (snoc     p 1)  == xs ++ [1]           | xs <- _testPartitions, let p = fromDescList xs]
+  , testCase "snocN/2..5"              $ allTrue [ toList (snocN n (p,1)) == xs ++ replicate n 1 | xs <- _testPartitions, let p = fromDescList xs, n <- [2..5] ]
+  , testCase "compare/staircase"       $ allTrue [ compare xs1 xs2 == cmp p1 p2 | n1 <- [0..100], let xs1 = _staircase n1, let p1 = staircase n1, n2 <- [0..100], let xs2 = _staircase n2, let p2 = staircase n2 ]
+  , testCase "compare/slope"           $ allTrue [ compare xs1 xs2 == cmp p1 p2 | n1 <- [0..100], let xs1 = _slope n1, let p1 = slope n1, n2 <- [0..100], let xs2 = _slope n2, let p2 = slope n2 ]
+  , testCase "compare/steep"           $ allTrue [ compare xs1 xs2 == cmp p1 p2 | n1 <- [0..100], let xs1 = _steep n1, let p1 = steep n1, n2 <- [0..100], let xs2 = _steep n2, let p2 = steep n2 ]
+  , testCase "compare/small"           $ allTrue [ compare xs1 xs2 == cmp p1 p2 | xs1 <- _allparts 12, let p1 = fromDescList xs1, xs2 <- _allparts 12, let p2 = fromDescList xs2 ]
+  , testCase "compare/15"              $ allTrue [ compare xs1 xs2 == cmp p1 p2 | xs1 <- _parts    15, let p1 = fromDescList xs1, xs2 <- _parts    15, let p2 = fromDescList xs2 ]
+  , testCase "compare/16"              $ allTrue [ compare xs1 xs2 == cmp p1 p2 | xs1 <- _parts    16, let p1 = fromDescList xs1, xs2 <- _parts    16, let p2 = fromDescList xs2 ]
+  , testCase "compare/17"              $ allTrue [ compare xs1 xs2 == cmp p1 p2 | xs1 <- _parts    17, let p1 = fromDescList xs1, xs2 <- _parts    17, let p2 = fromDescList xs2 ]
+  , testCase "ineq/small"              $ allTrue [ ineqTestPartition p1 p2 | xs1 <- _allparts 13, let p1 = fromDescList xs1, xs2 <- _allparts 13, let p2 = fromDescList xs2 ]
+  , testCase "consN 15 / staircase"    $ allTrue [ (replicate k 15  ++ xs) == toList (consN k (15,p)) | n<-[0..15], let xs = _staircase n, let p = fromDescList xs, k <- [1..80] ]
+  , testCase "consN 15 / slope"        $ allTrue [ (replicate k 15  ++ xs) == toList (consN k (15,p)) | n<-[0..15], let xs = _slope n, let p = fromDescList xs, k <- [1..80] ]
+  , testCase "consN 15 / steep"        $ allTrue [ (replicate k 15  ++ xs) == toList (consN k (15,p)) | n<-[0..15], let xs = _steep n, let p = fromDescList xs, k <- [1..40] ]
+  , testCase "consN 16 / staircase"    $ allTrue [ (replicate k  16 ++ xs) == toList (consN k (16,p)) | n<-[0..16], let xs = _staircase n, let p = fromDescList xs, k <- [1..80] ]
+  , testCase "consN 16 / slope"        $ allTrue [ (replicate k  16 ++ xs) == toList (consN k (16,p)) | n<-[0..16], let xs = _slope n, let p = fromDescList xs, k <- [1..80] ]
+  , testCase "consN 16 / steep"        $ allTrue [ (replicate k  16 ++ xs) == toList (consN k (16,p)) | n<-[0..16], let xs = _steep n, let p = fromDescList xs, k <- [1..40] ]
+  , testCase "consN 256 / staircase"   $ allTrue [ (replicate k 256 ++ xs) == toList (consN k (256,p)) | n<-[0..40], let xs = _staircase n, let p = fromDescList xs, k <- [1..40] ]
+  , testCase "consN 256 / slope"       $ allTrue [ (replicate k 256 ++ xs) == toList (consN k (256,p)) | n<-[0..40], let xs = _slope n, let p = fromDescList xs, k <- [1..35] ]
+  , testCase "consN 256 / steep"       $ allTrue [ (replicate k 256 ++ xs) == toList (consN k (256,p)) | n<-[0..40], let xs = _steep n, let p = fromDescList xs, k <- [1..35] ]
+  , testCase "diffSequence"            $ allTrue [ diffSequence p == refDiffSeq xs | xs <- _testPartitions, let p = fromDescList xs ]
+  , testCase "reverseDiffSequence"     $ allTrue [ reverseDiffSequence p == reverse (refDiffSeq xs) | xs <- _testPartitions, let p = fromDescList xs ]
   , testCase "dual . dual == id"       $ allTrue [ dualPartition (dualPartition p) == p | p <- testPartitions ]
-  , testCase "dual == reference impl." $ allTrue [ toList (dualPartition p) == P._dualPartition xs | xs <- _testPartitions , let p = fromDescList xs ]
-  , testCase "toExponentialForm"       $ allTrue [ toExponentialForm p == P._toExponentialForm xs | xs <- _testPartitions , let p = fromDescList xs ]
-  , testCase "fromExponentialForm"     $ allTrue [ toList (fromExponentialForm ef) == xs | xs <- _testPartitions , let p = fromDescList xs , let ef = P._toExponentialForm xs ]
-  , testCase "to / from expo. form"    $ allTrue [ toList (fromExponentialForm $ toExponentialForm p) == xs | xs <- _testPartitions , let p = fromDescList xs ]
-  , testCase "isSubPartitionOf/small"  $ allTrue [ P._isSubPartitionOf xs1 xs2 == isSubPartitionOf p1 p2 | xs1 <- _allparts 12 , xs2 <- _allparts 12 , let p1 = fromDescList xs1 , let p2 = fromDescList xs2 ]
-  , testCase "isSubPartitionOf/15"     $ allTrue [ P._isSubPartitionOf xs1 xs2 == isSubPartitionOf p1 p2 | xs1 <- _parts    15 , xs2 <- _parts    15 , let p1 = fromDescList xs1 , let p2 = fromDescList xs2 ]
-  , testCase "isSubPartitionOf/16"     $ allTrue [ P._isSubPartitionOf xs1 xs2 == isSubPartitionOf p1 p2 | xs1 <- _parts    16 , xs2 <- _parts    16 , let p1 = fromDescList xs1 , let p2 = fromDescList xs2 ]
-  , testCase "isSubPartitionOf/17"     $ allTrue [ P._isSubPartitionOf xs1 xs2 == isSubPartitionOf p1 p2 | xs1 <- _parts    17 , xs2 <- _parts    17 , let p1 = fromDescList xs1 , let p2 = fromDescList xs2 ]
-  , testCase "dominates/small"         $ allTrue [ P._dominates xs1 xs2 == dominates p1 p2 | xs1 <- _allparts 12 , xs2 <- _allparts 12 , let p1 = fromDescList xs1 , let p2 = fromDescList xs2 ]
-  , testCase "dominates/15"            $ allTrue [ P._dominates xs1 xs2 == dominates p1 p2 | xs1 <- _parts    15 , xs2 <- _parts    15 , let p1 = fromDescList xs1 , let p2 = fromDescList xs2 ]
-  , testCase "dominates/16"            $ allTrue [ P._dominates xs1 xs2 == dominates p1 p2 | xs1 <- _parts    16 , xs2 <- _parts    16 , let p1 = fromDescList xs1 , let p2 = fromDescList xs2 ]
-  , testCase "dominates/17"            $ allTrue [ P._dominates xs1 xs2 == dominates p1 p2 | xs1 <- _parts    17 , xs2 <- _parts    17 , let p1 = fromDescList xs1 , let p2 = fromDescList xs2 ]
---  , testCase "pieriRuleSingleBox"      $ allTrue [ pieriRuleSingleBox p =%%= map fromDescList (P._pieriRule xs 1) | xs <- _testPartitions      , let p = fromDescList xs ] 
-  , testCase "pieriRule"               $ allTrue [ pieriRule p k        =%%= map fromDescList (P._pieriRule xs k) | xs <- every10th _testPartitionsSmall , let p = fromDescList xs , k <- [1..2] ] 
+  , testCase "dual == reference impl." $ allTrue [ toList (dualPartition p) == P._dualPartition xs | xs <- _testPartitions, let p = fromDescList xs ]
+  , testCase "toExponentialForm"       $ allTrue [ toExponentialForm p == P._toExponentialForm xs | xs <- _testPartitions, let p = fromDescList xs ]
+  , testCase "fromExponentialForm"     $ allTrue [ toList (fromExponentialForm ef) == xs | xs <- _testPartitions, let p = fromDescList xs, let ef = P._toExponentialForm xs ]
+  , testCase "to / from expo. form"    $ allTrue [ toList (fromExponentialForm $ toExponentialForm p) == xs | xs <- _testPartitions, let p = fromDescList xs ]
+  , testCase "isSubPartitionOf/small"  $ allTrue [ P._isSubPartitionOf xs1 xs2 == isSubPartitionOf p1 p2 | xs1 <- _allparts 12, let p1 = fromDescList xs1, xs2 <- _allparts 12, let p2 = fromDescList xs2 ]
+  , testCase "isSubPartitionOf/15"     $ allTrue [ P._isSubPartitionOf xs1 xs2 == isSubPartitionOf p1 p2 | xs1 <- _parts    15, let p1 = fromDescList xs1, xs2 <- _parts    15, let p2 = fromDescList xs2 ]
+  , testCase "isSubPartitionOf/16"     $ allTrue [ P._isSubPartitionOf xs1 xs2 == isSubPartitionOf p1 p2 | xs1 <- _parts    16, let p1 = fromDescList xs1, xs2 <- _parts    16, let p2 = fromDescList xs2 ]
+  , testCase "isSubPartitionOf/17"     $ allTrue [ P._isSubPartitionOf xs1 xs2 == isSubPartitionOf p1 p2 | xs1 <- _parts    17, let p1 = fromDescList xs1, xs2 <- _parts    17, let p2 = fromDescList xs2 ]
+  , testCase "dominates/small"         $ allTrue [ P._dominates xs1 xs2 == dominates p1 p2 | xs1 <- _allparts 12, let p1 = fromDescList xs1, xs2 <- _allparts 12, let p2 = fromDescList xs2 ]
+  , testCase "dominates/15"            $ allTrue [ P._dominates xs1 xs2 == dominates p1 p2 | xs1 <- _parts    15, let p1 = fromDescList xs1, xs2 <- _parts    15, let p2 = fromDescList xs2 ]
+  , testCase "dominates/16"            $ allTrue [ P._dominates xs1 xs2 == dominates p1 p2 | xs1 <- _parts    16, let p1 = fromDescList xs1, xs2 <- _parts    16, let p2 = fromDescList xs2 ]
+  , testCase "dominates/17"            $ allTrue [ P._dominates xs1 xs2 == dominates p1 p2 | xs1 <- _parts    17, let p1 = fromDescList xs1, xs2 <- _parts    17, let p2 = fromDescList xs2 ]
+--  , testCase "pieriRuleSingleBox"      $ allTrue [ pieriRuleSingleBox p =%%= map fromDescList (P._pieriRule xs 1) | xs <- _testPartitions    , let p = fromDescList xs ] 
+  , testCase "pieriRule"               $ allTrue [ pieriRule p k        =%%= map fromDescList (P._pieriRule xs k) | xs <- every10th _testPartitionsSmall, let p = fromDescList xs, k <- [1..2] ] 
   ]
 
 --------------------------------------------------------------------------------
@@ -96,13 +97,13 @@ unitTests = testGroup "Unit tests"
 properties :: TestTree
 properties = localOption (QuickCheckTests 1000)  -- 200
            $ testGroup "Properties" 
-  [ prop "toList . fromList == id" $ \(DescList xs) -> (toList (fromDescList xs) == xs)
-  , prop "toAscList . fromList == reverse" $ \(DescList xs) -> (toAscList (fromDescList xs) == reverse xs)
+  [ prop "toList . fromList == id" $ \(DescList xs) -> toList (fromDescList xs) == xs
+  , prop "toAscList . fromList == reverse" $ \(DescList xs) -> toAscList (fromDescList xs) == reverse xs
   , prop "snoc1/list"              $ \(DescList xs) -> toList (snoc (fromDescList xs) 1) == xs ++ [1]
   , prop "snocN/list"              $ \(DescList xs) (SmallN n) -> toList (snocN n (fromDescList xs,1)) == xs ++ replicate n 1
-  , prop "fromList . toList == id" $ \p    -> (fromDescList (toList p ) == p )
+  , prop "fromList . toList == id" $ \p    -> fromDescList (toList p ) == p
   , prop "compare"                 $ \p q  -> cmp p q == compare (toList p) (toList q)
-  , prop "uncons"                  $ \p    -> (unconsTest p) == unconsList (toList p)
+  , prop "uncons"                  $ \p    -> unconsTest p == unconsList (toList p)
   , prop "width"                   $ \p    -> width  p == length   (toList p)
   , prop "height"                  $ \p    -> height p == safeHead (toList p)
   , prop "(width,height)"          $ \p    -> let xs = toList p in widthHeight p == (length xs, safeHead xs)
@@ -134,7 +135,7 @@ properties = localOption (QuickCheckTests 1000)  -- 200
   , localOption (QuickCheckTests 100) 
   $ prop "pieriRule /1"            $ \p (PieriK k) -> map toList (pieriRule p k) =%%= P._pieriRule (toList p) k 
   , localOption (QuickCheckTests 100) 
-  $ prop "pieriRule /2"            $ \p (PieriK k) -> (pieriRule p k) =%%= map fromDescList (P._pieriRule (toList p) k) 
+  $ prop "pieriRule /2"            $ \p (PieriK k) -> pieriRule p k =%%= map fromDescList (P._pieriRule (toList p) k) 
   ]
 
 ineqTestPartition :: Partition -> Partition -> Bool
@@ -143,7 +144,7 @@ ineqTestPartition = ineqTest
 --------------------------------------------------------------------------------
 
 ineqTest :: Ord a => a -> a -> Bool
-ineqTest a b = case (a<b , a==b , a>b) of
+ineqTest a b = case (a<b, a==b, a>b) of
   (True ,False,False) -> True
   (False,True ,False) -> True
   (False,False,True ) -> True
@@ -159,10 +160,10 @@ everyNth k = go where
 
 infix 4 =%%=
 (=%%=) :: Ord a => [a] -> [a] -> Bool
-(=%%=) xs ys = (sort xs == sort ys)
+(=%%=) xs ys = sort xs == sort ys
 
 allTrue :: [Bool] -> Assertion
-allTrue bools = (and bools @=? True)
+allTrue bools = and bools @=? True
 
 prop :: Testable a => TestName -> a -> TestTree
 prop = Q.testProperty
@@ -191,7 +192,7 @@ instance Arbitrary PieriK where
 newtype DescList = DescList [Int] deriving (Eq,Ord,Show)
 
 instance Arbitrary DescList where
-  arbitrary = (DescList . reverse . sort . map getPositive) <$> arbitrary
+  arbitrary = DescList . sortBy (comparing Down) . map getPositive <$> arbitrary
 
 instance Arbitrary Partition where
   arbitrary = do
@@ -200,8 +201,8 @@ instance Arbitrary Partition where
 
 --------------------------------------------------------------------------------
 
-_allparts n = P._allPartitions n
-_parts    n = P._partitions    n 
+_allparts = P._allPartitions
+_parts    = P._partitions    
 
 _staircase n   = [n,n-1..1]
 _rectangle h n = replicate n h
@@ -218,11 +219,11 @@ _steep  n = [n,n-2..1]
 allparts = map fromDescList . _allparts
 parts    = map fromDescList . _parts
 
-staircase n   = fromDescList $ _staircase n 
-rectangle h n = fromDescList $ _rectangle h n 
+staircase   = fromDescList . _staircase 
+rectangle h = fromDescList . _rectangle h
 
-slope n = fromDescList $ _slope n
-steep n = fromDescList $ _steep n
+slope = fromDescList . _slope
+steep = fromDescList . _steep
 
 --------------------------------------------------------------------------------
 
@@ -247,10 +248,9 @@ _testPartitionsSmall = concat
 
 _testPartitions = _testPartitionsSmall ++ _testPartRandom
 
-_testPartRandom = concat
-  [ [ drop n seq       | seq <- randomSequences , n<-[0..79] ] 
-  , [ take n seq       | seq <- randomSequences , n<-[0..79] ] 
-  ]
+_testPartRandom =
+  [ drop n seq       | seq <- randomSequences, n<-[0..79] ] ++
+  [ take n seq       | seq <- randomSequences, n<-[0..79] ]
 
 --------------------------------------------------------------------------------
 -- * reference

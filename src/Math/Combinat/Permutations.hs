@@ -1,5 +1,5 @@
 
--- | Permutations. 
+-- | Permutations.
 --
 -- See eg.:
 -- Donald E. Knuth: The Art of Computer Programming, vol 4, pre-fascicle 2B.
@@ -8,8 +8,9 @@
 -- are represented internally. Also now they act on the /right/ by default!
 --
 
-{-# LANGUAGE CPP, BangPatterns, ScopedTypeVariables, GeneralizedNewtypeDeriving, FlexibleContexts #-}
-module Math.Combinat.Permutations 
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+module Math.Combinat.Permutations
   ( -- * The Permutation type
     Permutation (..)
   , fromPermutation
@@ -36,8 +37,8 @@ module Math.Combinat.Permutations
   , isReversePermutation
   , isEvenPermutation
   , isOddPermutation
-  , signOfPermutation  
-  , signValueOfPermutation  
+  , signOfPermutation
+  , signValueOfPermutation
   , module Math.Combinat.Sign   --  , Sign(..)
   , isCyclicPermutation
     -- * Some concrete permutations
@@ -62,17 +63,17 @@ module Math.Combinat.Permutations
   , productOfPermutations
   , productOfPermutations'
     -- * Action of the permutation group
-  , permuteArray 
+  , permuteArray
   , permuteList
   , permuteArrayLeft , permuteArrayRight
   , permuteListLeft  , permuteListRight
     -- * Sorting
-  , sortingPermutationAsc 
+  , sortingPermutationAsc
   , sortingPermutationDesc
     -- * ASCII drawing
   , asciiPermutation
   , asciiDisjointCycles
-  , twoLineNotation 
+  , twoLineNotation
   , inverseTwoLineNotation
   , genericTwoLineNotation
     -- * List of permutations
@@ -92,7 +93,7 @@ module Math.Combinat.Permutations
   , permuteMultiset
   , countPermuteMultiset
   , fasc2B_algorithm_L
-  ) 
+  )
   where
 
 --------------------------------------------------------------------------------
@@ -152,7 +153,7 @@ _assocs vec = zip [1..] (_elems vec)
 _bound :: WordVec -> Int
 _bound = V.vecLen
 
-{- 
+{-
 -- the old internal representation (UArray Int Int)
 
 _elems :: UArray Int Int -> [Int]
@@ -172,10 +173,10 @@ toPermN n xs = Permutation (fromPermListN n xs)
 --------------------------------------------------------------------------------
 -- * Types
 
--- | A permutation. Internally it is an (compact) vector 
+-- | A permutation. Internally it is an (compact) vector
 -- of the integers @[1..n]@.
 --
--- If this array of integers is @[p1,p2,...,pn]@, then in two-line 
+-- If this array of integers is @[p1,p2,...,pn]@, then in two-line
 -- notations, that represents the permutation
 --
 -- > ( 1  2  3  ... n  )
@@ -184,7 +185,7 @@ toPermN n xs = Permutation (fromPermListN n xs)
 -- That is, it is the permutation @sigma@ whose (right) action on the set @[1..n]@ is
 --
 -- > sigma(1) = p1
--- > sigma(2) = p2 
+-- > sigma(2) = p2
 -- > ...
 --
 -- (NOTE: this changed at version 0.2.8.0!)
@@ -192,16 +193,16 @@ toPermN n xs = Permutation (fromPermListN n xs)
 newtype Permutation = Permutation WordVec deriving (Eq,Ord) -- ,Show,Read)
 
 instance Show Permutation where
-  showsPrec d (Permutation arr) 
-    = showParen (d > 10)  
+  showsPrec d (Permutation arr)
+    = showParen (d > 10)
     $ showString "toPermutation " . showsPrec 11 (_elems arr)       -- app_prec = 10
 
 instance Read Permutation where
   readsPrec d r = readParen (d > 10) fun r where
-    fun r = [ (toPermutation p,t) 
+    fun r = [ (toPermutation p,t)
             | ("toPermutation",s) <- lex r
             , (p,t) <- readsPrec 11 s                              -- app_prec = 10
-            ] 
+            ]
 
 instance DrawASCII Permutation where
   ascii = asciiPermutation
@@ -228,42 +229,45 @@ permutationArray (Permutation ar) = listArray (1,n) (_elems ar) where
 
 -- | Assumes that the input is a permutation of the numbers @[1..n]@.
 toPermutationUnsafe :: [Int] -> Permutation
-toPermutationUnsafe xs = Permutation (fromPermList xs) 
+toPermutationUnsafe xs = Permutation (fromPermList xs)
 
 -- | This is faster than 'toPermutationUnsafe', but you need to supply @n@.
 toPermutationUnsafeN :: Int -> [Int] -> Permutation
-toPermutationUnsafeN n xs = Permutation (fromPermListN n xs) 
+toPermutationUnsafeN n xs = Permutation (fromPermListN n xs)
 
 -- | Note: Indexing starts from 1.
 uarrayToPermutationUnsafe :: UArray Int Int -> Permutation
 uarrayToPermutationUnsafe = Permutation . fromUArray
 
+-- | Checks whether the input is a permutation of the numbers @[1..n]@
+-- (with length provided, which is assumed to be correct)
+isPermutationN :: Int -> [Int] -> Bool
+isPermutationN n input = runST action where
+  action :: forall s. ST s Bool
+  action = do
+    ar <- newArray (1,n) False :: ST s (STUArray s Int Bool)
+    let go []     = return True
+        go (j:js)
+          | j<1 || j>n = return False
+          | otherwise  = do
+              z <- readArray ar j
+              if z
+                then return False
+                else do
+                  writeArray ar j True
+                  go js
+    go input
+
 -- | Checks whether the input is a permutation of the numbers @[1..n]@.
 isPermutation :: [Int] -> Bool
-isPermutation xs = (ar!0 == 0) && and [ ar!j == 1 | j<-[1..n] ] where
-  n = length xs
-  -- the zero index is an unidiomatic hack
-  ar = (accumArray (+) 0 (0,n) $ map f xs) :: UArray Int Int
-  f :: Int -> (Int,Int)
-  f !j = if j<1 || j>n then (0,1) else (j,1)
+isPermutation xs = isPermutationN (length xs) xs
 
 -- | Checks whether the input is a permutation of the numbers @[1..n]@.
 maybePermutation :: [Int] -> Maybe Permutation
-maybePermutation input = runST action where
-  n = length input
-  action :: forall s. ST s (Maybe Permutation)
-  action = do
-    ar <- newArray (1,n) 0 :: ST s (STUArray s Int Int)
-    let go []     = return $ Just (toPermutationUnsafe input)
-        go (j:js) = if j<1 || j>n 
-          then return Nothing
-          else do
-            z <- readArray ar j
-            writeArray ar j (z+1)
-            if z==0 then go js
-                    else return Nothing               
-    go input
-    
+maybePermutation xs
+  | isPermutation xs = Just $ toPermutationUnsafe xs
+  | otherwise        = Nothing
+
 -- | Checks the input.
 toPermutation :: [Int] -> Permutation
 toPermutation xs = case maybePermutation xs of
@@ -275,7 +279,7 @@ permutationSize :: Permutation -> Int
 permutationSize (Permutation ar) = _bound ar
 
 -- | Returns the image @sigma(k)@ of @k@ under the permutation @sigma@.
--- 
+--
 -- Note: we don't check the bounds! It may even crash if you index out of bounds!
 lookupPermutation :: Permutation -> Int -> Int
 lookupPermutation (Permutation ar) idx = ar .! idx
@@ -291,7 +295,7 @@ instance HasWidth Permutation where
 
 -- | Checks whether the permutation is the identity permutation
 isIdentityPermutation :: Permutation -> Bool
-isIdentityPermutation (Permutation ar) = (_elems ar == [1..n]) where
+isIdentityPermutation (Permutation ar) = _elems ar == [1..n] where
   n = _bound ar
 
 -- | Given a permutation of @n@ and a permutation of @m@, we return
@@ -300,7 +304,7 @@ isIdentityPermutation (Permutation ar) = (_elems ar == [1..n]) where
 --
 -- > permuteList p1 xs ++ permuteList p2 ys == permuteList (concatPermutations p1 p2) (xs++ys)
 --
-concatPermutations :: Permutation -> Permutation -> Permutation 
+concatPermutations :: Permutation -> Permutation -> Permutation
 concatPermutations perm1 perm2 = toPermutationUnsafe list where
   n    = permutationSize perm1
   list = fromPermutation perm1 ++ map (+n) (fromPermutation perm2)
@@ -310,11 +314,11 @@ concatPermutations perm1 perm2 = toPermutationUnsafe list where
 
 -- | Synonym for 'twoLineNotation'
 asciiPermutation :: Permutation -> ASCII
-asciiPermutation = twoLineNotation 
+asciiPermutation = twoLineNotation
 
 asciiDisjointCycles :: DisjointCycles -> ASCII
 asciiDisjointCycles (DisjointCycles cycles) = final where
-  final = hCatWith VTop (HSepSpaces 1) boxes 
+  final = hCatWith VTop (HSepSpaces 1) boxes
   boxes = [ genericTwoLineNotation (f cyc) | cyc <- cycles ]
   f cyc = pairs (cyc ++ [head cyc])
 
@@ -323,30 +327,23 @@ asciiDisjointCycles (DisjointCycles cycles) = final where
 twoLineNotation :: Permutation -> ASCII
 twoLineNotation (Permutation arr) = genericTwoLineNotation $ zip [1..] (_elems arr)
 
--- | The inverse two-line notation, where the it\'s the bottom line 
--- which is in standard order. The columns of this are a permutation
--- of the columns 'twoLineNotation'.
+-- | The inverse two-line notation, where it\'s the bottom line which
+-- is in standard order. The columns of this are a permutation of the
+-- columns of 'twoLineNotation'.
 --
--- Remark: the top row of @inverseTwoLineNotation perm@ is the same 
+-- Remark: the top row of @inverseTwoLineNotation perm@ is the same
 -- as the bottom row of @twoLineNotation (inversePermutation perm)@.
 --
 inverseTwoLineNotation :: Permutation -> ASCII
 inverseTwoLineNotation (Permutation arr) =
-  genericTwoLineNotation $ sortBy (comparing snd) $ zip [1..] (_elems arr) 
+  genericTwoLineNotation $ sortBy (comparing snd) $ zip [1..] (_elems arr)
 
 -- | Two-line notation for any set of numbers
-genericTwoLineNotation :: [(Int,Int)] -> ASCII
-genericTwoLineNotation xys = asciiFromLines [ topLine, botLine ] where
-  topLine = "( " ++ intercalate " " us ++ " )"
-  botLine = "( " ++ intercalate " " vs ++ " )"
-  pairs   = [ (show x, show y) | (x,y) <- xys ]
-  (us,vs) = unzip (map f pairs) 
-  f (s,t) = (s',t') where
-    a = length s 
-    b = length t
-    c = max a b
-    s' = replicate (c-a) ' ' ++ s
-    t' = replicate (c-b) ' ' ++ t
+genericTwoLineNotation :: (Show a, Show b) => [(a,b)] -> ASCII
+genericTwoLineNotation xys = let
+  pairs = ("(","(") : [(show x, show y) | (x,y) <- xys] <> [(")",")")]
+  cols = [vCatWith HRight VSepEmpty (asciiFromString <$> [x,y]) | (x,y) <- pairs]
+  in hCatWith VTop (HSepSpaces 1) cols
 
 --------------------------------------------------------------------------------
 -- * Disjoint cycles
@@ -354,7 +351,7 @@ genericTwoLineNotation xys = asciiFromLines [ topLine, botLine ] where
 fromDisjointCycles :: DisjointCycles -> [[Int]]
 fromDisjointCycles (DisjointCycles cycles) = cycles
 
-disjointCyclesUnsafe :: [[Int]] -> DisjointCycles 
+disjointCyclesUnsafe :: [[Int]] -> DisjointCycles
 disjointCyclesUnsafe = DisjointCycles
 
 instance DrawASCII DisjointCycles where
@@ -365,33 +362,33 @@ instance HasNumberOfCycles DisjointCycles where
 
 instance HasNumberOfCycles Permutation where
   numberOfCycles = numberOfCycles . permutationToDisjointCycles
-  
+
 disjointCyclesToPermutation :: Int -> DisjointCycles -> Permutation
 disjointCyclesToPermutation n (DisjointCycles cycles) = Permutation $ fromUArray perm where
 
   pairs :: [Int] -> [(Int,Int)]
   pairs xs@(x:_) = worker (xs++[x]) where
     worker (x:xs@(y:_)) = (x,y):worker xs
-    worker _ = [] 
+    worker _ = []
   pairs [] = error "disjointCyclesToPermutation: empty cycle"
 
   perm = runSTUArray $ do
     ar <- newArray_ (1,n) :: ST s (STUArray s Int Int)
-    forM_ [1..n] $ \i -> writeArray ar i i 
-    forM_ cycles $ \cyc -> forM_ (pairs cyc) $ \(i,j) -> writeArray ar i j
+    forM_ [1..n] $ \i -> writeArray ar i i
+    forM_ cycles $ \cyc -> forM_ (pairs cyc) $ uncurry (writeArray ar)
     return ar -- freeze ar
-  
+
 -- | Convert to disjoint cycle notation.
 --
--- This is compatible with Maple's @convert(perm,\'disjcyc\')@ 
+-- This is compatible with Maple's @convert(perm,\'disjcyc\')@
 -- and also with Mathematica's @PermutationCycles[perm]@
 --
--- Note however, that for example Mathematica uses the 
+-- Note however, that for example Mathematica uses the
 -- /top row/ to represent a permutation, while we use the
 -- /bottom row/ - thus even though this function looks
 -- identical, the /meaning/ of both the input and output
 -- is different!
--- 
+--
 permutationToDisjointCycles :: Permutation -> DisjointCycles
 permutationToDisjointCycles (Permutation perm) = res where
 
@@ -401,62 +398,62 @@ permutationToDisjointCycles (Permutation perm) = res where
   f :: [Int] -> Bool
   f [_] = False
   f _ = True
-  
+
   res = runST $ do
-    tag <- newArray (1,n) False 
-    cycles <- unfoldM (step tag) 1 
+    tag <- newArray (1,n) False
+    cycles <- unfoldM (step tag) 1
     return (DisjointCycles $ filter f cycles)
-    
+
   step :: STUArray s Int Bool -> Int -> ST s ([Int],Maybe Int)
   step tag k = do
-    cyc <- worker tag k k [k] 
+    cyc <- worker tag k k [k]
     m <- next tag (k+1)
-    return (reverse cyc, m) 
-    
+    return (reverse cyc, m)
+
   next :: STUArray s Int Bool -> Int -> ST s (Maybe Int)
   next tag k = if k > n
     then return Nothing
-    else readArray tag k >>= \b -> if b 
-      then next tag (k+1)  
+    else readArray tag k >>= \b -> if b
+      then next tag (k+1)
       else return (Just k)
-       
+
   worker :: STUArray s Int Bool -> Int -> Int -> [Int] -> ST s [Int]
   worker tag k l cyc = do
     writeArray tag l True
     let m = perm .! l
-    if m == k 
+    if m == k
       then return cyc
-      else worker tag k m (m:cyc)      
+      else worker tag k m (m:cyc)
 
 isEvenPermutation :: Permutation -> Bool
 isEvenPermutation (Permutation perm) = res where
 
   n = _bound perm
   res = runST $ do
-    tag <- newArray (1,n) False 
-    cycles <- unfoldM (step tag) 1 
+    tag <- newArray (1,n) False
+    cycles <- unfoldM (step tag) 1
     return $ even (sum cycles)
-    
+
   step :: STUArray s Int Bool -> Int -> ST s (Int,Maybe Int)
   step tag k = do
     cyclen <- worker tag k k 0
     m <- next tag (k+1)
     return (cyclen,m)
-    
+
   next :: STUArray s Int Bool -> Int -> ST s (Maybe Int)
   next tag k = if k > n
     then return Nothing
-    else readArray tag k >>= \b -> if b 
-      then next tag (k+1)  
+    else readArray tag k >>= \b -> if b
+      then next tag (k+1)
       else return (Just k)
-      
+
   worker :: STUArray s Int Bool -> Int -> Int -> Int -> ST s Int
   worker tag k l cyclen = do
     writeArray tag l True
     let m = perm .! l
-    if m == k 
+    if m == k
       then return cyclen
-      else worker tag k m (1+cyclen)      
+      else worker tag k m (1+cyclen)
 
 isOddPermutation :: Permutation -> Bool
 isOddPermutation = not . isEvenPermutation
@@ -471,14 +468,14 @@ signOfPermutation perm = case isEvenPermutation perm of
 {-# SPECIALIZE signValueOfPermutation :: Permutation -> Integer #-}
 signValueOfPermutation :: Num a => Permutation -> a
 signValueOfPermutation = signValue . signOfPermutation
-  
+
 isCyclicPermutation :: Permutation -> Bool
-isCyclicPermutation perm = 
+isCyclicPermutation perm =
   case cycles of
     []    -> True
-    [cyc] -> (length cyc == n)
+    [cyc] -> length cyc == n
     _     -> False
-  where 
+  where
     n = permutationSize perm
     DisjointCycles cycles = permutationToDisjointCycles perm
 
@@ -510,7 +507,7 @@ numberOfInversions = numberOfInversionsMerge
 numberOfInversionsMerge :: Permutation -> Int
 numberOfInversionsMerge (Permutation arr) = fst (sortCnt n $ _elems arr) where
   n = _bound arr
-                                        
+
   -- | First argument is length of the list.
   -- Returns also the inversion count.
   sortCnt :: Int -> [Int] -> (Int,[Int])
@@ -519,13 +516,13 @@ numberOfInversionsMerge (Permutation arr) = fst (sortCnt n $ _elems arr) where
   sortCnt 2 [x,y] = if x>y then (1,[y,x]) else (0,[x,y])
   sortCnt n xs    = mergeCnt (sortCnt k us) (sortCnt l vs) where
     k = div n 2
-    l = n - k 
+    l = n - k
     (us,vs) = splitAt k xs
 
   mergeCnt :: (Int,[Int]) -> (Int,[Int]) -> (Int,[Int])
   mergeCnt (!c,us) (!d,vs) = (c+d+e,ws) where
 
-    (e,ws) = go 0 us vs 
+    (e,ws) = go 0 us vs
 
     go !k xs [] = ( k*length xs , xs )
     go _  [] ys = ( 0 , ys)
@@ -544,7 +541,7 @@ numberOfInversionsNaive (Permutation arr) = length list where
 --
 -- > multiplyMany' n (map (transposition n) $ bubbleSort2 perm) == perm
 --
--- Note that while this is not unique, the number of transpositions 
+-- Note that while this is not unique, the number of transpositions
 -- equals the number of inversions.
 --
 bubbleSort2 :: Permutation -> [(Int,Int)]
@@ -570,7 +567,7 @@ bubbleSort perm@(Permutation tgt) = runST action where
 
       let k = tgt .! x       -- we take the number which will be at the @x@-th position at the end
       i <- readArray inv k   -- number @k@ is at the moment at position @i@
-      let j = x              -- but the final place is at @x@      
+      let j = x              -- but the final place is at @x@
 
       let swaps = move i j
       forM_ swaps $ \y -> do
@@ -586,7 +583,7 @@ bubbleSort perm@(Permutation tgt) = runST action where
         writeArray inv a v
 
       return swaps
-  
+
     return (concat list)
 
   move :: Int -> Int -> [Int]
@@ -606,13 +603,13 @@ reversePermutation n = Permutation $ fromPermListN n [n,n-1..1]
 isReversePermutation :: Permutation -> Bool
 isReversePermutation (Permutation arr) = _elems arr == [n,n-1..1] where n = _bound arr
 
--- | A transposition (swapping two elements). 
+-- | A transposition (swapping two elements).
 --
 -- @transposition n (i,j)@ is the permutation of size @n@ which swaps @i@\'th and @j@'th elements.
 --
 transposition :: Int -> (Int,Int) -> Permutation
-transposition n (i,j) = 
-  if i>=1 && j>=1 && i<=n && j<=n 
+transposition n (i,j) =
+  if i>=1 && j>=1 && i<=n && j<=n
     then Permutation $ fromPermListN n [ f k | k<-[1..n] ]
     else error "transposition: index out of range"
   where
@@ -629,19 +626,19 @@ transpositions n list = Permutation (fromUArray $ runSTUArray action) where
 
   action :: ST s (STUArray s Int Int)
   action = do
-    arr <- newArray_ (1,n) 
-    forM_ [1..n] $ \i -> writeArray arr i i    
+    arr <- newArray_ (1,n)
+    forM_ [1..n] $ \i -> writeArray arr i i
     let doSwap (i,j) = do
           u <- readArray arr i
           v <- readArray arr j
           writeArray arr i v
-          writeArray arr j u          
+          writeArray arr j u
     mapM_ doSwap list
     return arr
 
 -- | @adjacentTransposition n k@ swaps the elements @k@ and @(k+1)@.
 adjacentTransposition :: Int -> Int -> Permutation
-adjacentTransposition n k 
+adjacentTransposition n k
   | k>0 && k<n  = transposition n (k,k+1)
   | otherwise   = error "adjacentTransposition: index out of range"
 
@@ -654,42 +651,42 @@ adjacentTranspositions n list = Permutation (fromUArray $ runSTUArray action) wh
 
   action :: ST s (STUArray s Int Int)
   action = do
-    arr <- newArray_ (1,n) 
-    forM_ [1..n] $ \i -> writeArray arr i i    
+    arr <- newArray_ (1,n)
+    forM_ [1..n] $ \i -> writeArray arr i i
     let doSwap i
           | i<0 || i>=n  = error "adjacentTranspositions: index out of range"
           | otherwise    = do
               u <- readArray arr  i
               v <- readArray arr (i+1)
               writeArray arr  i    v
-              writeArray arr (i+1) u          
+              writeArray arr (i+1) u
     mapM_ doSwap list
     return arr
 
 -- | The permutation which cycles a list left by one step:
--- 
+--
 -- > permuteList (cycleLeft 5) "abcde" == "bcdea"
 --
 -- Or in two-line notation:
 --
 -- > ( 1 2 3 4 5 )
 -- > ( 2 3 4 5 1 )
--- 
+--
 cycleLeft :: Int -> Permutation
 cycleLeft n = Permutation $ fromPermListN n ([2..n] ++ [1])
 
 -- | The permutation which cycles a list right by one step:
--- 
+--
 -- > permuteList (cycleRight 5) "abcde" == "eabcd"
 --
 -- Or in two-line notation:
 --
 -- > ( 1 2 3 4 5 )
 -- > ( 5 1 2 3 4 )
--- 
+--
 cycleRight :: Int -> Permutation
 cycleRight n = Permutation $ fromPermListN n (n : [1..n-1])
-   
+
 --------------------------------------------------------------------------------
 -- * Permutation groups
 
@@ -697,55 +694,55 @@ cycleRight n = Permutation $ fromPermListN n (n : [1..n-1])
 -- means the permutation when we first apply @p@, and then @q@
 -- (that is, the natural action is the /right/ action)
 --
--- See also 'permuteArray' for our conventions.  
+-- See also 'permuteArray' for our conventions.
 --
 multiplyPermutation :: Permutation -> Permutation -> Permutation
-multiplyPermutation pi1@(Permutation perm1) pi2@(Permutation perm2) = 
-  if (n==m) 
+multiplyPermutation pi1@(Permutation perm1) pi2@(Permutation perm2) =
+  if n == m
     then Permutation $ fromUArray result
-    else error "multiplyPermutation: permutations of different sets"  
+    else error "multiplyPermutation: permutations of different sets"
   where
     n = _bound perm1
-    m = _bound perm2    
+    m = _bound perm2
     result = permuteArray pi2 (toUArray perm1)
-  
-infixr 7 `multiplyPermutation`  
+
+infixr 7 `multiplyPermutation`
 
 -- | The inverse permutation.
-inversePermutation :: Permutation -> Permutation    
+inversePermutation :: Permutation -> Permutation
 inversePermutation (Permutation perm1) = Permutation $ fromUArray result
   where
     result = array (1,n) $ map swap $ _assocs perm1
     n = _bound perm1
-    
+
 -- | The identity (or trivial) permutation.
-identityPermutation :: Int -> Permutation 
+identityPermutation :: Int -> Permutation
 identityPermutation n = Permutation $ fromPermListN n [1..n]
 
 -- | Multiply together a /non-empty/ list of permutations (the reason for requiring the list to
 -- be non-empty is that we don\'t know the size of the result). See also 'multiplyMany''.
-productOfPermutations :: [Permutation] -> Permutation 
+productOfPermutations :: [Permutation] -> Permutation
 productOfPermutations [] = error "productOfPermutations: empty list, we don't know size of the result"
-productOfPermutations ps = foldl1' multiplyPermutation ps    
+productOfPermutations ps = foldl1' multiplyPermutation ps
 
 -- | Multiply together a (possibly empty) list of permutations, all of which has size @n@
-productOfPermutations' :: Int -> [Permutation] -> Permutation 
+productOfPermutations' :: Int -> [Permutation] -> Permutation
 productOfPermutations' n []       = identityPermutation n
-productOfPermutations' n ps@(p:_) = if n == permutationSize p 
-  then foldl1' multiplyPermutation ps    
+productOfPermutations' n ps@(p:_) = if n == permutationSize p
+  then foldl1' multiplyPermutation ps
   else error "productOfPermutations': incompatible permutation size(s)"
 
 --------------------------------------------------------------------------------
 -- * Action of the permutation group
 
--- | /Right/ action of a permutation on a set. If our permutation is 
+-- | /Right/ action of a permutation on a set. If our permutation is
 -- encoded with the sequence @[p1,p2,...,pn]@, then in the
 -- two-line notation we have
 --
 -- > ( 1  2  3  ... n  )
 -- > ( p1 p2 p3 ... pn )
 --
--- We adopt the convention that permutations act /on the right/ 
+-- We adopt the convention that permutations act /on the right/
 -- (as in Knuth):
 --
 -- > permuteArray pi2 (permuteArray pi1 set) == permuteArray (pi1 `multiplyPermutation` pi2) set
@@ -754,38 +751,38 @@ productOfPermutations' n ps@(p:_) = if n == permutationSize p
 --
 {-# SPECIALIZE permuteArray :: Permutation -> Array  Int b   -> Array  Int b   #-}
 {-# SPECIALIZE permuteArray :: Permutation -> UArray Int Int -> UArray Int Int #-}
-permuteArray :: IArray arr b => Permutation -> arr Int b -> arr Int b    
+permuteArray :: IArray arr b => Permutation -> arr Int b -> arr Int b
 permuteArray = permuteArrayRight
 
 -- | Right action on lists. Synonym to 'permuteListRight'
 --
 permuteList :: Permutation -> [a] -> [a]
 permuteList = permuteListRight
-    
--- | The right (standard) action of permutations on sets. 
--- 
+
+-- | The right (standard) action of permutations on sets.
+--
 -- > permuteArrayRight pi2 (permuteArrayRight pi1 set) == permuteArrayRight (pi1 `multiplyPermutation` pi2) set
---   
+--
 -- The second argument should be an array with bounds @(1,n)@.
 -- The function checks the array bounds.
 --
 {-# SPECIALIZE permuteArrayRight :: Permutation -> Array  Int b   -> Array  Int b   #-}
 {-# SPECIALIZE permuteArrayRight :: Permutation -> UArray Int Int -> UArray Int Int #-}
-permuteArrayRight :: IArray arr b => Permutation -> arr Int b -> arr Int b    
-permuteArrayRight pi@(Permutation perm) ar = 
-  if (a==1) && (b==n) 
-    then listArray (1,n) [ ar!(perm.!i) | i <- [1..n] ] 
+permuteArrayRight :: IArray arr b => Permutation -> arr Int b -> arr Int b
+permuteArrayRight pi@(Permutation perm) ar =
+  if (a==1) && (b==n)
+    then listArray (1,n) [ ar!(perm.!i) | i <- [1..n] ]
     else error "permuteArrayRight: array bounds do not match"
   where
     n     = _bound perm
-    (a,b) = bounds ar   
+    (a,b) = bounds ar
 
 -- | The right (standard) action on a list. The list should be of length @n@.
 --
 -- > fromPermutation perm == permuteListRight perm [1..n]
--- 
-permuteListRight :: forall a . Permutation -> [a] -> [a]    
-permuteListRight perm xs = elems $ permuteArrayRight perm $ arr where
+--
+permuteListRight :: forall a . Permutation -> [a] -> [a]
+permuteListRight perm xs = elems $ permuteArrayRight perm arr where
   arr = listArray (1,n) xs :: Array Int a
   n   = permutationSize perm
 
@@ -800,23 +797,23 @@ permuteListRight perm xs = elems $ permuteArrayRight perm $ arr where
 --
 {-# SPECIALIZE permuteArrayLeft :: Permutation -> Array  Int b   -> Array  Int b   #-}
 {-# SPECIALIZE permuteArrayLeft :: Permutation -> UArray Int Int -> UArray Int Int #-}
-permuteArrayLeft :: IArray arr b => Permutation -> arr Int b -> arr Int b    
-permuteArrayLeft pi@(Permutation perm) ar =    
+permuteArrayLeft :: IArray arr b => Permutation -> arr Int b -> arr Int b
+permuteArrayLeft pi@(Permutation perm) ar =
   -- permuteRight (inverse pi) ar
-  if (a==1) && (b==n) 
-    then array (1,n) [ ( perm.!i , ar!i ) | i <- [1..n] ] 
+  if (a==1) && (b==n)
+    then array (1,n) [ ( perm.!i , ar!i ) | i <- [1..n] ]
     else error "permuteArrayLeft: array bounds do not match"
   where
     n     = _bound perm
-    (a,b) = bounds ar   
+    (a,b) = bounds ar
 
 -- | The left (opposite) action on a list. The list should be of length @n@.
 --
 -- > permuteListLeft perm set == permuteList (inversePermutation perm) set
 -- > fromPermutation (inversePermutation perm) == permuteListLeft perm [1..n]
 --
-permuteListLeft :: forall a. Permutation -> [a] -> [a]    
-permuteListLeft perm xs = elems $ permuteArrayLeft perm $ arr where
+permuteListLeft :: forall a. Permutation -> [a] -> [a]
+permuteListLeft perm xs = elems $ permuteArrayLeft perm arr where
   arr = listArray (1,n) xs :: Array Int a
   n   = permutationSize perm
 
@@ -858,9 +855,9 @@ _permutations = _permutationsNaive
 
 -- | All permutations of @[1..n]@ in lexicographic order, naive algorithm.
 permutationsNaive :: Int -> [Permutation]
-permutationsNaive n = map toPermutationUnsafe $ _permutations n 
+permutationsNaive n = map toPermutationUnsafe $ _permutations n
 
-_permutationsNaive :: Int -> [[Int]]  
+_permutationsNaive :: Int -> [[Int]]
 _permutationsNaive 0 = [[]]
 _permutationsNaive 1 = [[1]]
 _permutationsNaive n = helper [1..n] where
@@ -868,7 +865,7 @@ _permutationsNaive n = helper [1..n] where
   helper xs = [ i : ys | i <- xs , ys <- helper (xs `minus` i) ]
   minus [] _ = []
   minus (x:xs) i = if x < i then x : minus xs i else xs
-          
+
 -- | # = n!
 countPermutations :: Int -> Integer
 countPermutations = factorial
@@ -882,7 +879,7 @@ randomPermutation = randomPermutationDurstenfeld
 
 _randomPermutation :: RandomGen g => Int -> g -> ([Int],g)
 _randomPermutation n rndgen = (fromPermutation perm, rndgen') where
-  (perm, rndgen') = randomPermutationDurstenfeld n rndgen 
+  (perm, rndgen') = randomPermutationDurstenfeld n rndgen
 
 -- | A synonym for 'randomCyclicPermutationSattolo'.
 randomCyclicPermutation :: RandomGen g => Int -> g -> (Permutation,g)
@@ -890,7 +887,7 @@ randomCyclicPermutation = randomCyclicPermutationSattolo
 
 _randomCyclicPermutation :: RandomGen g => Int -> g -> ([Int],g)
 _randomCyclicPermutation n rndgen = (fromPermutation perm, rndgen') where
-  (perm, rndgen') = randomCyclicPermutationSattolo n rndgen 
+  (perm, rndgen') = randomCyclicPermutationSattolo n rndgen
 
 -- | Generates a uniformly random permutation of @[1..n]@.
 -- Durstenfeld's algorithm (see <http://en.wikipedia.org/wiki/Knuth_shuffle>).
@@ -905,65 +902,63 @@ randomCyclicPermutationSattolo = randomPermutationDurstenfeldSattolo True
 randomPermutationDurstenfeldSattolo :: RandomGen g => Bool -> Int -> g -> (Permutation,g)
 randomPermutationDurstenfeldSattolo isSattolo n rnd = res where
   res = runST $ do
-    ar <- newArray_ (1,n) 
+    ar <- newArray_ (1,n)
     forM_ [1..n] $ \i -> writeArray ar i i
-    rnd' <- worker n (if isSattolo then n-1 else n) rnd ar 
+    rnd' <- worker n (if isSattolo then n-1 else n) rnd ar
     perm <- Data.Array.Unsafe.unsafeFreeze ar
     return (Permutation (fromUArray perm), rnd')
-  worker :: RandomGen g => Int -> Int -> g -> STUArray s Int Int -> ST s g 
-  worker n m rnd ar = 
-    if n==1 
-      then return rnd 
+  worker :: RandomGen g => Int -> Int -> g -> STUArray s Int Int -> ST s g
+  worker n m rnd ar =
+    if n==1
+      then return rnd
       else do
         let (k,rnd') = randomR (1,m) rnd
         when (k /= n) $ do
-          y <- readArray ar k 
+          y <- readArray ar k
           z <- readArray ar n
           writeArray ar n y
           writeArray ar k z
-        worker (n-1) (m-1) rnd' ar 
+        worker (n-1) (m-1) rnd' ar
 
 --------------------------------------------------------------------------------
 -- * Permutations of a multiset
 
--- | Generates all permutations of a multiset.  
+-- | Generates all permutations of a multiset.
 --   The order is lexicographic. A synonym for 'fasc2B_algorithm_L'
-permuteMultiset :: (Eq a, Ord a) => [a] -> [[a]] 
+permuteMultiset :: (Eq a, Ord a) => [a] -> [[a]]
 permuteMultiset = fasc2B_algorithm_L
 
--- | # = \\frac { (\sum_i n_i) ! } { \\prod_i (n_i !) }    
+-- | # = \\frac { (\sum_i n_i) ! } { \\prod_i (n_i !) }
 countPermuteMultiset :: (Eq a, Ord a) => [a] -> Integer
-countPermuteMultiset xs = factorial n `div` product [ factorial (length z) | z <- group ys ] 
+countPermuteMultiset xs = factorial n `div` product [ factorial (length z) | z <- group ys ]
   where
     ys = sort xs
     n = length xs
-  
--- | Generates all permutations of a multiset 
---   (based on \"algorithm L\" in Knuth; somewhat less efficient). 
---   The order is lexicographic.  
-fasc2B_algorithm_L :: (Eq a, Ord a) => [a] -> [[a]] 
+
+-- | Generates all permutations of a multiset
+--   (based on \"algorithm L\" in Knuth; somewhat less efficient).
+--   The order is lexicographic.
+fasc2B_algorithm_L :: (Eq a, Ord a) => [a] -> [[a]]
 fasc2B_algorithm_L xs = unfold1 next (sort xs) where
 
   -- next :: [a] -> Maybe [a]
-  next xs = case findj (reverse xs,[]) of 
+  next xs = case findj (reverse xs,[]) of
     Nothing -> Nothing
-    Just ( (l:ls) , rs) -> Just $ inc l ls (reverse rs,[]) 
-    Just ( [] , _ ) -> error "permute: should not happen"
+    Just (l:ls, rs) -> Just $ inc l ls (reverse rs,[])
+    Just ([]  , _ ) -> error "permute: should not happen"
 
   -- we use simple list zippers: (left,right)
-  -- findj :: ([a],[a]) -> Maybe ([a],[a])   
-  findj ( xxs@(x:xs) , yys@(y:_) ) = if x >= y 
+  -- findj :: ([a],[a]) -> Maybe ([a],[a])
+  findj ( xxs@(x:xs) , yys@(y:_) ) = if x >= y
     then findj ( xs , x : yys )
     else Just ( xxs , yys )
-  findj ( x:xs , [] ) = findj ( xs , [x] )  
+  findj ( x:xs , [] ) = findj ( xs , [x] )
   findj ( [] , _ ) = Nothing
-  
+
   -- inc :: a -> [a] -> ([a],[a]) -> [a]
-  inc !u us ( (x:xs) , yys ) = if u >= x
-    then inc u us ( xs , x : yys ) 
+  inc !u us (x:xs, yys) = if u >= x
+    then inc u us ( xs , x : yys )
     else reverse (x:us)  ++ reverse (u:yys) ++ xs
   inc _ _ ( [] , _ ) = error "permute: should not happen"
-      
+
 --------------------------------------------------------------------------------
-
-

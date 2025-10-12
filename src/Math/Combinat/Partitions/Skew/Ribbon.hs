@@ -8,7 +8,8 @@
 -- An alternative definition that they are skew partitions whose projection
 -- to the diagonal line is a continuous segment of width 1.
 
-{-# LANGUAGE BangPatterns, ScopedTypeVariables #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Math.Combinat.Partitions.Skew.Ribbon where
 
 --------------------------------------------------------------------------------
@@ -93,17 +94,17 @@ cornerBoxSequence (Partition_ ps) = if null ps then [] else interleave outer inn
 innerCornerBoxesNaive :: Partition -> [(Int,Int)]
 innerCornerBoxesNaive part = filter f boxes where
   boxes = elements part
-  f (y,x) =       elem (y+1,x  ) boxes
-          &&      elem (y  ,x+1) boxes
-          && not (elem (y+1,x+1) boxes)
+  f (y,x) =  elem    (y+1,x  ) boxes
+          && elem    (y  ,x+1) boxes
+          && notElem (y+1,x+1) boxes
 
 -- | Naive (and very slow) implementation of @outerCornerBoxes@, for testing purposes
 outerCornerBoxesNaive :: Partition -> [(Int,Int)]
 outerCornerBoxesNaive part = filter f boxes where
   boxes = elements part
-  f (y,x) =  not (elem (y+1,x  ) boxes)
-          && not (elem (y  ,x+1) boxes)
-          && not (elem (y+1,x+1) boxes)
+  f (y,x) =  notElem (y+1,x  ) boxes
+          && notElem (y  ,x+1) boxes
+          && notElem (y+1,x+1) boxes
 
 --------------------------------------------------------------------------------
 -- * Ribbon
@@ -145,8 +146,8 @@ toRibbon skew =
       , rbWidth  = width
       }
     elems  = skewPartitionElements skew
-    height = (length $ group $ sort $ map fst elems) - 1    -- TODO: optimize these
-    width  = (length $ group $ sort $ map snd elems) - 1
+    height = length (group $ sort $ map fst elems) - 1    -- TODO: optimize these
+    width  = length (group $ sort $ map snd elems) - 1
 
 -- | Border strips (or ribbons) are defined to be skew partitions which are 
 -- connected and do not contain 2x2 blocks.
@@ -266,8 +267,8 @@ outerRibbonsOfLength part@(Partition ps) givenLength = result where
   annArr   = listArray (1,n) annList
 
   mkStrip !i1 !i2 = Ribbon shape len height width where
-    ps'   = (-666) : ps ++ replicate (givenLength) 0
-    shape = SkewPartition [ (p,k) | (i,p,q) <- zip3 [1..max ysize y2] (tail ps') ps' , let k = indent i p q ] 
+    ps'   = (-666) : ps ++ replicate givenLength 0
+    shape = SkewPartition [(p,k) | (i,p,q) <- zip3 [1..max ysize y2] (tail ps') ps' , let k = indent i p q] 
     indent !i !p !q 
       | i <  y1    = 0
       | i >  y2    = 0
@@ -292,8 +293,8 @@ innerRibbonsNaive outer = list where
          , isRibbon skew
          ]
   len skew = length (skewPartitionElements skew)
-  ht  skew = (length $ group $ sort $ map fst $ skewPartitionElements skew) - 1
-  wt  skew = (length $ group $ sort $ map snd $ skewPartitionElements skew) - 1
+  ht  skew = length (group $ sort $ map fst $ skewPartitionElements skew) - 1
+  wt  skew = length (group $ sort $ map snd $ skewPartitionElements skew) - 1
 
 
 -- | Naive (and slow) implementation listing all inner border strips of the given length
@@ -305,8 +306,8 @@ innerRibbonsOfLengthNaive outer givenLength = list where
          , isRibbon skew
          ]
   len skew = length (skewPartitionElements skew)
-  ht  skew = (length $ group $ sort $ map fst $ skewPartitionElements skew) - 1
-  wt  skew = (length $ group $ sort $ map snd $ skewPartitionElements skew) - 1
+  ht  skew = length (group $ sort $ map fst $ skewPartitionElements skew) - 1
+  wt  skew = length (group $ sort $ map snd $ skewPartitionElements skew) - 1
 
 -- | Naive (and slow) implementation listing all outer border strips of the given length
 outerRibbonsOfLengthNaive :: Partition -> Int -> [Ribbon]
@@ -317,8 +318,8 @@ outerRibbonsOfLengthNaive inner givenLength = list where
          , isRibbon skew
          ]
   len skew = length (skewPartitionElements skew)
-  ht  skew = (length $ group $ sort $ map fst $ skewPartitionElements skew) - 1
-  wt  skew = (length $ group $ sort $ map snd $ skewPartitionElements skew) - 1
+  ht  skew = length (group $ sort $ map fst $ skewPartitionElements skew) - 1
+  wt  skew = length (group $ sort $ map snd $ skewPartitionElements skew) - 1
 
 --------------------------------------------------------------------------------
 -- * Annotated borders

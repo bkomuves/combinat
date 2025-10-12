@@ -44,7 +44,7 @@ import System.Random
 
 -- | @d `divides` n@
 divides :: Integer -> Integer -> Bool
-divides d n = (mod n d == 0)
+divides d n = mod n d == 0
 
 {-# SPECIALIZE moebiusMu :: Int     -> Int     #-}
 {-# SPECIALIZE moebiusMu :: Integer -> Integer #-}
@@ -71,7 +71,7 @@ liouvilleLambda n =
 
 -- | Sum ofthe of the divisors
 divisorSum :: Integer -> Integer
-divisorSum n = foldl' (+) 0 [ d | d <- divisors n]
+divisorSum n = foldl' (+) 0 (divisors n)
 
 -- | Sum of @k@-th powers of the divisors
 divisorSum' :: Int -> Integer -> Integer
@@ -82,7 +82,7 @@ eulerTotient :: Integer -> Integer
 eulerTotient n = div n prodp * prodp1 where
   grps   = groupIntegerFactors $ integerFactorsTrialDivision n
   ps     = map fst grps
-  prodp  = foldl' (*) 1 [ p   | p <- ps ] 
+  prodp  = foldl' (*) 1 ps
   prodp1 = foldl' (*) 1 [ p-1 | p <- ps ] 
 
 -- | Divisors of @n@ (note: the result is /not/ ordered!)
@@ -106,7 +106,7 @@ squareFreeDivisors_ :: Integer -> [Integer]
 squareFreeDivisors_ n = map f (sublists primes) where
   grps = groupIntegerFactors $ integerFactorsTrialDivision n
   primes = map fst grps
-  f ps = foldl' (*) 1 ps
+  f = foldl' (*) 1
 
 -- | To avoid cyclic dependencies, I made a local copy of this...
 sublists :: [a] -> [[a]]
@@ -141,11 +141,11 @@ primesTMWE = 2:3:5:7: gaps 11 wheel (fold3t $ roll 11 wheel primes') where
   wheel = 2:4:2:4:6:2:6:4:2:4:6:6:2:6:4:2:6:4:6:8:4:2:4:2:  
           4:8:6:4:6:2:4:6:2:6:6:4:2:4:6:2:6:4:2:4:2:10:2:10:wheel 
   gaps k ws@(w:t) cs@(~(c:u))
-    | k==c  = gaps (k+w) t u              
-    | True  = k : gaps (k+w) t cs  
+    | k == c    = gaps (k+w) t u              
+    | otherwise = k : gaps (k+w) t cs  
   roll k ws@(w:t) ps@(~(p:u)) 
-    | k==p  = scanl (\c d->c+p*d) (p*p) ws : roll (k+w) t u              
-    | True  = roll (k+w) t ps   
+    | k == p    = scanl (\c d->c+p*d) (p*p) ws : roll (k+w) t u              
+    | otherwise = roll (k+w) t ps   
 
   minus xxs@(x:xs) yys@(y:ys) = case compare x y of 
     LT -> x : minus xs  yys
@@ -177,8 +177,8 @@ productOfFactors = productInterleaved . map (uncurry pow) where
   pow 2 n = shiftL 1 n
   pow p 2 = p*p
   pow p n = if even n
-              then     (pow p (shiftR n 1))^2
-              else p * (pow p (shiftR n 1))^2 
+              then     pow p (shiftR n 1) ^ 2
+              else p * pow p (shiftR n 1) ^ 2 
 
 -- | Groups integer factors. Example: from [2,2,2,3,3,5] we produce [(2,3),(3,2),(5,1)]  
 groupIntegerFactors :: [Integer] -> [(Integer,Int)]
@@ -268,7 +268,7 @@ millerRabinPrimalityTest n a
 
 {-# SPECIALIZE find2km :: Integer -> (Integer,Integer) #-}
 find2km :: Integral a => a -> (a,a)
-find2km n = f 0 n where 
+find2km = f 0 where 
   f k m
     | r == 1 = (k,m)
     | otherwise = f (k+1) q
@@ -313,7 +313,7 @@ powMod m = pow' (mulMod m) (squareMod m)
 isProbablyPrime :: Integer -> Bool
 isProbablyPrime n 
   | n < 2      = False
-  | even n     = (n==2)
+  | even n     = n==2
   | n < 1000   = length (integerFactorsTrialDivision n) == 1
   | otherwise  = and [ millerRabinPrimalityTest n a | a <- witnessList ]
   where
@@ -328,7 +328,7 @@ isProbablyPrime n
 isVeryProbablyPrime :: Integer -> Bool
 isVeryProbablyPrime n
   | n < 2      = False
-  | even n     = (n==2)
+  | even n     = n==2
   | n < 1000   = length (integerFactorsTrialDivision n) == 1
   | otherwise  = and [ millerRabinPrimalityTest n a | a <- witnessList ]
   where

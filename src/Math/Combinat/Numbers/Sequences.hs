@@ -4,7 +4,8 @@
 -- See the \"On-Line Encyclopedia of Integer Sequences\",
 -- <https://oeis.org> .
 
-{-# LANGUAGE BangPatterns, ScopedTypeVariables #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Math.Combinat.Numbers.Sequences where
 
 --------------------------------------------------------------------------------
@@ -28,7 +29,7 @@ factorial = factorialSplit
 
 -- | Faster implementation of the factorial function
 factorialSplit :: Integral a => a -> Integer
-factorialSplit n = productFromTo 1 n
+factorialSplit = productFromTo 1
 
 -- | Naive implementation of factorial
 factorialNaive :: Integral a => a -> Integer
@@ -39,7 +40,7 @@ factorialNaive n
 
 -- | \"Swing factorial\" algorithm
 factorialSwing :: Integral a => a -> Integer
-factorialSwing n = productOfFactors (factorialPrimeExponents $ fromIntegral n) where
+factorialSwing = productOfFactors . factorialPrimeExponents . fromIntegral
 
 --------------------------------------------------------------------------------
 
@@ -53,9 +54,7 @@ factorialPrimeExponentsNaive n = result where
   fi = fromIntegral :: a -> Integer
   result = Map.toList 
          $ Map.unionsWith (+) 
-         $ map Map.fromList 
-         $ map factorize 
-         $ map fi [1..n] 
+         $ map (Map.fromList . factorize . fi) [1..n] 
 
 factorialPrimeExponents_ :: Int -> [Int]
 factorialPrimeExponents_ = go where
@@ -141,7 +140,7 @@ binomialSplit n k
   | k > n = 0
   | k < 0 = 0
   | k > (n `div` 2) = binomialSplit n (n-k)
-  | otherwise = (productFromTo (n-k) n) `div` (productFromTo 1 k)
+  | otherwise = productFromTo (n-k) n `div` productFromTo 1 k
 
 -- | A007318. Note: This is zero for @n<0@ or @k<0@; see also 'signedBinomial' below.
 binomialNaive :: Integral a => a -> a -> Integer
@@ -149,7 +148,7 @@ binomialNaive n k
   | k > n = 0
   | k < 0 = 0
   | k > (n `div` 2) = binomial n (n-k)
-  | otherwise = (product [n'-k'+1 .. n']) `div` (product [1..k'])
+  | otherwise = product [n'-k'+1 .. n'] `div` product [1..k']
   where 
     k' = fromIntegral k
     n' = fromIntegral n
@@ -182,8 +181,10 @@ pascalRow :: Integral a => a -> [Integer]
 pascalRow n' = worker 0 1 where
   n = fromIntegral n'
   worker j x
-    | j>n   = [] 
-    | True  = let j'=j+1 in x : worker j' (div (x*(n-j)) j') 
+    | j>n        = [] 
+    | otherwise  = let
+        j'=j+1
+        in x : worker j' (div (x*(n-j)) j') 
 
 multinomial :: Integral a => [a] -> Integer
 multinomial xs = div
@@ -240,7 +241,7 @@ signedStirling1st n k
   | k==0 && n==0 = 1
   | k < 1        = 0
   | k > n        = 0
-  | otherwise    = signedStirling1stArray n ! (fromIntegral k)
+  | otherwise    = signedStirling1stArray n ! fromIntegral k
 
 -- | (Unsigned) Stirling numbers of the first kind. See 'signedStirling1st'.
 unsignedStirling1st :: Integral a => a -> a -> Integer
@@ -257,7 +258,7 @@ stirling2nd n k
   | k < 1        = 0
   | k > n        = 0
   | otherwise = sum xs `div` factorial k where
-      xs = [ negateIfOdd (k-i) $ binomial k i * (fromIntegral i)^n | i<-[0..k] ]
+      xs = [ negateIfOdd (k-i) $ binomial k i * fromIntegral i ^ n | i<-[0..k] ]
 
 --------------------------------------------------------------------------------
 -- * Bernoulli numbers
@@ -269,7 +270,7 @@ bernoulli :: Integral a => a -> Rational
 bernoulli n 
   | n <  0    = error "bernoulli: n should be nonnegative"
   | n == 0    = 1
-  | n == 1    = -1/2
+  | n == 1    = -(1/2)
   | otherwise = sum [ f k | k<-[1..n] ] 
   where
     f k = toRational (negateIfOdd (n+k) $ factorial k * stirling2nd n k) 

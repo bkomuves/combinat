@@ -41,7 +41,7 @@ vennDiagramNumberOfSets (VennDiagram table) = length $ fst $ Map.findMin table
 -- > vennDiagramNumberOfZones v == 2 ^ (vennDiagramNumberOfSets v)
 --
 vennDiagramNumberOfZones :: VennDiagram a -> Int
-vennDiagramNumberOfZones venn = 2 ^ (vennDiagramNumberOfSets venn)
+vennDiagramNumberOfZones venn = 2 ^ vennDiagramNumberOfSets venn
 
 -- | How many /nonempty/ zones are in the Venn diagram
 vennDiagramNumberOfNonemptyZones :: VennDiagram Int -> Int
@@ -81,9 +81,9 @@ vennDiagramSetCardinalities (VennDiagram table) = go n list where
   list = Map.toList table
   n = length $ fst $ head list
   go :: Int -> [([Bool],Int)] -> [Int]
-  go !0 _  = []
+  go 0 _  = []
   go !k xs = this : go (k-1) (map xtail xs) where
-    this = foldl' (+) 0 [ c | ((True:_) , c) <- xs ]
+    this = foldl' (+) 0 [c | (True:_, c) <- xs]
   xtail (bs,c) = (tail bs,c)
 
 --------------------------------------------------------------------------------
@@ -120,7 +120,7 @@ enumerateVennDiagrams dims =
       list   = Map.toList table
       falses = replicate n False
 
-      comps k = compositions' (map snd list) k
+      comps = compositions' (map snd list)
       result = 
         [ unsafeMakeVennDiagram $ 
             [ (False:tfs    , m-c) | ((tfs,m),c) <- zip list comp ] ++

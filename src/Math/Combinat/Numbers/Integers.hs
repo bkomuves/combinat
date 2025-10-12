@@ -28,7 +28,7 @@ import System.Random
 
 -- | Largest integer @k@ such that @2^k@ is smaller or equal to @n@
 integerLog2 :: Integer -> Integer
-integerLog2 n = go n where
+integerLog2 = go where
   go 0 = -1
   go k = 1 + go (shiftR k 1)
 
@@ -43,10 +43,8 @@ ceilingLog2 n = 1 + go (n-1) where
 -- Integer square root
 
 isSquare :: Integer -> Bool
-isSquare n = 
-  if (fromIntegral $ mod n 32) `elem` rs 
-    then snd (integerSquareRoot' n) == 0
-    else False
+isSquare n = fromIntegral (mod n 32) `elem` rs
+  && snd (integerSquareRoot' n) == 0
   where
     rs = [0,1,4,9,16,17,25] :: [Int]
     
@@ -57,7 +55,8 @@ integerSquareRoot = fst . integerSquareRoot'
 
 -- | Smallest integer whose square is larger or equal to the input
 ceilingSquareRoot :: Integer -> Integer
-ceilingSquareRoot n = (if r>0 then u+1 else u) where (u,r) = integerSquareRoot' n 
+ceilingSquareRoot n = if r > 0 then u+1 else u where
+  (u,r) = integerSquareRoot' n 
 
 -- | We also return the excess residue; that is
 --
@@ -74,7 +73,7 @@ integerSquareRoot' n
   | otherwise = go firstGuess 
   where
     k = integerLog2 n
-    firstGuess = 2^(div (k+2) 2) -- !! note that (div (k+1) 2) is NOT enough !!
+    firstGuess = 2 ^ div (k+2) 2 -- !! note that (div (k+1) 2) is NOT enough !!
     go a = 
       if m < a
         then go a' 

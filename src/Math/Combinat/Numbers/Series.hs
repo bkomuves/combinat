@@ -8,7 +8,7 @@
 -- TODO: better names for these functions.
 --
 
-{-# LANGUAGE CPP, BangPatterns, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE BangPatterns #-}
 module Math.Combinat.Numbers.Series where
 
 --------------------------------------------------------------------------------
@@ -48,14 +48,14 @@ powerTerm n = replicate n 0 ++ (1 : repeat 0)
 -- * Basic operations on power series
 
 addSeries :: Num a => [a] -> [a] -> [a]
-addSeries xs ys = longZipWith 0 0 (+) xs ys
+addSeries = longZipWith 0 0 (+)
 
 sumSeries :: Num a => [[a]] -> [a]
 sumSeries [] = [0]
 sumSeries xs = foldl1' addSeries xs
 
 subSeries :: Num a => [a] -> [a] -> [a]
-subSeries xs ys = longZipWith 0 0 (-) xs ys
+subSeries = longZipWith 0 0 (-)
 
 negateSeries :: Num a => [a] -> [a]
 negateSeries = map negate
@@ -68,7 +68,7 @@ scaleSeries s = map (*s)
 -- M. Douglas McIlroy: Power Series, Power Serious 
 mulSeries :: Num a => [a] -> [a] -> [a]
 mulSeries xs ys = go (xs ++ repeat 0) (ys ++ repeat 0) where
-  go (f:fs) ggs@(g:gs) = f*g : (scaleSeries f gs) `addSeries` go fs ggs
+  go (f:fs) ggs@(g:gs) = f*g : scaleSeries f gs `addSeries` go fs ggs
 
 -- | Multiplication of power series. This implementation is a synonym for 'convolve'
 mulSeriesNaive :: Num a => [a] -> [a] -> [a]
@@ -167,7 +167,7 @@ substituteNaive as_ bs_ =
     a i = as !! i
     b j = bs !! j
     f n = sum
-            [ b m * product [ (a i)^j | (i,j)<-es ] * fromInteger (multinomial (map snd es))
+            [ b m * product [ a i ^ j | (i,j)<-es ] * fromInteger (multinomial (map snd es))
             | p <- partitions n 
             , let es = toExponentialForm p
             , let m  = partitionWidth    p
@@ -176,7 +176,9 @@ substituteNaive as_ bs_ =
 --------------------------------------------------------------------------------
 -- * Lagrange inversions
 
--- | We expect the input series to match @(0:a1:_)@. with a1 nonzero The following is true for the result (at least with exact arithmetic):
+-- | We expect the input series to match @(0:a1:_)@ with a1
+-- nonzero. The following is true for the result (at least with exact
+-- arithmetic):
 --
 -- > substitute f (lagrangeInversion f) == (0 : 1 : repeat 0)
 -- > substitute (lagrangeInversion f) f == (0 : 1 : repeat 0)
@@ -212,7 +214,7 @@ integralLagrangeInversionNaive series_ =
     series = series_ ++ repeat 0
     as  = tail series 
     a i = as !! i
-    f n = sum [ fromInteger (lagrangeCoeff p) * product [ (a i)^j | (i,j) <- toExponentialForm p ]
+    f n = sum [ fromInteger (lagrangeCoeff p) * product [ a i ^ j | (i,j) <- toExponentialForm p ]
               | p <- partitions n
               ] 
 
@@ -230,7 +232,7 @@ lagrangeInversionNaive series_ =
     a1  = series !! 1
     as  = map (/a1) (tail series)
     a i = as !! i
-    f n = sum [ fromInteger (lagrangeCoeff p) * product [ (a i)^j | (i,j) <- toExponentialForm p ]
+    f n = sum [ fromInteger (lagrangeCoeff p) * product [ a i ^ j | (i,j) <- toExponentialForm p ]
               | p <- partitions n
               ] 
 
@@ -245,7 +247,7 @@ differentiateSeries (y:ys) = go (1::Int) ys where
 
 integrateSeries :: Fractional a => [a] -> [a]
 integrateSeries ys = 0 : go (1::Int) ys where
-  go !n (x:xs) = x / (fromIntegral n) : go (n+1) xs
+  go !n (x:xs) = x / fromIntegral n : go (n+1) xs
   go _  []     = []
 
 --------------------------------------------------------------------------------
@@ -259,12 +261,12 @@ expSeries = go 0 1 where
 -- | Power series expansion of @cos(x)@
 cosSeries :: Fractional a => [a]
 cosSeries = go 0 1 where
-  go i e = e : 0 : go (i+2) (-e / ((i+1)*(i+2)))
+  go i e = e : 0 : go (i+2) ((-e) / ((i+1)*(i+2)))
 
 -- | Power series expansion of @sin(x)@
 sinSeries :: Fractional a => [a]
 sinSeries = go 1 1 where
-  go i e = 0 : e : go (i+2) (-e / ((i+1)*(i+2)))
+  go i e = 0 : e : go (i+2) ((-e) / ((i+1)*(i+2)))
 
 -- | Alternative implementation using differential equations.
 --

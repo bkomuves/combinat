@@ -1,7 +1,8 @@
 
 -- | Counting partitions of integers.
 
-{-# LANGUAGE CPP, BangPatterns, ScopedTypeVariables #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Math.Combinat.Partitions.Integer.Count where
 
 --------------------------------------------------------------------------------

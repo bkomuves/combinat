@@ -2,7 +2,7 @@
 -- | Braids. See eg. <https://en.wikipedia.org/wiki/Braid_group>
 --
 --
--- Based on: 
+-- Based on:
 --
 --  * Joan S. Birman, Tara E. Brendle: BRAIDS - A SURVEY
 --    <https://www.math.columbia.edu/~jb/Handbook-21.pdf>
@@ -13,12 +13,13 @@
 --
 
 
-{-# LANGUAGE 
-      CPP, BangPatterns, 
-      ScopedTypeVariables, ExistentialQuantification,
-      DataKinds, KindSignatures, Rank2Types,
-      TypeOperators, TypeFamilies,
-      StandaloneDeriving #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Math.Combinat.Groups.Braid where
 
@@ -54,7 +55,7 @@ import qualified Math.Combinat.Permutations as P
 --------------------------------------------------------------------------------
 -- * Artin generators
 
--- | A standard Artin generator of a braid: @Sigma i@ represents twisting 
+-- | A standard Artin generator of a braid: @Sigma i@ represents twisting
 -- the neighbour strands @i@ and @(i+1)@, such that strand @i@ goes /under/ strand @(i+1)@.
 --
 -- Note: The strands are numbered @1..n@.
@@ -62,7 +63,7 @@ data BrGen
   = Sigma    !Int         -- ^ @i@ goes under @(i+1)@
   | SigmaInv !Int         -- ^ @i@ goes above @(i+1)@
   deriving (Eq,Ord,Show)
- 
+
 -- | The strand (more precisely, the first of the two strands) the generator twistes
 brGenIdx :: BrGen -> Int
 brGenIdx g = case g of
@@ -74,10 +75,10 @@ brGenSign g = case g of
   Sigma    _ -> Plus
   SigmaInv _ -> Minus
 
-brGenSignIdx :: BrGen -> (Sign,Int)        
+brGenSignIdx :: BrGen -> (Sign,Int)
 brGenSignIdx g = case g of
   Sigma    i -> (Plus ,i)
-  SigmaInv i -> (Minus,i) 
+  SigmaInv i -> (Minus,i)
 
 -- | The inverse of a braid generator
 invBrGen :: BrGen -> BrGen
@@ -87,7 +88,7 @@ invBrGen  g = case g of
 
 --------------------------------------------------------------------------------
 -- * The braid type
-  
+
 -- | The braid group @B_n@ on @n@ strands.
 -- The number @n@ is encoded as a type level natural in the type parameter.
 --
@@ -97,7 +98,7 @@ newtype Braid (n :: Nat) = Braid [BrGen] deriving (Show)
 
 -- | The number of strands in the braid
 numberOfStrands :: KnownNat n => Braid n -> Int
-numberOfStrands = fromInteger . natVal . braidProxy where                                                         
+numberOfStrands = fromInteger . natVal . braidProxy where
   braidProxy :: Braid n -> Proxy n
   braidProxy _ = Proxy
 
@@ -106,8 +107,8 @@ numberOfStrands = fromInteger . natVal . braidProxy where
 data SomeBraid = forall n. KnownNat n => SomeBraid (Braid n)
 
 someBraid :: Int -> (forall (n :: Nat). KnownNat n => Braid n) -> SomeBraid
-someBraid n polyBraid = 
-  case snat of    
+someBraid n polyBraid =
+  case snat of
     SomeNat pxy -> SomeBraid (asProxyTypeOf1 polyBraid pxy)
   where
     snat = case someNatVal (fromIntegral n :: Integer) of
@@ -122,13 +123,13 @@ mkBraid f n w = y where
   sb = someBraid n (Braid w)
   y  = withSomeBraid sb f
 
-withBraid 
+withBraid
   :: Int
   -> (forall (n :: Nat). KnownNat n => Braid n)
-  -> (forall (n :: Nat). KnownNat n => Braid n -> a) 
+  -> (forall (n :: Nat). KnownNat n => Braid n -> a)
   -> a
-withBraid n polyBraid f = 
-  case snat of    
+withBraid n polyBraid f =
+  case snat of
     SomeNat pxy -> f (asProxyTypeOf1 polyBraid pxy)
   where
     snat = case someNatVal (fromIntegral n :: Integer) of
@@ -143,7 +144,7 @@ braidWord (Braid gs) = gs
 braidWordLength :: Braid n -> Int
 braidWordLength (Braid gs) = length gs
 
--- | Embeds a smaller braid group into a bigger braid group    
+-- | Embeds a smaller braid group into a bigger braid group
 extend :: (n1 <= n2) => Braid n1 -> Braid n2
 extend (Braid gs) = Braid gs
 
@@ -155,13 +156,13 @@ freeReduceBraidWord (Braid orig) = Braid (loop orig) where
   loop w = case reduceStep w of
     Nothing -> w
     Just w' -> loop w'
-  
+
   reduceStep :: [BrGen] -> Maybe [BrGen]
-  reduceStep = go False where    
+  reduceStep = go False where
     go !changed w = case w of
       (Sigma    x : SigmaInv y : rest) | x==y   -> go True rest
       (SigmaInv x : Sigma    y : rest) | x==y   -> go True rest
-      (this : rest)                             -> liftM (this:) $ go changed rest
+      (this : rest)                             -> (this:) <$> go changed rest
       _                                         -> if changed then Just w else Nothing
 
 --------------------------------------------------------------------------------
@@ -184,7 +185,7 @@ sigmaInv k = braid where
 -- | @doubleSigma s t@ (for s<t)is the generator @sigma_{s,t}@ in Birman-Ko-Lee's
 -- \"new presentation\". It twistes the strands @s@ and @t@ while going over all
 -- other strands. For @t==s+1@ we get back @sigma s@
--- 
+--
 doubleSigma :: KnownNat n => Int -> Int -> Braid (n :: Nat)
 doubleSigma s t = braid where
   n = numberOfStrands braid
@@ -198,29 +199,29 @@ doubleSigma s t = braid where
 -- | @positiveWord [2,5,1]@ is shorthand for the word @sigma_2*sigma_5*sigma_1@.
 positiveWord :: KnownNat n => [Int] -> Braid (n :: Nat)
 positiveWord idxs = braid where
-  braid = Braid (map gen idxs) 
+  braid = Braid (map gen idxs)
   n     = numberOfStrands braid
   gen i = if i>0 && i<n then Sigma i else error "positiveWord: index out of range"
-       
+
 -- | The (positive) half-twist of all the braid strands, usually denoted by @Delta@.
 halfTwist :: KnownNat n => Braid n
 halfTwist = braid where
-  braid = Braid $ map Sigma $ _halfTwist n 
+  braid = Braid $ map Sigma $ _halfTwist n
   n     = numberOfStrands braid
 
 -- | The untyped version of 'halfTwist'
 _halfTwist :: Int -> [Int]
 _halfTwist n = gens where
   gens  = concat [ sub k | k<-[1..n-1] ]
-  sub k = [ j | j<-[n-1,n-2..k] ]
-  
+  sub k = [n-1,n-2..k]
+
 -- | Synonym for 'halfTwist'
 theGarsideBraid :: KnownNat n => Braid n
-theGarsideBraid = halfTwist 
+theGarsideBraid = halfTwist
 
--- | The inner automorphism defined by @tau(X) = Delta^-1 X Delta@, 
+-- | The inner automorphism defined by @tau(X) = Delta^-1 X Delta@,
 -- where @Delta@ is the positive half-twist.
--- 
+--
 -- This sends each generator @sigma_j@ to @sigma_(n-j)@.
 --
 tau :: KnownNat n => Braid n -> Braid n
@@ -248,13 +249,13 @@ identity = Braid []
 inverse :: Braid n -> Braid n
 inverse = Braid . reverse . map invBrGen . braidWord
 
--- | Composes two braids, doing free reduction on the result 
+-- | Composes two braids, doing free reduction on the result
 -- (that is, removing @(sigma_k * sigma_k^-1)@ pairs@)
 compose :: Braid n -> Braid n -> Braid n
 compose (Braid gs) (Braid hs) = freeReduceBraidWord $ Braid (gs++hs)
 
 composeMany :: [Braid n] -> Braid n
-composeMany = freeReduceBraidWord . Braid . concat . map braidWord 
+composeMany = freeReduceBraidWord . Braid . concatMap braidWord
 
 -- | Composes two braids without doing any reduction.
 composeDontReduce :: Braid n -> Braid n -> Braid n
@@ -265,11 +266,11 @@ composeDontReduce (Braid gs) (Braid hs) = Braid (gs++hs)
 
 -- | A braid is pure if its permutation is trivial
 isPureBraid :: KnownNat n => Braid n -> Bool
-isPureBraid braid = (braidPermutation braid == P.identityPermutation n) where
+isPureBraid braid = braidPermutation braid == P.identityPermutation n where
   n = numberOfStrands braid
 
--- | Returns the left-to-right permutation associated to the braid. 
--- We follow the strands /from the left to the right/ (or from the top to the 
+-- | Returns the left-to-right permutation associated to the braid.
+-- We follow the strands /from the left to the right/ (or from the top to the
 -- bottom), and return the permutation taking the left side to the right side.
 --
 -- This is compatible with /right/ (standard) action of the permutations:
@@ -290,15 +291,15 @@ braidPermutation braid@(Braid gens) = perm where
 _braidPermutation :: Int -> [Int] -> Permutation
 _braidPermutation n idxs = P.uarrayToPermutationUnsafe (runSTUArray action) where
 
-  action :: forall s. ST s (STUArray s Int Int) 
-  action = do 
-    arr <- newArray_ (1,n) 
+  action :: forall s. ST s (STUArray s Int Int)
+  action = do
+    arr <- newArray_ (1,n)
     forM_ [1..n] $ \i -> writeArray arr i i
     worker arr idxs
     return arr
-    
+
   worker arr = go where
-    go []     = return arr 
+    go []     = return arr
     go (i:is) = do
       a <- readArray arr  i
       b <- readArray arr (i+1)
@@ -311,32 +312,32 @@ _braidPermutation n idxs = P.uarrayToPermutationUnsafe (runSTUArray action) wher
 
 -- | A positive braid word contains only positive (@Sigma@) generators.
 isPositiveBraidWord :: KnownNat n => Braid n -> Bool
-isPositiveBraidWord (Braid gs) = all (isPlus . brGenSign) gs 
+isPositiveBraidWord (Braid gs) = all (isPlus . brGenSign) gs
 
 -- | A /permutation braid/ is a positive braid where any two strands cross
--- at most one, and /positively/. 
+-- at most one, and /positively/.
 --
 isPermutationBraid :: KnownNat n => Braid n -> Bool
 isPermutationBraid braid = isPositiveBraidWord braid && crosses where
-  crosses     = and [ check i j | i<-[1..n-1], j<-[i+1..n] ] 
-  check i j   = zeroOrOne (lkMatrix ! (i,j)) 
-  zeroOrOne a = (a==1 || a==0)
+  crosses     = and [ check i j | i<-[1..n-1], j<-[i+1..n] ]
+  check i j   = zeroOrOne (lkMatrix ! (i,j))
+  zeroOrOne a = a == 1 || a == 0
   lkMatrix    = linkingMatrix   braid
   n           = numberOfStrands braid
 
 -- | Untyped version of 'isPermutationBraid' for positive words.
 _isPermutationBraid :: Int -> [Int] -> Bool
 _isPermutationBraid n gens = crosses where
-  crosses     = and [ check i j | i<-[1..n-1], j<-[i+1..n] ] 
-  check i j   = zeroOrOne (lkMatrix ! (i,j)) 
-  zeroOrOne a = (a==1 || a==0)
+  crosses     = and [ check i j | i<-[1..n-1], j<-[i+1..n] ]
+  check i j   = zeroOrOne (lkMatrix ! (i,j))
+  zeroOrOne a = a == 1 || a == 0
   lkMatrix    = _linkingMatrix n $ map Sigma gens
 
 -- | For any permutation this functions returns a /permutation braid/ realizing
 -- that permutation. Note that this is not unique, so we make an arbitrary choice
--- (except for the permutation @[n,n-1..1]@ reversing the order, in which case 
+-- (except for the permutation @[n,n-1..1]@ reversing the order, in which case
 -- the result must be the half-twist braid).
--- 
+--
 -- The resulting braid word will have a length at most @choose n 2@ (and will have
 -- that length only for the permutation @[n,n-1..1]@)
 --
@@ -373,7 +374,7 @@ _permutationBraid' perm = runST action where
       writeArray cfwd j j
       writeArray cinv j j
 
-    let doSwap i = do     
+    let doSwap i = do
           a <- readArray cinv  i
           b <- readArray cinv (i+1)
           writeArray cinv  i    b
@@ -391,19 +392,19 @@ _permutationBraid' perm = runST action where
               let tgt = P.lookupPermutation perm phase  -- (arr ! phase)
               src <- readArray cfwd tgt
               let this = [src-1,src-2..phase]
-              mapM_ doSwap $ this 
+              mapM_ doSwap this
               rest <- worker (phase+1)
               return (this:rest)
 
     worker 1
- 
+
 
 -- | We compute the linking numbers between all pairs of strands:
 --
--- > linkingMatrix braid ! (i,j) == strandLinking braid i j 
+-- > linkingMatrix braid ! (i,j) == strandLinking braid i j
 --
 linkingMatrix :: KnownNat n => Braid n -> UArray (Int,Int) Int
-linkingMatrix braid@(Braid gens) = _linkingMatrix (numberOfStrands braid) gens where
+linkingMatrix braid@(Braid gens) = _linkingMatrix (numberOfStrands braid) gens
 
 -- | Untyped version of 'linkingMatrix'
 _linkingMatrix :: Int -> [BrGen] -> UArray (Int,Int) Int
@@ -419,37 +420,37 @@ _linkingMatrix n gens = runSTUArray action where
           b <- readArray perm (i+1)
           writeArray perm  i    b
           writeArray perm (i+1) a
-               
+
     mat <- newArray ((1,1),(n,n)) 0 :: ST s (STUArray s (Int,Int) Int)
     let doAdd :: Int -> Int -> Int -> ST s ()
         doAdd i j pm1 = do
           x <- readArray mat (i,j)
-          writeArray mat (i,j) (x+pm1) 
+          writeArray mat (i,j) (x+pm1)
           writeArray mat (j,i) (x+pm1)
-       
+
     forM_ gens $ \g -> do
       let (sgn,k) = brGenSignIdx g
-      u <- readArray perm  k 
+      u <- readArray perm  k
       v <- readArray perm (k+1)
       doAdd u v (signValue sgn)
-      doSwap k 
-        
+      doSwap k
+
     return mat
-    
-    
--- | The linking number between two strands numbered @i@ and @j@ 
+
+
+-- | The linking number between two strands numbered @i@ and @j@
 -- (numbered such on the /left/ side).
 strandLinking :: KnownNat n => Braid n -> Int -> Int -> Int
-strandLinking braid@(Braid gens) i0 j0 
+strandLinking braid@(Braid gens) i0 j0
   | i0 < 1 || i0 > n  = error $ "strandLinkingNumber: invalid strand index i: " ++ show i0
   | j0 < 1 || j0 > n  = error $ "strandLinkingNumber: invalid strand index j: " ++ show j0
   | i0 == j0          = 0
   | otherwise         = go i0 j0 gens
   where
     n = numberOfStrands braid
-    
+
     go !i !j []     = 0
-    go !i !j (g:gs)  
+    go !i !j (g:gs)
       | i == k   && j == k+1  = s + go (i+1) (j-1) gs
       | j == k   && i == k+1  = s + go (i-1) (j+1) gs
       | i == k                =     go (i+1)  j    gs
@@ -462,15 +463,15 @@ strandLinking braid@(Braid gens) i0 j0
         s = signValue sgn
 
 --------------------------------------------------------------------------------
--- * Growth 
+-- * Growth
 
--- | Bronfman's recursive formula for the reciprocial of the growth function 
--- of /positive/ braids. It was already known (by Deligne) that these generating functions 
--- are reciprocials of polynomials; Bronfman [1] gave a recursive formula for them.
+-- | Bronfman's recursive formula for the reciprocal of the growth function
+-- of /positive/ braids. It was already known (by Deligne) that these generating functions
+-- are reciprocals of polynomials; Bronfman [1] gave a recursive formula for them.
 --
 -- > let count n l = length $ nub $ [ braidNormalForm w | w <- allPositiveBraidWords n l ]
 -- > let convertPoly (1:cs) = zip (map negate cs) [1..]
--- > pseries' (convertPoly $ bronfmanH n) == expandBronfmanH n == [ count n l | l <- [0..] ] 
+-- > pseries' (convertPoly $ bronfmanH n) == expandBronfmanH n == [ count n l | l <- [0..] ]
 --
 -- * [1] Aaron Bronfman: Growth functions of a class of monoids. Preprint, 2001
 --
@@ -489,12 +490,12 @@ bronfmanHsList = list where
   sgn i = if odd i then id else map negate
   choose2 k = div (k*(k-1)) 2
 
--- | Expands the reciprocial of @H(n)@ into an infinite power series,
+-- | Expands the reciprocal of @H(n)@ into an infinite power series,
 -- giving the growth function of the positive braids on @n@ strands.
 expandBronfmanH :: Int -> [Int]
 expandBronfmanH n = pseries' (convertPoly $ bronfmanH n) where
   convertPoly (1:cs) = zip (map negate cs) [1..]
-   
+
 --------------------------------------------------------------------------------
 -- * ASCII diagram
 
@@ -508,25 +509,25 @@ horizBraidASCII = horizBraidASCII' True
 
 -- | Horizontal braid diagram, drawn from left to right.
 -- The boolean flag indicates whether to flip the strands
--- vertically ('True' means bottom-to-top, 'False' means top-to-bottom) 
+-- vertically ('True' means bottom-to-top, 'False' means top-to-bottom)
 horizBraidASCII' :: KnownNat n => Bool -> Braid n -> ASCII
 horizBraidASCII' flipped braid@(Braid gens) = final where
 
   n = numberOfStrands braid
- 
+
   final        = vExtendWith VTop 1 $ hCatTop allBlocks
   allBlocks    = prelude ++ middleBlocks ++ epilogue
-  prelude      = [ numberBlock   , spaceBlock , beginEndBlock ] 
+  prelude      = [ numberBlock   , spaceBlock , beginEndBlock ]
   epilogue     = [ beginEndBlock , spaceBlock , numberBlock'  ]
-  middleBlocks = map block gens 
-  
+  middleBlocks = map block gens
+
   block g = case g of
     Sigma    i -> block' i $ if flipped then over  else under
     SigmaInv i -> block' i $ if flipped then under else over
 
-  block' i middle = asciiFromLines $ drop 2 $ concat 
+  block' i middle = asciiFromLines $ drop 2 $ concat
                   $ replicate a horiz ++ [space3, middle] ++ replicate b horiz
-    where 
+    where
       (a,b) = if flipped then (n-i-1,i-1) else (i-1,n-i-1)
 
   -- cycleN :: Int -> [a] -> [a]
@@ -538,8 +539,8 @@ horizBraidASCII' flipped braid@(Braid gens) = final where
   numberBlock'  = mkNumbers $ P.fromPermutation $ braidPermutation braid
 
   mkNumbers :: [Int] -> ASCII
-  mkNumbers list = vCatWith HRight (VSepSpaces 2) $ map asciiShow 
-                 $ (if flipped then reverse else id) $ list
+  mkNumbers list = vCatWith HRight (VSepSpaces 2) $ map asciiShow
+                 $ (if flipped then reverse else id) list
 
   under  = [ "\\ /" , " / "  , "/ \\" ]
   over   = [ "\\ /" , " \\ " , "/ \\" ]
@@ -560,13 +561,13 @@ verticalBraidASCII :: KnownNat n => Braid n -> ASCII
 verticalBraidASCII braid@(Braid gens) = final where
 
   n = numberOfStrands braid
- 
+
   final        = hExtendWith HLeft 1 $ vCatLeft allBlocks
   allBlocks    = prelude ++ middleBlocks ++ epilogue
-  prelude      = [ numberBlock   , spaceBlock , beginEndBlock ] 
+  prelude      = [ numberBlock   , spaceBlock , beginEndBlock ]
   epilogue     = [ beginEndBlock , spaceBlock , numberBlock'  ]
-  middleBlocks = map block gens 
-  
+  middleBlocks = map block gens
+
   block g = case g of
     Sigma    i -> block' i under
     SigmaInv i -> block' i over
@@ -582,7 +583,7 @@ verticalBraidASCII braid@(Braid gens) = final where
 
   mkNumbers :: [Int] -> ASCII
   mkNumbers list = asciiFromString (drop 1 $ concatMap show3 list)
-  show3 k = let s = show k 
+  show3 k = let s = show k
             in  replicate (3-length s) ' ' ++ s
 
   under  = [ "\\ /" , " / "  , "/ \\" ]
@@ -597,13 +598,13 @@ verticalBraidASCII braid@(Braid gens) = final where
 allPositiveBraidWords :: KnownNat n => Int -> [Braid n]
 allPositiveBraidWords l = braids where
   n = numberOfStrands (head braids)
-  braids = map Braid $ _allPositiveBraidWords n l 
+  braids = map Braid $ _allPositiveBraidWords n l
 
 -- | All braid words of the given length
 allBraidWords :: KnownNat n => Int -> [Braid n]
 allBraidWords l = braids where
   n = numberOfStrands (head braids)
-  braids = map Braid $ _allBraidWords n l 
+  braids = map Braid $ _allBraidWords n l
 
 -- | Untyped version of 'allPositiveBraidWords'
 _allPositiveBraidWords :: Int -> Int -> [[BrGen]]
@@ -619,7 +620,7 @@ _allBraidWords n = go where
   gens = concat [ [ Sigma i , SigmaInv i ] | i<-[1..n-1] ]
 
 --------------------------------------------------------------------------------
--- * Random braids  
+-- * Random braids
 
 -- | Random braid word of the given length
 randomBraidWord :: (RandomGen g, KnownNat n) => Int -> g -> (Braid n, g)
@@ -645,44 +646,45 @@ randomPositiveBraidWord len g = (braid, g') where
 randomPerturbBraidWord :: forall n g. (RandomGen g, KnownNat n) => Int -> Braid n -> g -> (Braid n, g)
 randomPerturbBraidWord m braid@(Braid xs) g = (Braid word' , g') where
 
-  (word',g') = go m (length xs) xs g 
+  (word',g') = go m (length xs) xs g
 
   n = numberOfStrands braid
 
   -- | A random pair cancelling each other
   rndE :: g -> ([BrGen],g)
   rndE g = (e1,g'') where
-    (i , g'  ) = randomR (1,n-1) g 
+    (i , g'  ) = randomR (1,n-1) g
     (b , g'' ) = random          g'
-    e0 = [SigmaInv i, Sigma i] 
+    e0 = [SigmaInv i, Sigma i]
     e1 = if b then reverse e0 else e0
 
   brg    s i = case s of { Plus -> Sigma    i ; Minus -> SigmaInv i }
   brginv s i = case s of { Plus -> SigmaInv i ; Minus -> Sigma    i }
 
   go :: Int -> Int -> [BrGen] -> g -> ([BrGen], g)
-  go !cnt !len !word !g 
+  go !cnt !len !word !g
 
     | cnt <= 0   = (word, g)
 
-    | len <  2   = let w' = if b1 then (e++word) else (word++e)        -- if it is short, we just add a trivial pair somewhere
+    | len <  2   = let w' = if b1 then e++word else word++e        -- if it is short, we just add a trivial pair somewhere
                    in  continue g4 (len+2) w'
 
     | abs (i-j) >= 2            = continue g4  len    (as ++ v:u:bs)         -- they commute, so we just commute them
 
     | i == j && s/=t            = continue g4 (len-2) (as ++ bs    )         -- they are inverse of each other, so we kill them
 
-    | abs (i-j) == 1 && s == t  = let mid = if b1 
+    | abs (i-j) == 1 && s == t  = let mid = if b1
                                         then [ brg s j , brg s i , brg s j , brginv s i ]   -- insert pair and
-                                        else [ brginv s j , brg s i , brg s j , brg s i ]   -- apply ternary relation 
+                                        else [ brginv s j , brg s i , brg s j , brg s i ]   -- apply ternary relation
                                   in  continue g4 (len+2) (as ++ mid ++ bs)
 
-    | otherwise                 = let mid = if b1
-                                        then (u : e ++ [v])
-                                        else if b2
-                                          then [u,v] ++ e
-                                          else e ++ [u,v]
-                                  in continue g4 (len+2) (as++(u:e)++[v]++bs)          -- otherwise we just insert an trivial pair         
+    | otherwise                 = let
+                                  mid
+                                    | b1        = u : e ++ [v]
+                                    | b2        = [u,v] ++ e
+                                    | otherwise = e ++ [u,v]
+                                  -- otherwise we just insert an trivial pair
+                                  in continue g4 (len+2) (as++(u:e)++[v]++bs)
 
     where
 
@@ -693,15 +695,15 @@ randomPerturbBraidWord m braid@(Braid xs) g = (Braid word' , g') where
       (as,u:v:bs) = splitAt pos word
       (s,i) = brGenSignIdx u
       (t,j) = brGenSignIdx v
-  
+
       continue g' len' word' = go (cnt-1) len' word' g'
 
 --------------------------------------------------------------------------------
 
 -- | This version of 'randomBraidWord' may be convenient to avoid the type level stuff
-withRandomBraidWord 
-  :: RandomGen g 
-  => (forall n. KnownNat n => Braid n -> a) 
+withRandomBraidWord
+  :: RandomGen g
+  => (forall n. KnownNat n => Braid n -> a)
   -> Int                -- ^ number of strands
   -> Int                -- ^ length of the random word
   -> g -> (a, g)
@@ -709,9 +711,9 @@ withRandomBraidWord f n len = runRand $ do
   withSelectedM f (rand $ randomBraidWord len) n
 
 -- | This version of 'randomPositiveBraidWord' may be convenient to avoid the type level stuff
-withRandomPositiveBraidWord 
-  :: RandomGen g 
-  => (forall n. KnownNat n => Braid n -> a) 
+withRandomPositiveBraidWord
+  :: RandomGen g
+  => (forall n. KnownNat n => Braid n -> a)
   -> Int                -- ^ number of strands
   -> Int                -- ^ length of the random word
   -> g -> (a, g)
@@ -719,8 +721,8 @@ withRandomPositiveBraidWord f n len = runRand $ do
   withSelectedM f (rand $ randomPositiveBraidWord len) n
 
 -- | Untyped version of 'randomBraidWord'
-_randomBraidWord 
-  :: (RandomGen g) 
+_randomBraidWord
+  :: (RandomGen g)
   => Int                -- ^ number of strands
   -> Int                -- ^ length of the random word
   -> g -> ([BrGen], g)
@@ -732,13 +734,12 @@ _randomBraidWord n len = runRand $ replicateM len $ do
     Minus -> SigmaInv k
 
 -- | Untyped version of 'randomPositiveBraidWord'
-_randomPositiveBraidWord 
-  :: (RandomGen g) 
+_randomPositiveBraidWord
+  :: (RandomGen g)
   => Int             -- ^ number of strands
   -> Int             -- ^ length of the random word
   -> g -> ([BrGen], g)
 _randomPositiveBraidWord n len = runRand $ replicateM len $ do
-  liftM Sigma $ randChoose (1,n-1)
+  Sigma <$> randChoose (1,n-1)
 
 --------------------------------------------------------------------------------
-

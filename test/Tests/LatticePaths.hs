@@ -2,7 +2,8 @@
 -- | Tests for lattice paths 
 --
 
-{-# LANGUAGE CPP, ScopedTypeVariables, GeneralizedNewtypeDeriving, FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE FlexibleContexts #-}
 module Tests.LatticePaths where
 
 --------------------------------------------------------------------------------
@@ -36,7 +37,7 @@ maxHalfSize :: Int
 maxHalfSize = 11     -- number of paths grow exponentially
 
 instance Arbitrary Half where
-  arbitrary = liftM Half $ choose (0,maxHalfSize)    
+  arbitrary = Half <$> choose (0,maxHalfSize)    
 
 instance Arbitrary HalfPair where
   arbitrary = do
@@ -83,12 +84,12 @@ prop_count_lattice :: HalfPair -> Bool
 prop_count_lattice (HalfPair y x) = fi (length (latticePaths (x,y))) == countLatticePaths (x,y)
 
 prop_bounded_1 :: HalfPair -> Bool
-prop_bounded_1 (HalfPair h m) = (one == two) where
+prop_bounded_1 (HalfPair h m) = one == two where
   one = sort (boundedDyckPaths h m ) 
   two = sort [ p | p <- dyckPaths m  , pathHeight p <= h ]
   
 prop_bounded_2 :: Half -> Half -> Bool
-prop_bounded_2 (Half h) (Half m) = (one == two) where
+prop_bounded_2 (Half h) (Half m) = one == two where
   one = sort (boundedDyckPaths h  m ) 
   two = sort [ p | p <- dyckPaths m  , pathHeight p <= h  ]
 
@@ -96,13 +97,13 @@ prop_not_bounded :: Bool
 prop_not_bounded = and [ sort (boundedDyckPaths m m) == sort (dyckPaths m) | m <- [0..maxHalfSize] ]
 
 prop_touching :: HalfPair -> Bool
-prop_touching (HalfPair k m) = (one == two && fi (length one) == cnt) where
+prop_touching (HalfPair k m) = one == two && fi (length one) == cnt where
   one = sort (touchingDyckPaths k m) 
   two = sort [ p | p <- dyckPaths m , pathNumberOfZeroTouches p == k ]
   cnt = countTouchingDyckPaths k m
 
 prop_peaking :: HalfPair -> Bool
-prop_peaking (HalfPair k m) = (one == two && fi (length one) == cnt) where
+prop_peaking (HalfPair k m) = one == two && fi (length one) == cnt where
   one = sort (peakingDyckPaths k m) 
   two = sort [ p | p <- dyckPaths m , pathNumberOfPeaks p == k ]
   cnt = countPeakingDyckPaths k m

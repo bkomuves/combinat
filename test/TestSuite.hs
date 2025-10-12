@@ -6,6 +6,7 @@ module Main where
 import Test.Framework
 import Test.Framework.Providers.QuickCheck2
 
+import Tests.Numbers.HalfInt    ( testgroup_HalfInt           )
 import Tests.Permutations       ( testgroup_Permutations      )
 import Tests.Partitions.Integer ( testgroup_IntegerPartitions )
 import Tests.Partitions.Skew    ( testgroup_SkewPartitions    )
@@ -49,6 +50,7 @@ tests =
       [ testgroup_Braid 
       , testgroup_Braid_NF 
       ]
+  , testgroup_HalfInt
   ]
 
 --------------------------------------------------------------------------------
